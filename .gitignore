@@ -1,0 +1,19 @@
+# Dane bazy danych (jeśli utworzysz wolumen w folderze)
+pgdata/
+
+# Java i Maven
+target/
+*.jar
+*.war
+
+# Logi aplikacji
+*.log
+
+# Pliki IDE (IntelliJ, VS Code)
+.idea/
+.vscode/
+*.iml
+
+# Systemowe
+.DS_Store
+Thumbs.db

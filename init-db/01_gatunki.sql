@@ -1,0 +1,4 @@
+CREATE TABLE gatunki (
+	id_gatunku SERIAL PRIMARY KEY,
+	nazwa VARCHAR(100) NOT NULL UNIQUE
+);
