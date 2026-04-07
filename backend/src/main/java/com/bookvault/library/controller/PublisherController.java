@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/publisher") // Oddzielny endpoint dla wydawnictw
+@RequestMapping("/api/v1/publishers")
 @RequiredArgsConstructor
 public class PublisherController {
 
@@ -18,6 +18,6 @@ public class PublisherController {
 
     @GetMapping
     public List<Publisher> getAllPublishers() {
-        return publisherRepository.findAll(); // Pobiera dane z tabeli 'wydawnictwa'
+        return publisherRepository.findAll();
     }
 }

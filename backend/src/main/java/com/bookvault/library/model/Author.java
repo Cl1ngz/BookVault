@@ -1,42 +1,38 @@
 package com.bookvault.library.model;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "autorzy", schema = "biblioteka")
-@Data // gettery, settery, toString, equals i hashCode
+@Table(name = "autorzy")
+@Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
 @AllArgsConstructor
-public class Author {
+@EqualsAndHashCode(callSuper = true)
+public class Author extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_autora") //mapowanie nazwy snake_case na camelCase
-    private Integer idAutora;
+    @Column(name = "id_autora")
+    private Integer id;
 
-    @Column(nullable = false)
-    private String imie;
+    @Column(name = "imie", nullable = false)
+    private String firstName;
 
-    @Column(nullable = false)
-    private String nazwisko;
+    @Column(name = "nazwisko", nullable = false)
+    private String lastName;
 
     @Column(name = "data_urodzenia")
-    private LocalDate dataUrodzenia;
+    private LocalDate birthDate;
 
-    private String narodowosc;
+    @Column(name = "narodowosc")
+    private String nationality;
 
-    @Column(columnDefinition = "TEXT")
-    private String biografia;
-
-    //pola audytowe stworzone w sql
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "biografia", columnDefinition = "TEXT")
+    private String biography;
 }

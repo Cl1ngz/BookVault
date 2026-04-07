@@ -6,6 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AuthorRepository extends JpaRepository<Author, Integer> {
-    // Rozszerzenie JpaRepository daje gotowe metody:
-    // findAll(), findById(), save(), deleteById() itd.
 }

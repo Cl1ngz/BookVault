@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/author")
-@RequiredArgsConstructor // Automatycznie wstrzykuje repozytorium przez konstruktor
+@RequestMapping("/api/v1/authors")
+@RequiredArgsConstructor
 public class AuthorController {
 
     private final AuthorRepository authorRepository;
 
     @GetMapping
     public List<Author> getAllAuthors() {
-        return authorRepository.findAll(); // Pobiera wszystkich autorów z bazy
+        return authorRepository.findAll();
     }
 }

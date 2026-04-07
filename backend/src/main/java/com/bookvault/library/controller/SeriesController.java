@@ -21,4 +21,3 @@ public class SeriesController {
         return seriesRepository.findAll();
     }
 }
-
