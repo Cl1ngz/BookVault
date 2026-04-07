@@ -1,10 +1,10 @@
-package com.example.biblioteka.repository;
+package com.bookvault.library.repository;
 
-import com.example.biblioteka.model.Wydawnictwo;
+import com.bookvault.library.model.Publisher;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface WydawnictwoRepository extends JpaRepository<Wydawnictwo, Integer> {
+public interface PublisherRepository extends JpaRepository<Publisher, Integer> {
     // Dzięki temu można  wyszukać wydawnictwo po nazwie
 }

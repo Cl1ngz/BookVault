@@ -1,4 +1,4 @@
-package com.example.biblioteka.model;
+package com.bookvault.library.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data // gettery, settery, toString, equals i hashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class Autor {
+public class Author {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

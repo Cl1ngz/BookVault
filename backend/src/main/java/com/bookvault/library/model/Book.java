@@ -1,4 +1,4 @@
-package com.example.biblioteka.model;
+package com.bookvault.library.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "ksiazki", schema = "biblioteka")
 @Data
-public class Ksiazka {
+public class Book {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,11 +19,11 @@ public class Ksiazka {
 
     @ManyToOne
     @JoinColumn(name = "id_autora", nullable = false)
-    private Autor autor;
+    private Author author;
 
     @ManyToOne
     @JoinColumn(name = "id_wydawnictwa")
-    private Wydawnictwo wydawnictwo;
+    private Publisher publisher;
 
     @Column(name = "id_serii")
     private Integer idSerii; // Mapujemy jako Integer
