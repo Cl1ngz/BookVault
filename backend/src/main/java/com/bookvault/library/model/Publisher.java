@@ -1,4 +1,4 @@
-package com.example.biblioteka.model;
+package com.bookvault.library.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "wydawnictwa", schema = "biblioteka")
 @Data
-public class Wydawnictwo {
+public class Publisher {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

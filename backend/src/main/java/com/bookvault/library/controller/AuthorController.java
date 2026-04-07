@@ -1,7 +1,7 @@
-package com.example.biblioteka.controller;
+package com.bookvault.library.controller;
 
-import com.example.biblioteka.model.Autor;
-import com.example.biblioteka.repository.AutorRepository;
+import com.bookvault.library.model.Author;
+import com.bookvault.library.repository.AuthorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,12 +12,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/autorzy")
 @RequiredArgsConstructor // Automatycznie wstrzykuje repozytorium przez konstruktor
-public class AutorController {
+public class AuthorController {
 
-    private final AutorRepository autorRepository;
+    private final AuthorRepository authorRepository;
 
     @GetMapping
-    public List<Autor> getAllAuthors() {
-        return autorRepository.findAll(); // Pobiera wszystkich autorów z bazy
+    public List<Author> getAllAuthors() {
+        return authorRepository.findAll(); // Pobiera wszystkich autorów z bazy
     }
 }

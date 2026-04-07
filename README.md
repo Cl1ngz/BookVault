@@ -8,8 +8,11 @@ Wymagany zainstalowany Docker i Docker Compose.
 
 1. Sklonuj repozytorium.
 2. W głównym folderze wykonaj komendę:
+```bash
+docker-compose up -d db
+```
+Jeżeli nie łączy się z bazą a masz vpn lub customowe dns to trzeba wyłączyć
 
-   docker-compose up -d db
 
 Baza posiada automatycznie inicjalizowany schemat biblioteka.
 
