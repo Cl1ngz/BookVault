@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ksiazki")
+@RequestMapping("/api/v1/ksiazki")
 @RequiredArgsConstructor
 public class BookController {
 
