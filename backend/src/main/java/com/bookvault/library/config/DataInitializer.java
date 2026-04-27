@@ -8,10 +8,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 @Component
-@RequiredArgsConstructor // Automatycznie wygeneruje konstruktor dla wszystkich pól final
+@RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
     private final AuthorRepository authorRepository;
@@ -26,47 +28,39 @@ public class DataInitializer implements CommandLineRunner {
     private final Faker faker = new Faker(new Locale("pl"));
 
     @Override
-    @Transactional // Zapewnia, że wszystkie operacje wykonają się w jednej transakcji
+    @Transactional
     public void run(String... args) {
-        // Sprawdzamy czy baza jest pusta (patrzymy na autorów jako punkt startowy)
         if (authorRepository.count() == 0) {
-            System.out.println(">>> Rozpoczynam generowanie danych testowych (DataFaker)...");
+            System.out.println(">>> ROZPOCZYNAM GENEROWANIE DANYCH TESTOWYCH...");
 
-            // 1. GATUNKI (Stała lista)
             List<Genre> genres = seedGenres();
+            List<Address> addresses = seedAddresses(15);
+            List<Author> authors = seedAuthors(20);
+            List<Publisher> publishers = seedPublishers(8, addresses);
+            List<Series> seriesList = seedSeries(10, authors);
 
-            // 2. ADRESY
-            List<Address> addresses = seedAddresses(10);
+            // Przekazujemy serie i autorów do książek
+            List<Book> books = seedBooks(50, authors, publishers, seriesList, genres);
 
-            // 3. AUTORZY
-            List<Author> authors = seedAuthors(15);
+            List<Reader> readers = seedReaders(15);
+            seedReviews(100, books, readers);
 
-            // 4. WYDAWNICTWA (Potrzebują adresów)
-            List<Publisher> publishers = seedPublishers(5, addresses);
-
-            // 5. SERIE (Potrzebują autorów)
-            List<Series> seriesList = seedSeries(5, authors);
-
-            // 6. KSIĄŻKI (Potrzebują autorów, wydawnictw, serii i gatunków)
-            List<Book> books = seedBooks(30, authors, publishers, seriesList, genres);
-
-            // 7. CZYTELNICY
-            List<Reader> readers = seedReaders(10);
-
-            // 8. RECENZJE (Potrzebują książek i czytelników)
-            seedReviews(50, books, readers);
-
-            System.out.println(">>> Proces generowania danych zakończony pomyślnie!");
+            System.out.println(">>> GENEROWANIE DANYCH ZAKOŃCZONE. MIŁEGO TESTOWANIA!");
         }
     }
 
     private List<Genre> seedGenres() {
-        String[] genreNames = {"Fantasy", "Sci-Fi", "Kryminał", "Thriller", "Horror", "Biografia", "Historyczna"};
+        String[] genreNames = {"Fantasy", "Sci-Fi", "Kryminał", "Thriller", "Horror", "Biografia", "Historyczna", "Romans"};
         List<Genre> genres = new ArrayList<>();
         for (String name : genreNames) {
-            Genre g = new Genre();
-            g.setName(name);
-            genres.add(genreRepository.save(g));
+            // Używamy Twojej nowej metody, żeby nie dublować
+            Genre g = genreRepository.findByNameIgnoreCase(name)
+                    .orElseGet(() -> {
+                        Genre newGenre = new Genre();
+                        newGenre.setName(name);
+                        return genreRepository.save(newGenre);
+                    });
+            genres.add(g);
         }
         return genres;
     }
@@ -92,7 +86,9 @@ public class DataInitializer implements CommandLineRunner {
             a.setFirstName(faker.name().firstName());
             a.setLastName(faker.name().lastName());
             a.setNationality(faker.nation().nationality());
-            a.setBiography(faker.lorem().paragraph());
+            a.setBiography(faker.lorem().paragraph(3));
+            // Generujemy datę urodzenia (wiek 25-90 lat)
+            a.setBirthDate(faker.timeAndDate().birthday(25, 90));
             authors.add(authorRepository.save(a));
         }
         return authors;
@@ -102,9 +98,9 @@ public class DataInitializer implements CommandLineRunner {
         List<Publisher> publishers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Publisher p = new Publisher();
-            p.setName(faker.book().publisher()); // POPRAWIONE
+            p.setName("Wydawnictwo " + faker.book().publisher());
             p.setOwner(faker.name().fullName());
-            p.setFoundationYear(faker.number().numberBetween(1950, 2020));
+            p.setFoundationYear(faker.number().numberBetween(1945, 2023));
             p.setAddress(addresses.get(faker.random().nextInt(addresses.size())));
             publishers.add(publisherRepository.save(p));
         }
@@ -115,8 +111,10 @@ public class DataInitializer implements CommandLineRunner {
         List<Series> seriesList = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Series s = new Series();
-            s.setName("Saga " + faker.funnyName().name());
-            s.setVolumeCount((short) faker.number().numberBetween(3, 10)); // POPRAWIONE RZUTOWANIE
+            // Lepsze nazwy serii
+            String seriesTitle = faker.random().nextBoolean() ? faker.book().genre() : faker.space().constellation();
+            s.setName("Kroniki " + seriesTitle);
+            s.setVolumeCount((short) faker.number().numberBetween(3, 12));
             s.setAuthor(authors.get(faker.random().nextInt(authors.size())));
             seriesList.add(seriesRepository.save(s));
         }
@@ -129,21 +127,23 @@ public class DataInitializer implements CommandLineRunner {
             Book b = new Book();
             b.setTitle(faker.book().title());
             b.setPublicationYear(faker.number().numberBetween(1990, 2024));
-            b.setPageCount(faker.number().numberBetween(150, 900));
+            b.setPageCount(faker.number().numberBetween(120, 1100));
             b.setMood(faker.mood().emotion());
-
-            b.setAuthor(authors.get(faker.random().nextInt(authors.size())));
             b.setPublisher(publishers.get(faker.random().nextInt(publishers.size())));
 
-            // Opcjonalne przypisanie do serii (50% szans)
-            if (faker.random().nextBoolean()) {
-                b.setSeries(series.get(faker.random().nextInt(series.size())));
+            // LOGIKA SPÓJNOŚCI: Jeśli jest seria, autor musi być ten sam
+            if (faker.random().nextInt(100) < 40) { // 40% szans na serię
+                Series randomSeries = series.get(faker.random().nextInt(series.size()));
+                b.setSeries(randomSeries);
+                b.setAuthor(randomSeries.getAuthor()); // Autor z serii
+            } else {
+                b.setAuthor(authors.get(faker.random().nextInt(authors.size())));
             }
 
-            // Losowe gatunki (od 1 do 3)
+            // Gatunki
             Set<Genre> bookGenres = new HashSet<>();
-            int numGenres = faker.number().numberBetween(1, 3);
-            for(int j=0; j<numGenres; j++) {
+            int numGenres = faker.number().numberBetween(1, 4);
+            while (bookGenres.size() < numGenres) {
                 bookGenres.add(genres.get(faker.random().nextInt(genres.size())));
             }
             b.setGenres(bookGenres);
@@ -160,6 +160,7 @@ public class DataInitializer implements CommandLineRunner {
             r.setFirstName(faker.name().firstName());
             r.setLastName(faker.name().lastName());
             r.setNationality("Polska");
+            r.setBirthDate(faker.timeAndDate().birthday(25, 90));
             readers.add(readerRepository.save(r));
         }
         return readers;
@@ -168,8 +169,8 @@ public class DataInitializer implements CommandLineRunner {
     private void seedReviews(int count, List<Book> books, List<Reader> readers) {
         for (int i = 0; i < count; i++) {
             Review r = new Review();
-            r.setRating(faker.number().numberBetween(1, 5));
-            r.setContent(faker.lorem().sentence());
+            r.setRating(faker.number().numberBetween(1, 6)); // Skala 1-5
+            r.setContent(faker.lorem().paragraph(2));
             r.setBook(books.get(faker.random().nextInt(books.size())));
             r.setReader(readers.get(faker.random().nextInt(readers.size())));
             reviewRepository.save(r);
