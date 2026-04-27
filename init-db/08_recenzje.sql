@@ -5,7 +5,7 @@ CREATE TABLE recenzje (
     ocena INTEGER NOT NULL CHECK (ocena >= 1 AND ocena <= 5),
     tresc TEXT,
     data_dodania TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP -- TA KOLUMNA JEST KLUCZOWA
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TRIGGER update_recenzje_modtime

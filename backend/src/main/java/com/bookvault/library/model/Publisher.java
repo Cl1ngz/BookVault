@@ -1,13 +1,11 @@
 package com.bookvault.library.model;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 @Entity
-@Table(name = "wydawnictwa")
+@Table(name = "wydawnictwa", schema = "biblioteka") // Dodany schema dla pewności
 @Data
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
@@ -20,16 +18,16 @@ public class Publisher extends BaseEntity {
     @Column(name = "id_wydawnictwa")
     private Integer id;
 
-    @Column(name = "nazwa", nullable = false)
+    @Column(name = "nazwa", nullable = false, length = 150) // Dodany length z SQL
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_adresu")
+    @JoinColumn(name = "id_adresu") // SQL nie ma NOT NULL, więc zostaje domyślne nullable
     private Address address;
 
     @Column(name = "rok_zalozenia")
     private Integer foundationYear;
 
-    @Column(name = "wlasciciel")
+    @Column(name = "wlasciciel", length = 150) // Dodany length z SQL
     private String owner;
 }

@@ -1,13 +1,11 @@
 package com.bookvault.library.model;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 @Entity
-@Table(name = "serie")
+@Table(name = "serie", schema = "biblioteka")
 @Data
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
@@ -20,7 +18,7 @@ public class Series extends BaseEntity {
     @Column(name = "id_serii")
     private Integer id;
 
-    @Column(name = "nazwa", nullable = false)
+    @Column(name = "nazwa", nullable = false, length = 150) // Dodano length z SQL
     private String name;
 
     @Column(name = "liczba_tomow")

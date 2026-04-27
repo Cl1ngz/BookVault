@@ -1,23 +1,20 @@
 package com.bookvault.library.model;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 import java.time.LocalDate;
+
 @Entity
-@Table(name = "autorzy")
+@Table(name = "czytelnicy", schema = "biblioteka")
 @Data
-@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class Author extends BaseEntity {
+public class Reader extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_autora")
+    @Column(name = "id_czytelnika")
     private Integer id;
 
     @Column(name = "imie", nullable = false, length = 100) // Dodano length
@@ -31,7 +28,4 @@ public class Author extends BaseEntity {
 
     @Column(name = "narodowosc", length = 50) // Dodano length
     private String nationality;
-
-    @Column(name = "biografia", columnDefinition = "TEXT")
-    private String biography;
 }
