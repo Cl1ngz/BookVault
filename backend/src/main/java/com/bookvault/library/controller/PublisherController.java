@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/publisher") // Liczba pojedyncza - konsekwentnie!
+@RequestMapping("/api/v1/publishers") // Liczba pojedyncza - konsekwentnie!
 @RequiredArgsConstructor
 public class PublisherController {
 

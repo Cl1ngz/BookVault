@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/reader") // Liczba pojedyncza, żeby uniknąć konfliktów
+@RequestMapping("/api/v1/readers") // Liczba pojedyncza, żeby uniknąć konfliktów
 @RequiredArgsConstructor
 public class ReaderController {
 
