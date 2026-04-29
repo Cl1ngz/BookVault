@@ -5,7 +5,7 @@ import api from '@/api'
 const authors = ref<any[]>([])
 
 onMounted(async () => {
-  const res = await api.get('/author')
+  const res = await api.get('/authors')
   authors.value = res.data
 })
 </script>

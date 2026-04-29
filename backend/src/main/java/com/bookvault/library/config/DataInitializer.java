@@ -45,7 +45,26 @@ public class DataInitializer implements CommandLineRunner {
     private List<Genre> seedGenres() {
         if (genreRepository.count() > 0) return genreRepository.findAll();
         System.out.println("-> Generowanie gatunków...");
-        String[] genreNames = {"Fantasy", "Sci-Fi", "Kryminał", "Thriller", "Horror", "Biografia", "Historyczna", "Romans"};
+        String[] genreNames = {
+                // Fiction
+                "Fantasy", "Science Fiction", "Romance", "Horror", "Thriller",
+                "Mystery", "Crime", "Historical Fiction", "Adventure", "Literary Fiction",
+                "Contemporary Fiction", "Magical Realism", "Dystopian", "Speculative Fiction",
+                "Paranormal", "Urban Fantasy", "Epic Fantasy", "Dark Fantasy", "Space Opera",
+                "Cyberpunk", "Steampunk", "Alternate History", "Satire", "Humor", "Drama",
+                "Coming of Age", "Women's Fiction", "Chick Lit", "Fairy Tale", "Mythology",
+                "Short Stories", "Anthology",
+                // Non-fiction
+                "Biography", "Autobiography", "Memoir", "Self-Help", "Psychology",
+                "Philosophy", "History", "Politics", "True Crime", "Science",
+                "Popular Science", "Technology", "Business", "Economics", "Travel",
+                "Food & Cooking", "Art", "Music", "Sports", "Health & Wellness",
+                "Parenting", "Religion & Spirituality", "Essays",
+                // YA / Children
+                "Young Adult", "Middle Grade", "Children's", "Picture Book",
+                // Other
+                "Graphic Novel", "Manga", "Poetry", "Play / Drama"
+        };
         List<Genre> list = new ArrayList<>();
         for (String name : genreNames) {
             Genre g = new Genre();
@@ -54,6 +73,7 @@ public class DataInitializer implements CommandLineRunner {
         }
         return list;
     }
+
 
     private List<Address> seedAddresses(int count) {
         if (addressRepository.count() > 0) return addressRepository.findAll();
