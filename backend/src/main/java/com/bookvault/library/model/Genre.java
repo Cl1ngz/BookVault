@@ -1,24 +1,25 @@
 package com.bookvault.library.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "gatunki", schema = "biblioteka")
+@Table(name = "gatunki", schema = "biblioteka") // Dodany schema dla pewności
 @Data
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@NoArgsConstructor
+@AllArgsConstructor
 public class Genre {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_gatunku")
-    private Integer idGatunku;
+    private Integer id;
 
-    @Column(nullable = false, unique = true)
-    private String nazwa;
+    @Column(name = "nazwa", nullable = false, unique = true, length = 100) // Dodany length
+    private String name;
 }
-

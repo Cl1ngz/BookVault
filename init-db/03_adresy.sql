@@ -1,8 +1,13 @@
 CREATE TABLE adresy (
-	id_adresu SERIAL PRIMARY KEY,
-	ulica VARCHAR(150),
-	numer_domu VARCHAR(10),
-	miasto VARCHAR(100) NOT NULL,
-	kod_pocztowy VARCHAR(20),
-	kraj VARCHAR(100) DEFAULT 'Polska'
+    id_adresu SERIAL PRIMARY KEY,
+    ulica VARCHAR(255),
+    numer_domu VARCHAR(10) NOT NULL,
+    kod_pocztowy VARCHAR(10) NOT NULL,
+    miasto VARCHAR(100) NOT NULL,
+    kraj VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TRIGGER update_adresy_modtime 
+    BEFORE UPDATE ON adresy 
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

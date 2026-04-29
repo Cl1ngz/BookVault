@@ -3,8 +3,10 @@ package com.bookvault.library.controller;
 import com.bookvault.library.model.Series;
 import com.bookvault.library.repository.SeriesRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -17,8 +19,21 @@ public class SeriesController {
     private final SeriesRepository seriesRepository;
 
     @GetMapping
-    public List<Series> getAllSeries() {
-        return seriesRepository.findAll();
+    public ResponseEntity<List<Series>> getAllSeries(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String authorLastName
+    ) {
+        // 1. Wyszukiwanie po nazwie serii (np. "Wiedźmin")
+        if (name != null && !name.isBlank()) {
+            return ResponseEntity.ok(seriesRepository.findByNameContainingIgnoreCase(name.trim()));
+        }
+
+        // 2. Wyszukiwanie serii po nazwisku autora (np. "Sapkowski")
+        if (authorLastName != null && !authorLastName.isBlank()) {
+            return ResponseEntity.ok(seriesRepository.findByAuthor_LastNameContainingIgnoreCase(authorLastName.trim()));
+        }
+
+        // 3. Domyślnie - zwróć wszystko
+        return ResponseEntity.ok(seriesRepository.findAll());
     }
 }
-

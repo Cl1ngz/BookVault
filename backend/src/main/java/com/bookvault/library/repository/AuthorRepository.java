@@ -4,8 +4,17 @@ import com.bookvault.library.model.Author;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface AuthorRepository extends JpaRepository<Author, Integer> {
-    // Rozszerzenie JpaRepository daje gotowe metody:
-    // findAll(), findById(), save(), deleteById() itd.
+
+    // Wyszukiwanie po nazwisku (ignoruje wielkość liter i szuka fragmentu tekstu)
+    List<Author> findByLastNameContainingIgnoreCase(String lastName);
+
+    // Wyszukiwanie po imieniu (podobnie jak wyżej)
+    List<Author> findByFirstNameContainingIgnoreCase(String firstName);
+
+    // Opcjonalnie: Wyszukiwanie po narodowości (np. "Polish", "American")
+    List<Author> findByNationalityContainingIgnoreCase(String nationality);
 }

@@ -8,6 +8,6 @@ CREATE TABLE czytelnicy (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TRIGGER update_czytelnicy_modtime
-    BEFORE UPDATE ON autorzy
+    BEFORE UPDATE ON czytelnicy
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();

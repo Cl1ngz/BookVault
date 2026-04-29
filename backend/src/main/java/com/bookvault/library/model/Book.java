@@ -1,57 +1,55 @@
 package com.bookvault.library.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.Data;
-
-import java.time.LocalDateTime;
+import lombok.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "ksiazki", schema = "biblioteka")
+@Table(name = "ksiazki", schema = "biblioteka") // Dodany schema dla pewności
 @Data
-public class Book {
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class Book extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_ksiazki")
-    private Integer idKsiazki;
+    private Integer id;
 
-    @Column(nullable = false)
-    private String tytul;
+    @Column(name = "tytul", nullable = false, length = 255) // Dodany length z SQL
+    private String title;
 
-    @ManyToOne
-    @JoinColumn(name = "id_autora", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_autora") // SQL nie ma NOT NULL, więc zostawiamy domyślne nullable
     private Author author;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_wydawnictwa")
     private Publisher publisher;
 
-    @Column(name = "id_serii")
-    private Integer idSerii; // Mapujemy jako Integer
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_serii")
+    private Series series;
+
+    @Column(name = "rok_wydania")
+    private Integer publicationYear;
+
+    @Column(name = "ilosc_stron")
+    private Integer pageCount;
+
+    @Column(name = "nastroj", length = 50) // Dodany length z SQL
+    private String mood;
 
     @ManyToMany
     @JoinTable(
             name = "ksiazka_gatunek",
-            schema = "biblioteka",
+            schema = "biblioteka", // Spójność z tabelą łączącą
             joinColumns = @JoinColumn(name = "id_ksiazki"),
             inverseJoinColumns = @JoinColumn(name = "id_gatunku")
     )
-    private Set<Genre> genres = new HashSet<>();
-
-    @Column(name = "rok_wydania")
-    private Integer rokWydania;
-
-    @Column(name = "ilosc_stron")
-    private Integer iloscStron;
-
-    @Column(name = "nastroj")
-    private String mood;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    private Set<Genre> genres = new HashSet<>(); // Inicjalizacja HashSetem!
 }
