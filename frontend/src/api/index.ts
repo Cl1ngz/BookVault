@@ -1,9 +1,17 @@
 import axios from 'axios'
 
 const api = axios.create({
-    // In Docker: nginx proxies /api/ → backend container
-    // In dev: direct to localhost:8080
     baseURL: import.meta.env.VITE_API_URL ?? '/api/v1'
+})
+
+// Attach JWT token to every request if present
+api.interceptors.request.use(config => {
+    const user = localStorage.getItem('user')
+    if (user) {
+        const { token } = JSON.parse(user)
+        if (token) config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
 })
 
 export default api

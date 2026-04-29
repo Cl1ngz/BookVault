@@ -57,8 +57,11 @@ cd frontend
 npm install
 npm run dev
 ```
-
 Frontend available at: http://localhost:5173
+#### Database editing changing disabling
+```Bash
+docker-compose down -v
+```
 
 ---
 
