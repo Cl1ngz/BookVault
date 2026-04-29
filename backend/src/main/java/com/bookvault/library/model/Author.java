@@ -1,11 +1,12 @@
 package com.bookvault.library.model;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+
 import java.time.LocalDate;
+
 @Entity
 @Table(name = "autorzy")
 @Data
@@ -20,18 +21,25 @@ public class Author extends BaseEntity {
     @Column(name = "id_autora")
     private Integer id;
 
-    @Column(name = "imie", nullable = false, length = 100) // Dodano length
+    @Column(name = "imie", nullable = false, length = 100)
     private String firstName;
 
-    @Column(name = "nazwisko", nullable = false, length = 100) // Dodano length
+    @Column(name = "nazwisko", nullable = false, length = 100)
     private String lastName;
 
     @Column(name = "data_urodzenia")
     private LocalDate birthDate;
 
-    @Column(name = "narodowosc", length = 50) // Dodano length
+    @Column(name = "narodowosc", length = 50)
     private String nationality;
 
     @Column(name = "biografia", columnDefinition = "TEXT")
     private String biography;
+
+    @Column(name = "email", unique = true, length = 255)
+    private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 }

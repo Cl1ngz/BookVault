@@ -22,12 +22,11 @@ public class ReviewController {
     public ResponseEntity<List<Review>> getAllReviews(
             @RequestParam(required = false) Integer rating
     ) {
-        // Jeśli podano ocenę, filtrujemy
+        // filter by rating
         if (rating != null) {
             return ResponseEntity.ok(reviewRepository.findByRating(rating));
         }
 
-        // Domyślnie zwracamy wszystko
         return ResponseEntity.ok(reviewRepository.findAll());
     }
 }

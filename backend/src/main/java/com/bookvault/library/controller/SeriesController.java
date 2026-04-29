@@ -23,17 +23,17 @@ public class SeriesController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String authorLastName
     ) {
-        // 1. Wyszukiwanie po nazwie serii (np. "Wiedźmin")
+        // Search by series name
         if (name != null && !name.isBlank()) {
             return ResponseEntity.ok(seriesRepository.findByNameContainingIgnoreCase(name.trim()));
         }
 
-        // 2. Wyszukiwanie serii po nazwisku autora (np. "Sapkowski")
+        // Search by autor
         if (authorLastName != null && !authorLastName.isBlank()) {
             return ResponseEntity.ok(seriesRepository.findByAuthor_LastNameContainingIgnoreCase(authorLastName.trim()));
         }
 
-        // 3. Domyślnie - zwróć wszystko
+        // return everythin
         return ResponseEntity.ok(seriesRepository.findAll());
     }
 }

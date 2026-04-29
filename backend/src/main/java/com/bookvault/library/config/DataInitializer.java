@@ -23,7 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ReaderRepository readerRepository;
     private final ReviewRepository reviewRepository;
 
-    private final Faker faker = new Faker(new Locale("pl"));
+    private final Faker faker = new Faker(new Locale("en"));
 
     @Override
     @Transactional
@@ -83,6 +83,9 @@ public class DataInitializer implements CommandLineRunner {
             a.setBiography(faker.lorem().paragraph(3));
             // Poprawka dla DataFaker 2.4.0
             a.setBirthDate(faker.timeAndDate().birthday(25, 90));
+            a.setEmail(faker.internet().emailAddress());
+            a.setPasswordHash(faker.internet().password(12, 20));
+
             list.add(authorRepository.save(a));
         }
         return list;
@@ -156,10 +159,12 @@ public class DataInitializer implements CommandLineRunner {
         List<Reader> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Reader r = new Reader();
-            r.setFirstName(faker.name().firstName());
-            r.setLastName(faker.name().lastName());
+            r.setUsername(faker.internet().username() + faker.number().numberBetween(10, 999));
             r.setNationality("Polska");
             r.setBirthDate(faker.timeAndDate().birthday(18, 75));
+            r.setEmail(faker.internet().emailAddress());
+            r.setPasswordHash(faker.internet().password(12, 20));
+
             list.add(readerRepository.save(r));
         }
         return list;

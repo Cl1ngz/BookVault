@@ -9,12 +9,9 @@ import java.util.List;
 @Repository
 public interface ReaderRepository extends JpaRepository<Reader, Integer> {
 
-    // Wyszukiwanie czytelnika po nazwisku (kluczowe dla obsługi biblioteki)
-    List<Reader> findByLastNameContainingIgnoreCase(String lastName);
+    // Search by username
+    List<Reader> findByUsernameContainingIgnoreCase(String username);
 
-    // Wyszukiwanie czytelnika po imieniu
-    List<Reader> findByFirstNameContainingIgnoreCase(String firstName);
-
-    // Wyszukiwanie po narodowości (przydatne do statystyk)
+    // Search by nationality (useful for stats)
     List<Reader> findByNationalityContainingIgnoreCase(String nationality);
 }

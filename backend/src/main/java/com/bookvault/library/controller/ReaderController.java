@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/readers") // Liczba pojedyncza, żeby uniknąć konfliktów
+@RequestMapping("/api/v1/readers")
 @RequiredArgsConstructor
 public class ReaderController {
 
@@ -20,26 +20,21 @@ public class ReaderController {
 
     @GetMapping
     public ResponseEntity<List<Reader>> getAllReaders(
-            @RequestParam(required = false) String firstName,
-            @RequestParam(required = false) String lastName,
+            @RequestParam(required = false) String username,
             @RequestParam(required = false) String nationality
     ) {
-        // 1. Wyszukiwanie po nazwisku (najczęstszy scenariusz)
-        if (lastName != null && !lastName.isBlank()) {
-            return ResponseEntity.ok(readerRepository.findByLastNameContainingIgnoreCase(lastName.trim()));
+
+        // search by username
+        if (username != null && !username.isBlank()) {
+            return ResponseEntity.ok(readerRepository.findByUsernameContainingIgnoreCase(username.trim()));
         }
 
-        // 2. Wyszukiwanie po imieniu
-        if (firstName != null && !firstName.isBlank()) {
-            return ResponseEntity.ok(readerRepository.findByFirstNameContainingIgnoreCase(firstName.trim()));
-        }
-
-        // 3. Wyszukiwanie po narodowości
+        // by nacionalikty if provided
         if (nationality != null && !nationality.isBlank()) {
             return ResponseEntity.ok(readerRepository.findByNationalityContainingIgnoreCase(nationality.trim()));
         }
 
-        // 4. Jeśli brak filtrów - zwróć wszystkich
+
         return ResponseEntity.ok(readerRepository.findAll());
     }
 }
