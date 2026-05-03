@@ -20,9 +20,12 @@ public class ReviewController {
 
     @GetMapping
     public ResponseEntity<List<Review>> getAllReviews(
-            @RequestParam(required = false) Integer rating
+            @RequestParam(required = false) Integer rating,
+            @RequestParam(required = false) Integer bookId
     ) {
-        // filter by rating
+        if (bookId != null) {
+            return ResponseEntity.ok(reviewRepository.findByBook_Id(bookId));
+        }
         if (rating != null) {
             return ResponseEntity.ok(reviewRepository.findByRating(rating));
         }

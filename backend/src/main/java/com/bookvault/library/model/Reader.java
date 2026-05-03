@@ -34,4 +34,7 @@ public class Reader extends BaseEntity {
 
     @Column(name = "narodowosc", length = 50)
     private String nationality;
+
+    @Column(name = "role", length = 20, nullable = false)
+    private String role = "USER";
 }

@@ -38,8 +38,8 @@ public class AuthController {
         reader.setPasswordHash(passwordEncoder.encode(password)); // BCrypt!
 
         readerRepository.save(reader);
-        String token = jwtUtils.generateToken(reader.getEmail(), reader.getId(), reader.getUsername());
-        return ResponseEntity.ok(Map.of("token", token, "username", username));
+        String token = jwtUtils.generateToken(reader.getEmail(), reader.getId(), reader.getUsername(), reader.getRole());
+        return ResponseEntity.ok(Map.of("token", token, "username", username, "role", reader.getRole()));
     }
 
     @PostMapping("/login")
@@ -52,12 +52,13 @@ public class AuthController {
             return ResponseEntity.status(401).body("Invalid email or password");
         }
 
-        String token = jwtUtils.generateToken(found.getEmail(), found.getId(), found.getUsername());
+        String token = jwtUtils.generateToken(found.getEmail(), found.getId(), found.getUsername(), found.getRole());
         return ResponseEntity.ok(Map.of(
                 "token", token,
                 "id", found.getId(),
                 "username", found.getUsername(),
-                "email", found.getEmail()
+                "email", found.getEmail(),
+                "role", found.getRole()
         ));
     }
 }

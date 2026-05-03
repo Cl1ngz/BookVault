@@ -5,6 +5,7 @@ import com.bookvault.library.model.*;
 import com.bookvault.library.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final SeriesRepository seriesRepository;
     private final ReaderRepository readerRepository;
     private final ReviewRepository reviewRepository;
+    private final PasswordEncoder passwordEncoder;
 
     private final Faker faker = new Faker(new Locale("en"));
 
@@ -38,6 +40,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Book> books = seedBooks(50, authors, publishers, seriesList, genres);
         List<Reader> readers = seedReaders(15);
         seedReviews(100, books, readers);
+        seedModerator();
 
         System.out.println(">>> SYNCHRONIZACJA DANYCH ZAKOŃCZONA!");
     }
@@ -202,5 +205,18 @@ public class DataInitializer implements CommandLineRunner {
             r.setReader(readers.get(faker.random().nextInt(readers.size())));
             reviewRepository.save(r);
         }
+    }
+
+    private void seedModerator() {
+        String moderatorEmail = "moderator@bookvault.com";
+        if (readerRepository.findByEmail(moderatorEmail).isPresent()) return;
+        System.out.println("-> Tworzenie konta moderatora...");
+        Reader mod = new Reader();
+        mod.setUsername("moderator");
+        mod.setEmail(moderatorEmail);
+        mod.setPasswordHash(passwordEncoder.encode("moderator123"));
+        mod.setRole("MODERATOR");
+        readerRepository.save(mod);
+        System.out.println("   Moderator: moderator@bookvault.com / moderator123");
     }
 }

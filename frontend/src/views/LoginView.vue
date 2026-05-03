@@ -12,6 +12,7 @@ async function login() {
   try {
     const res = await api.post('/auth/login', { email: email.value, password: password.value })
     localStorage.setItem('user', JSON.stringify(res.data))
+    window.dispatchEvent(new Event('storage'))
     router.push('/books')
   } catch {
     error.value = 'Invalid email or password'

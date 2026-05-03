@@ -6,6 +6,7 @@ CREATE TABLE czytelnicy
     password_hash  VARCHAR(255),
     data_urodzenia DATE,
     narodowosc     VARCHAR(50),
+    role           VARCHAR(20) NOT NULL DEFAULT 'USER',
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

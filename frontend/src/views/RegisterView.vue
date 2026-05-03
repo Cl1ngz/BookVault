@@ -11,12 +11,14 @@ const error = ref('')
 
 async function register() {
   try {
-    await api.post('/auth/register', {
+    const res = await api.post('/auth/register', {
       username: username.value,
       email: email.value,
       password: password.value
     })
-    router.push('/login')
+    localStorage.setItem('user', JSON.stringify(res.data))
+    window.dispatchEvent(new Event('storage'))
+    router.push('/books')
   } catch {
     error.value = 'Registration failed'
   }

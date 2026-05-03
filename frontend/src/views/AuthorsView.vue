@@ -14,8 +14,11 @@ onMounted(async () => {
   <div>
     <h1>Authors</h1>
     <ul>
-      <li v-for="a in authors" :key="a.id">
-        {{ a.firstName }} {{ a.lastName }} — {{ a.nationality }}
+      <li v-for="a in authors" :key="a.id" style="margin-bottom:6px;">
+        <RouterLink :to="`/authors/${a.id}`">
+          <strong>{{ a.firstName }} {{ a.lastName }}</strong>
+        </RouterLink>
+        <span v-if="a.nationality"> — {{ a.nationality }}</span>
       </li>
     </ul>
   </div>

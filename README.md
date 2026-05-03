@@ -69,4 +69,3 @@ docker-compose down -v
 
 - **Cannot connect to database?** If you have a VPN or custom DNS active, disable it and try again.
 - **Port 80 already in use?** Stop any local web server (Apache/Nginx) before running Docker.
-```
