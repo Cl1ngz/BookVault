@@ -1,6 +1,6 @@
 -- Funkcja obliczająca średnią ocenę książki
 CREATE OR REPLACE FUNCTION pobierz_srednia_ocena(p_id_ksiazki INT) 
-RETURNS NUMERIC AS $$
+RETURNS DOUBLE PRECISION AS $$
 BEGIN
 RETURN (SELECT ROUND(AVG(ocena), 2) FROM recenzje WHERE id_ksiazki = p_id_ksiazki);
 END;
