@@ -2,7 +2,7 @@ CREATE TABLE recenzje (
     id_recenzji SERIAL PRIMARY KEY,
     id_ksiazki INT REFERENCES ksiazki(id_ksiazki) ON DELETE CASCADE,
     id_czytelnika INT REFERENCES czytelnicy(id_czytelnika) ON DELETE CASCADE,
-    ocena INTEGER NOT NULL CHECK (ocena >= 1 AND ocena <= 5),
+    ocena NUMERIC(3,2) NOT NULL CHECK (ocena >= 0.25 AND ocena <= 5.0),
     tresc TEXT,
     data_dodania TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

@@ -199,7 +199,7 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("-> Generowanie recenzji...");
         for (int i = 0; i < count; i++) {
             Review r = new Review();
-            r.setRating(faker.number().numberBetween(1, 6));
+            r.setRating(Math.round(faker.number().randomDouble(2, 25, 500)) / 100.0); // 0.25 – 5.00
             r.setContent(faker.lorem().paragraph(2));
             r.setBook(books.get(faker.random().nextInt(books.size())));
             r.setReader(readers.get(faker.random().nextInt(readers.size())));

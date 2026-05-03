@@ -8,7 +8,7 @@ const user = JSON.parse(localStorage.getItem('user') || 'null')
 if (!user || user.role !== 'MODERATOR') router.push('/books')
 
 // ── Active tab ────────────────────────────────────────────────────────────────
-const activeTab = ref<'books' | 'editBook' | 'authors' | 'series' | 'reports'>('books')
+const activeTab = ref<'books' | 'editBook' | 'authors' | 'series' | 'reports' | 'readers'>('books')
 
 // ── Shared data ───────────────────────────────────────────────────────────────
 const authors    = ref<any[]>([])
@@ -145,6 +145,17 @@ async function saveEditSeries() {
 const reports = ref<any[]>([])
 const reportsFilter = ref('pending')
 
+// ── Readers ───────────────────────────────────────────────────────────────────
+const readers = ref<any[]>([])
+const readerSearch = ref('')
+
+async function loadReaders() {
+  const params: any = {}
+  if (readerSearch.value.trim()) params.username = readerSearch.value.trim()
+  const res = await api.get('/readers', { params })
+  readers.value = res.data
+}
+
 async function loadReports() {
   const res = await api.get(`/moderator/reports?status=${reportsFilter.value}`)
   reports.value = res.data
@@ -169,8 +180,9 @@ async function deleteReview(reviewId:number) {
           {key:'authors',  label:'✍️ Edit Author'},
           {key:'series',   label:'📖 Series'},
           {key:'reports',  label:'🚨 Reports'},
+          {key:'readers',  label:'👥 Readers'},
         ]" :key="tab.key"
-        @click="activeTab = tab.key as any; tab.key === 'editBook' && loadBooksForEdit()"
+        @click="activeTab = tab.key as any; tab.key === 'editBook' && loadBooksForEdit(); tab.key === 'readers' && loadReaders()"
         :style="{
           padding:'8px 16px', border:'none', cursor:'pointer', borderRadius:'6px 6px 0 0',
           background: activeTab === tab.key ? '#2563eb' : '#f3f4f6',
@@ -365,6 +377,39 @@ async function deleteReview(reviewId:number) {
         </tbody>
       </table>
     </section>
+    <!-- ── Readers tab ────────────────────────────────────────────────────── -->
+    <section v-if="activeTab === 'readers'">
+      <h2>👥 Registered Readers</h2>
+      <div style="display:flex; gap:8px; margin-bottom:1rem;">
+        <input v-model="readerSearch" placeholder="Search by username…" style="padding:6px; flex:1; max-width:300px;"/>
+        <button @click="loadReaders" style="padding:6px 14px; background:#2563eb; color:white; border:none; border-radius:6px; cursor:pointer;">Search</button>
+        <button @click="readerSearch=''; loadReaders()" style="padding:6px 14px; background:#6b7280; color:white; border:none; border-radius:6px; cursor:pointer;">Clear</button>
+      </div>
+      <p v-if="readers.length === 0" style="color:gray;">No readers found.</p>
+      <table v-else style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#f3f4f6; text-align:left;">
+            <th style="padding:8px; border:1px solid #ddd;">ID</th>
+            <th style="padding:8px; border:1px solid #ddd;">Username</th>
+            <th style="padding:8px; border:1px solid #ddd;">Email</th>
+            <th style="padding:8px; border:1px solid #ddd;">Nationality</th>
+            <th style="padding:8px; border:1px solid #ddd;">Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="r in readers" :key="r.id">
+            <td style="padding:8px; border:1px solid #ddd;">{{ r.id }}</td>
+            <td style="padding:8px; border:1px solid #ddd;">{{ r.username }}</td>
+            <td style="padding:8px; border:1px solid #ddd;">{{ r.email }}</td>
+            <td style="padding:8px; border:1px solid #ddd;">{{ r.nationality }}</td>
+            <td style="padding:8px; border:1px solid #ddd;">
+              <span :style="{color: r.role === 'MODERATOR' ? '#2563eb' : '#374151'}">{{ r.role }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
   </div>
 </template>
 

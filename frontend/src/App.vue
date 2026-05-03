@@ -28,8 +28,6 @@ window.addEventListener('storage', () => {
     <span style="color:#aaa;">|</span>
     <RouterLink to="/authors" style="color:white; text-decoration:none;">Authors</RouterLink>
     <span style="color:#aaa;">|</span>
-    <RouterLink to="/readers" style="color:white; text-decoration:none;">Readers</RouterLink>
-    <span style="color:#aaa;">|</span>
     <RouterLink to="/series" style="color:white; text-decoration:none;">Series</RouterLink>
 
     <template v-if="isModerator">

@@ -41,7 +41,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/authors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/series/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/readers/**").permitAll()
                         .requestMatchers("/api/v1/moderator/**").hasRole("MODERATOR")
                         .requestMatchers(
                                 "/swagger-ui/**", "/swagger-ui.html",
