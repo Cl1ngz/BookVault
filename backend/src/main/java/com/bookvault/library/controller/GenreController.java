@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/genres") // Liczba pojedyncza - konsekwentnie!
+@RequestMapping("/api/v1/genres")
 @RequiredArgsConstructor
 public class GenreController {
 

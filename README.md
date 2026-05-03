@@ -1,23 +1,71 @@
-# Biblioteka - Docker & Spring Boot
+# BookVault
 
-Projekt systemu bibliotecznego z bazą danych PostgreSQL w pełni skonfigurowaną przez Docker Compose.
+A book review application built with Spring Boot, Vue.js, and PostgreSQL.
 
-## Szybki Start
+## Tech Stack
+- **Backend:** Java 21, Spring Boot, Spring Data JPA
+- **Frontend:** Vue 3, TypeScript, Vite
+- **Database:** PostgreSQL 15
+- **Infrastructure:** Docker, Nginx
 
-Wymagany zainstalowany Docker i Docker Compose.
+---
 
-1. Sklonuj repozytorium.
-2. W głównym folderze wykonaj komendę:
+## Production — Run entire app with Docker
+
+> Requires Docker and Docker Compose installed.
+
 ```bash
+git clone https://github.com/Cl1ngz/BookVault.git
+cd BookVault
+docker-compose up --build
+```
+
+| Service  | URL |
+|----------|-----|
+| Frontend | http://localhost |
+| Backend API | http://localhost:8080/api/v1 |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html |
+
+#### Stop and remove everything
+```bash
+docker-compose down -v
+```
+
+---
+
+##  Development setup
+
+> Requires Docker, Java 21, Maven, and Node.js installed.
+
+### 1. Clone and start the database
+```bash
+git clone https://github.com/Cl1ngz/BookVault.git
+cd BookVault
 docker-compose up -d db
 ```
-Jeżeli nie łączy się z bazą a masz vpn lub customowe dns to trzeba wyłączyć
 
+### 2. Run backend (IntelliJ IDEA or terminal)
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+Swagger available at: http://localhost:8080/swagger-ui/
 
-Baza posiada automatycznie inicjalizowany schemat biblioteka.
+### 3. Run frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Frontend available at: http://localhost:5173
+#### Database editing changing disabling
+```Bash
+docker-compose down -v
+```
 
-    Skrypty init: 00-10 (struktura), 11 (dane testowe), 12 (logika), 13 (indeksy).
+---
 
-    Kaskady: Implementacja ON DELETE CASCADE dla spójności danych.
+##  Troubleshooting
 
-    Audyt: Automatyczne kolumny created_at i updated_at obsługiwane przez triggery.
+- **Cannot connect to database?** If you have a VPN or custom DNS active, disable it and try again.
+- **Port 80 already in use?** Stop any local web server (Apache/Nginx) before running Docker.

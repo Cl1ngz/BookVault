@@ -5,16 +5,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReaderRepository extends JpaRepository<Reader, Integer> {
 
-    // Wyszukiwanie czytelnika po nazwisku (kluczowe dla obsługi biblioteki)
-    List<Reader> findByLastNameContainingIgnoreCase(String lastName);
+    // Search by username
+    List<Reader> findByUsernameContainingIgnoreCase(String username);
 
-    // Wyszukiwanie czytelnika po imieniu
-    List<Reader> findByFirstNameContainingIgnoreCase(String firstName);
-
-    // Wyszukiwanie po narodowości (przydatne do statystyk)
+    // Search by nationality (useful for stats)
     List<Reader> findByNationalityContainingIgnoreCase(String nationality);
+
+    Optional<Reader> findByEmail(String email);
+
 }

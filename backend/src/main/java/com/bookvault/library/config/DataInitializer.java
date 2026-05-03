@@ -5,6 +5,7 @@ import com.bookvault.library.model.*;
 import com.bookvault.library.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,8 +23,9 @@ public class DataInitializer implements CommandLineRunner {
     private final SeriesRepository seriesRepository;
     private final ReaderRepository readerRepository;
     private final ReviewRepository reviewRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    private final Faker faker = new Faker(new Locale("pl"));
+    private final Faker faker = new Faker(new Locale("en"));
 
     @Override
     @Transactional
@@ -38,6 +40,7 @@ public class DataInitializer implements CommandLineRunner {
         List<Book> books = seedBooks(50, authors, publishers, seriesList, genres);
         List<Reader> readers = seedReaders(15);
         seedReviews(100, books, readers);
+        seedModerator();
 
         System.out.println(">>> SYNCHRONIZACJA DANYCH ZAKOŃCZONA!");
     }
@@ -45,7 +48,26 @@ public class DataInitializer implements CommandLineRunner {
     private List<Genre> seedGenres() {
         if (genreRepository.count() > 0) return genreRepository.findAll();
         System.out.println("-> Generowanie gatunków...");
-        String[] genreNames = {"Fantasy", "Sci-Fi", "Kryminał", "Thriller", "Horror", "Biografia", "Historyczna", "Romans"};
+        String[] genreNames = {
+                // Fiction
+                "Fantasy", "Science Fiction", "Romance", "Horror", "Thriller",
+                "Mystery", "Crime", "Historical Fiction", "Adventure", "Literary Fiction",
+                "Contemporary Fiction", "Magical Realism", "Dystopian", "Speculative Fiction",
+                "Paranormal", "Urban Fantasy", "Epic Fantasy", "Dark Fantasy", "Space Opera",
+                "Cyberpunk", "Steampunk", "Alternate History", "Satire", "Humor", "Drama",
+                "Coming of Age", "Women's Fiction", "Chick Lit", "Fairy Tale", "Mythology",
+                "Short Stories", "Anthology",
+                // Non-fiction
+                "Biography", "Autobiography", "Memoir", "Self-Help", "Psychology",
+                "Philosophy", "History", "Politics", "True Crime", "Science",
+                "Popular Science", "Technology", "Business", "Economics", "Travel",
+                "Food & Cooking", "Art", "Music", "Sports", "Health & Wellness",
+                "Parenting", "Religion & Spirituality", "Essays",
+                // YA / Children
+                "Young Adult", "Middle Grade", "Children's", "Picture Book",
+                // Other
+                "Graphic Novel", "Manga", "Poetry", "Play / Drama"
+        };
         List<Genre> list = new ArrayList<>();
         for (String name : genreNames) {
             Genre g = new Genre();
@@ -54,6 +76,7 @@ public class DataInitializer implements CommandLineRunner {
         }
         return list;
     }
+
 
     private List<Address> seedAddresses(int count) {
         if (addressRepository.count() > 0) return addressRepository.findAll();
@@ -83,6 +106,9 @@ public class DataInitializer implements CommandLineRunner {
             a.setBiography(faker.lorem().paragraph(3));
             // Poprawka dla DataFaker 2.4.0
             a.setBirthDate(faker.timeAndDate().birthday(25, 90));
+            a.setEmail(faker.internet().emailAddress());
+            a.setPasswordHash(faker.internet().password(12, 20));
+
             list.add(authorRepository.save(a));
         }
         return list;
@@ -156,10 +182,12 @@ public class DataInitializer implements CommandLineRunner {
         List<Reader> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Reader r = new Reader();
-            r.setFirstName(faker.name().firstName());
-            r.setLastName(faker.name().lastName());
+            r.setUsername(faker.internet().username() + faker.number().numberBetween(10, 999));
             r.setNationality("Polska");
             r.setBirthDate(faker.timeAndDate().birthday(18, 75));
+            r.setEmail(faker.internet().emailAddress());
+            r.setPasswordHash(faker.internet().password(12, 20));
+
             list.add(readerRepository.save(r));
         }
         return list;
@@ -171,11 +199,24 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("-> Generowanie recenzji...");
         for (int i = 0; i < count; i++) {
             Review r = new Review();
-            r.setRating(faker.number().numberBetween(1, 6));
+            r.setRating(Math.round(faker.number().randomDouble(2, 25, 500)) / 100.0); // 0.25 – 5.00
             r.setContent(faker.lorem().paragraph(2));
             r.setBook(books.get(faker.random().nextInt(books.size())));
             r.setReader(readers.get(faker.random().nextInt(readers.size())));
             reviewRepository.save(r);
         }
+    }
+
+    private void seedModerator() {
+        String moderatorEmail = "moderator@bookvault.com";
+        if (readerRepository.findByEmail(moderatorEmail).isPresent()) return;
+        System.out.println("-> Tworzenie konta moderatora...");
+        Reader mod = new Reader();
+        mod.setUsername("moderator");
+        mod.setEmail(moderatorEmail);
+        mod.setPasswordHash(passwordEncoder.encode("moderator123"));
+        mod.setRole("MODERATOR");
+        readerRepository.save(mod);
+        System.out.println("   Moderator: moderator@bookvault.com / moderator123");
     }
 }

@@ -1,7 +1,9 @@
 package com.bookvault.library.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDate;
 
 @Entity
@@ -17,15 +19,22 @@ public class Reader extends BaseEntity {
     @Column(name = "id_czytelnika")
     private Integer id;
 
-    @Column(name = "imie", nullable = false, length = 100) // Dodano length
-    private String firstName;
+    @Column(name = "username", nullable = false, length = 100)
+    private String username;
 
-    @Column(name = "nazwisko", nullable = false, length = 100) // Dodano length
-    private String lastName;
+    @Column(name = "email", unique = true, length = 255)
+    private String email;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
 
     @Column(name = "data_urodzenia")
     private LocalDate birthDate;
 
-    @Column(name = "narodowosc", length = 50) // Dodano length
+    @Column(name = "narodowosc", length = 50)
     private String nationality;
+
+    @Column(name = "role", length = 20, nullable = false)
+    private String role = "USER";
 }

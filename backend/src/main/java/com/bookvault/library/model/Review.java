@@ -33,7 +33,7 @@ public class Review extends BaseEntity {
     private Reader reader;
 
     @Column(name = "ocena", nullable = false)
-    private Integer rating;
+    private Double rating;
 
     @Column(name = "tresc", columnDefinition = "TEXT")
     private String content;
