@@ -9,7 +9,14 @@ import SeriesDetailView from '@/views/SeriesDetailView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import ModeratorView from '@/views/ModeratorView.vue'
+import MyShelfView from '@/views/MyShelfView.vue'
+import JournalView from '@/views/JournalView.vue'
+import ReadingDashboardView from '@/views/ReadingDashboardView.vue'
 
+const requireAuth = () => {
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    if (!user?.token) return '/login'
+}
 
 export default createRouter({
     history: createWebHistory(),
@@ -32,5 +39,8 @@ export default createRouter({
                 if (!user || user.role !== 'MODERATOR') return '/books'
             }
         },
+        {path: '/my-shelf', component: MyShelfView, beforeEnter: requireAuth},
+        {path: '/journal', component: JournalView, beforeEnter: requireAuth},
+        {path: '/dashboard', component: ReadingDashboardView, beforeEnter: requireAuth},
     ]
 })
