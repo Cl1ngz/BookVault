@@ -18,7 +18,6 @@ public class DataInitializer implements CommandLineRunner {
     private final AuthorRepository authorRepository;
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
-    private final AddressRepository addressRepository;
     private final PublisherRepository publisherRepository;
     private final SeriesRepository seriesRepository;
     private final ReaderRepository readerRepository;
@@ -32,14 +31,28 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println(">>> ROZPOCZYNAM ANALIZĘ STANU BAZY DANYCH...");
 
+        // 1. GATUNKI (Niezależne)
         List<Genre> genres = seedGenres();
-        List<Address> addresses = seedAddresses(15);
+
+        // 2. AUTORZY (Niezależni)
         List<Author> authors = seedAuthors(20);
-        List<Publisher> publishers = seedPublishers(8, addresses);
+
+        // 3. WYDAWNICTWA (Poprawione: usunęliśmy 'addresses')
+        List<Publisher> publishers = seedPublishers(8);
+
+        // 4. SERIE (Potrzebują autorów)
         List<Series> seriesList = seedSeries(10, authors);
+
+        // 5. KSIĄŻKI (Potrzebują autorów, wydawnictw, serii i gatunków)
         List<Book> books = seedBooks(50, authors, publishers, seriesList, genres);
+
+        // 6. CZYTELNICY (Niezależni)
         List<Reader> readers = seedReaders(15);
+
+        // 7. RECENZJE (Potrzebują książek i czytelników)
         seedReviews(100, books, readers);
+
+        // 8. MODERATOR (Twoja nowa metoda)
         seedModerator();
 
         System.out.println(">>> SYNCHRONIZACJA DANYCH ZAKOŃCZONA!");
@@ -77,23 +90,6 @@ public class DataInitializer implements CommandLineRunner {
         return list;
     }
 
-
-    private List<Address> seedAddresses(int count) {
-        if (addressRepository.count() > 0) return addressRepository.findAll();
-        System.out.println("-> Generowanie adresów...");
-        List<Address> list = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Address a = new Address();
-            a.setStreet(faker.address().streetName());
-            a.setHouseNumber(faker.address().buildingNumber());
-            a.setZipCode(faker.address().zipCode());
-            a.setCity(faker.address().city());
-            a.setCountry("Polska");
-            list.add(addressRepository.save(a));
-        }
-        return list;
-    }
-
     private List<Author> seedAuthors(int count) {
         if (authorRepository.count() > 0) return authorRepository.findAll();
         System.out.println("-> Generowanie autorów...");
@@ -114,18 +110,31 @@ public class DataInitializer implements CommandLineRunner {
         return list;
     }
 
-    private List<Publisher> seedPublishers(int count, List<Address> addresses) {
-        if (publisherRepository.count() > 0) return publisherRepository.findAll();
-        System.out.println("-> Generowanie wydawnictw...");
+    private List<Publisher> seedPublishers(int count) {
+        // Sprawdzamy, czy w bazie są już jakieś wydawnictwa
+        if (publisherRepository.count() > 0) {
+            return publisherRepository.findAll();
+        }
+
+        System.out.println("-> Generowanie wydawnictw (uproszczone, bez adresów)...");
         List<Publisher> list = new ArrayList<>();
+
         for (int i = 0; i < count; i++) {
             Publisher p = new Publisher();
+
+            // Ustawiamy nazwę (pamiętając o prefixie, żeby odróżnić dane od Fakera)
             p.setName("Wydawnictwo " + faker.book().publisher());
+
+            // Ustawiamy właściciela
             p.setOwner(faker.name().fullName());
-            p.setFoundationYear(faker.number().numberBetween(1945, 2023));
-            p.setAddress(addresses.get(faker.random().nextInt(addresses.size())));
+
+            // Ustawiamy rok założenia
+            p.setFoundationYear(faker.number().numberBetween(1945, 2024));
+
+            // Zapisujemy i dodajemy do listy, którą przekażemy dalej do metody seedBooks
             list.add(publisherRepository.save(p));
         }
+
         return list;
     }
 

@@ -1,7 +1,6 @@
 CREATE TABLE wydawnictwa (
     id_wydawnictwa SERIAL PRIMARY KEY,
     nazwa VARCHAR(150) NOT NULL,
-    id_adresu INT REFERENCES adresy(id_adresu) ON DELETE SET NULL,
     rok_zalozenia INT,
     wlasciciel VARCHAR(150),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

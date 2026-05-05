@@ -21,10 +21,6 @@ public class Publisher extends BaseEntity {
     @Column(name = "nazwa", nullable = false, length = 150) // Dodany length z SQL
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_adresu") // SQL nie ma NOT NULL, więc zostaje domyślne nullable
-    private Address address;
-
     @Column(name = "rok_zalozenia")
     private Integer foundationYear;
 
