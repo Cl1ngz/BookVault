@@ -10,9 +10,7 @@ import java.util.Optional;
 @Repository
 public interface GenreRepository extends JpaRepository<Genre, Integer> {
 
-    // Do sprawdzania unikalności (dokładna nazwa)
     Optional<Genre> findByNameIgnoreCase(String name);
 
-    // Do wyszukiwarki (fragment nazwy, np. "fant" znajdzie "Fantasy")
     List<Genre> findByNameContainingIgnoreCase(String name);
 }

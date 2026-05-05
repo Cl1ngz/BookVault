@@ -8,9 +8,7 @@ import java.util.List;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Integer> {
-    // Wyszukiwanie recenzji po konkretnej ocenie
     List<Review> findByRating(Double rating);
 
-    // Wyszukiwanie recenzji dla konkretnej książki (po jej ID)
     List<Review> findByBook_Id(Integer bookId);
 }

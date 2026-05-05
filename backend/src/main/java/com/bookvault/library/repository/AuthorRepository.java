@@ -9,12 +9,9 @@ import java.util.List;
 @Repository
 public interface AuthorRepository extends JpaRepository<Author, Integer> {
 
-    // Wyszukiwanie po nazwisku (ignoruje wielkość liter i szuka fragmentu tekstu)
     List<Author> findByLastNameContainingIgnoreCase(String lastName);
 
-    // Wyszukiwanie po imieniu (podobnie jak wyżej)
     List<Author> findByFirstNameContainingIgnoreCase(String firstName);
 
-    // Opcjonalnie: Wyszukiwanie po narodowości (np. "Polish", "American")
     List<Author> findByNationalityContainingIgnoreCase(String nationality);
 }

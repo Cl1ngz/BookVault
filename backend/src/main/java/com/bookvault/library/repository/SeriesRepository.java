@@ -9,10 +9,7 @@ import java.util.List;
 @Repository
 public interface SeriesRepository extends JpaRepository<Series, Integer> {
 
-    // Wyszukiwanie serii po jej nazwie (np. "Wiedźmin", "Harry Potter")
     List<Series> findByNameContainingIgnoreCase(String name);
 
-    // Wyszukiwanie serii po nazwisku autora (author -> lastName)
-    // To pozwoli znaleźć wszystkie serie napisane przez konkretnego autora
     List<Series> findByAuthor_LastNameContainingIgnoreCase(String lastName);
 }
