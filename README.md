@@ -49,7 +49,7 @@ docker-compose up -d db
 cd backend
 ./mvnw spring-boot:run
 ```
-Swagger available at: http://localhost:8080/swagger-ui/
+Swagger available at: http://localhost:8080/swagger-ui/index.html
 
 ### 3. Run frontend
 ```bash
