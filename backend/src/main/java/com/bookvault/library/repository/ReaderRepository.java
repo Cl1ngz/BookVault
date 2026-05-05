@@ -10,10 +10,8 @@ import java.util.Optional;
 @Repository
 public interface ReaderRepository extends JpaRepository<Reader, Integer> {
 
-    // Search by username
     List<Reader> findByUsernameContainingIgnoreCase(String username);
 
-    // Search by nationality (useful for stats)
     List<Reader> findByNationalityContainingIgnoreCase(String nationality);
 
     Optional<Reader> findByEmail(String email);
