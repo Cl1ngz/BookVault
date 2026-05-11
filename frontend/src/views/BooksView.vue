@@ -1,10 +1,30 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '@/api'
 
 const allBooks  = ref<any[]>([])
 const allGenres = ref<any[]>([])
 const filtersOpen = ref(true)
+
+// ── Sorting ───────────────────────────────────────────────────────────────────
+const SORT_OPTIONS = [
+  { value: 'title',           label: 'Title' },
+  { value: 'publicationYear', label: 'Publication Year' },
+  { value: 'pageCount',       label: 'Pages' },
+]
+
+function loadPref<T>(key: string, fallback: T): T {
+  try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback }
+  catch { return fallback }
+}
+
+const sortBy  = ref<string>(loadPref('bv_sortBy', 'title'))
+const sortDir = ref<'asc'|'desc'>(loadPref('bv_sortDir', 'asc'))
+
+watch(sortBy,  v => localStorage.setItem('bv_sortBy',  JSON.stringify(v)))
+watch(sortDir, v => localStorage.setItem('bv_sortDir', JSON.stringify(v)))
+
+function toggleDir() { sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc' }
 
 onMounted(async () => {
   const [booksRes, genresRes] = await Promise.all([api.get('/books'), api.get('/genres')])
@@ -70,6 +90,10 @@ const selectedPageBuckets = ref<string[]>([])
 const yearFrom = ref<number|null>(null)
 const yearTo   = ref<number|null>(null)
 
+// ── Added date (createdAt) ────────────────────────────────────────────────────
+const addedFrom = ref<string>('')   // ISO date string  e.g. "2025-01-01"
+const addedTo   = ref<string>('')   // ISO date string
+
 // ── Series ────────────────────────────────────────────────────────────────────
 const standaloneOnly = ref(false)
 
@@ -78,55 +102,80 @@ const activeFilterCount = computed(() =>
   [selectedMoods.value.length > 0, selectedPaces.value.length > 0,
    selectedTypes.value.length > 0, includeGenres.value.length > 0,
    excludeGenres.value.length > 0, selectedPageBuckets.value.length > 0,
-   !!(yearFrom.value || yearTo.value), standaloneOnly.value
+   !!(yearFrom.value || yearTo.value), standaloneOnly.value,
+   !!addedFrom.value, !!addedTo.value
   ].filter(Boolean).length
 )
 
 // ── Filter logic ──────────────────────────────────────────────────────────────
-const filteredBooks = computed(() => allBooks.value.filter(book => {
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.trim().toLowerCase()
-    if (!book.title?.toLowerCase().includes(q) &&
-        !book.author?.firstName?.toLowerCase().includes(q) &&
-        !book.author?.lastName?.toLowerCase().includes(q) &&
-        !book.series?.name?.toLowerCase().includes(q)) return false
-  }
-  if (selectedMoods.value.length) {
-    const m = book.mood?.toLowerCase() ?? ''
-    const check = selectedMoods.value.map(s => m.includes(s))
-    if (moodMode.value === 'any' ? !check.some(Boolean) : !check.every(Boolean)) return false
-  }
-  if (selectedPaces.value.length && !selectedPaces.value.includes(getPace(book) ?? '')) return false
-  if (selectedTypes.value.length) {
-    const t = getType(book)
-    if (!t || !selectedTypes.value.includes(t)) return false
-  }
-  if (includeGenres.value.length) {
-    const bg: string[] = book.genres?.map((g:any) => g.name) ?? []
-    if (includeMode.value === 'any' ? !includeGenres.value.some(g => bg.includes(g))
-                                    : !includeGenres.value.every(g => bg.includes(g))) return false
-  }
-  if (excludeGenres.value.length) {
-    const bg: string[] = book.genres?.map((g:any) => g.name) ?? []
-    if (excludeGenres.value.some(g => bg.includes(g))) return false
-  }
-  if (selectedPageBuckets.value.length) {
-    const p = book.pageCount ?? 0
-    if (!selectedPageBuckets.value.some(b =>
-      b === '<300' ? p < 300 : b === '300-499' ? p >= 300 && p < 500 : p >= 500)) return false
-  }
-  if (yearFrom.value && (book.publicationYear ?? 0) < yearFrom.value) return false
-  if (yearTo.value   && (book.publicationYear ?? 9999) > yearTo.value) return false
-  if (standaloneOnly.value && book.series) return false
-  return true
-}))
+const filteredBooks = computed(() => {
+  const filtered = allBooks.value.filter(book => {
+    if (searchQuery.value.trim()) {
+      const q = searchQuery.value.trim().toLowerCase()
+      if (!book.title?.toLowerCase().includes(q) &&
+          !book.author?.firstName?.toLowerCase().includes(q) &&
+          !book.author?.lastName?.toLowerCase().includes(q) &&
+          !book.series?.name?.toLowerCase().includes(q)) return false
+    }
+    if (selectedMoods.value.length) {
+      const m = book.mood?.toLowerCase() ?? ''
+      const check = selectedMoods.value.map(s => m.includes(s))
+      if (moodMode.value === 'any' ? !check.some(Boolean) : !check.every(Boolean)) return false
+    }
+    if (selectedPaces.value.length && !selectedPaces.value.includes(getPace(book) ?? '')) return false
+    if (selectedTypes.value.length) {
+      const t = getType(book)
+      if (!t || !selectedTypes.value.includes(t)) return false
+    }
+    if (includeGenres.value.length) {
+      const bg: string[] = book.genres?.map((g:any) => g.name) ?? []
+      if (includeMode.value === 'any' ? !includeGenres.value.some(g => bg.includes(g))
+                                      : !includeGenres.value.every(g => bg.includes(g))) return false
+    }
+    if (excludeGenres.value.length) {
+      const bg: string[] = book.genres?.map((g:any) => g.name) ?? []
+      if (excludeGenres.value.some(g => bg.includes(g))) return false
+    }
+    if (selectedPageBuckets.value.length) {
+      const p = book.pageCount ?? 0
+      if (!selectedPageBuckets.value.some(b =>
+        b === '<300' ? p < 300 : b === '300-499' ? p >= 300 && p < 500 : p >= 500)) return false
+    }
+    if (yearFrom.value && (book.publicationYear ?? 0) < yearFrom.value) return false
+    if (yearTo.value   && (book.publicationYear ?? 9999) > yearTo.value) return false
+    if (standaloneOnly.value && book.series) return false
+    // date-added range
+    if (addedFrom.value && book.createdAt) {
+      if (new Date(book.createdAt) < new Date(addedFrom.value)) return false
+    }
+    if (addedTo.value && book.createdAt) {
+      if (new Date(book.createdAt) > new Date(addedTo.value + 'T23:59:59')) return false
+    }
+    return true
+  })
+
+  // ── Sort ──────────────────────────────────────────────────────────────────
+  return [...filtered].sort((a, b) => {
+    let va: any, vb: any
+    if (sortBy.value === 'title') {
+      va = (a.title ?? '').toLowerCase(); vb = (b.title ?? '').toLowerCase()
+    } else if (sortBy.value === 'publicationYear') {
+      va = a.publicationYear ?? 0; vb = b.publicationYear ?? 0
+    } else {
+      va = a.pageCount ?? 0; vb = b.pageCount ?? 0
+    }
+    if (va < vb) return sortDir.value === 'asc' ? -1 : 1
+    if (va > vb) return sortDir.value === 'asc' ? 1 : -1
+    return 0
+  })
+})
 
 function clearAll() {
   searchQuery.value = ''; selectedMoods.value = []; moodMode.value = 'any'
   selectedPaces.value = []; selectedTypes.value = []
   includeGenres.value = []; excludeGenres.value = []; includeMode.value = 'any'
   selectedPageBuckets.value = []; yearFrom.value = null; yearTo.value = null
-  standaloneOnly.value = false
+  standaloneOnly.value = false; addedFrom.value = ''; addedTo.value = ''
 }
 
 function toggle(arr: string[], val: string) {
@@ -251,7 +300,7 @@ function toggle(arr: string[], val: string) {
           </div>
         </div>
 
-        <div style="margin-bottom:1rem;">
+        <div>
           <strong>📅 Publication Year</strong>
           <div style="display:flex; gap:8px; margin-top:6px; align-items:center;">
             <input v-model.number="yearFrom" type="number" placeholder="From" min="1000" max="2100"
@@ -259,6 +308,24 @@ function toggle(arr: string[], val: string) {
             <span style="color:#9ca3af;">—</span>
             <input v-model.number="yearTo" type="number" placeholder="To" min="1000" max="2100"
                    style="width:80px; padding:4px 6px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;"/>
+          </div>
+        </div>
+
+        <div>
+          <strong>🗓️ Date Added to Catalog</strong>
+          <div style="display:flex; flex-direction:column; gap:6px; margin-top:6px;">
+            <label style="font-size:0.82rem; color:#6b7280;">From
+              <input v-model="addedFrom" type="date"
+                     style="margin-left:6px; padding:3px 6px; border:1px solid #d1d5db; border-radius:6px; font-size:0.85rem;"/>
+            </label>
+            <label style="font-size:0.82rem; color:#6b7280;">To
+              <input v-model="addedTo" type="date"
+                     style="margin-left:6px; padding:3px 6px; border:1px solid #d1d5db; border-radius:6px; font-size:0.85rem;"/>
+            </label>
+            <button @click="addedFrom = new Date().toISOString().slice(0,10); addedTo = ''"
+                    style="align-self:flex-start; font-size:0.78rem; padding:2px 8px; border:1px solid #d1d5db; border-radius:5px; background:#f9fafb; cursor:pointer;">
+              📅 From today onwards
+            </button>
           </div>
         </div>
 
@@ -273,6 +340,24 @@ function toggle(arr: string[], val: string) {
         </div>
       </div>
 
+    </div>
+
+    <!-- Sort bar -->
+    <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.75rem; flex-wrap:wrap;">
+      <span style="font-size:0.85rem; color:#6b7280; font-weight:500;">Sort by:</span>
+      <button v-for="opt in SORT_OPTIONS" :key="opt.value"
+              @click="sortBy = opt.value"
+              :style="{padding:'4px 14px', borderRadius:'6px', fontSize:'0.85rem', cursor:'pointer', border:'1px solid',
+                       background: sortBy === opt.value ? '#1e3a5f' : '#fff',
+                       color: sortBy === opt.value ? 'white' : '#374151',
+                       borderColor: sortBy === opt.value ? '#1e3a5f' : '#d1d5db', fontWeight: sortBy === opt.value ? '600' : '400'}">
+        {{ opt.label }}
+      </button>
+      <button @click="toggleDir"
+              :title="sortDir === 'asc' ? 'Currently ascending — click for descending' : 'Currently descending — click for ascending'"
+              style="padding:4px 12px; border-radius:6px; font-size:0.85rem; cursor:pointer; border:1px solid #d1d5db; background:#f9fafb; color:#374151; display:flex; align-items:center; gap:4px;">
+        {{ sortDir === 'asc' ? '↑ ASC' : '↓ DESC' }}
+      </button>
     </div>
 
     <!-- Results -->

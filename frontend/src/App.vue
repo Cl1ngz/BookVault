@@ -42,6 +42,8 @@ window.addEventListener('storage', () => {
 
 <template>
   <nav style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 1rem; background:#1e3a5f; color:white;">
+    <RouterLink to="/" style="color:white; text-decoration:none; font-weight:700; font-size:1.05rem;">📚 BookVault</RouterLink>
+    <span style="color:#aaa;">|</span>
     <RouterLink to="/books" style="color:white; text-decoration:none;">Books</RouterLink>
     <span style="color:#aaa;">|</span>
     <RouterLink to="/authors" style="color:white; text-decoration:none;">Authors</RouterLink>
