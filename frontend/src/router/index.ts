@@ -1,4 +1,5 @@
 import {createRouter, createWebHistory} from 'vue-router'
+import HomeView from '@/views/HomeView.vue'
 import BooksView from '@/views/BooksView.vue'
 import BookDetailView from '@/views/BookDetailView.vue'
 import AuthorsView from '@/views/AuthorsView.vue'
@@ -21,7 +22,7 @@ const requireAuth = () => {
 export default createRouter({
     history: createWebHistory(),
     routes: [
-        {path: '/', redirect: '/books'},
+        {path: '/', component: HomeView},
         {path: '/books', component: BooksView},
         {path: '/books/:id', component: BookDetailView},
         {path: '/authors', component: AuthorsView},
