@@ -15,11 +15,12 @@ SELECT (ARRAY['Andrzej', 'Olga', 'Jacek', 'Remigiusz', 'Katarzyna', 'Stanisław'
             'Polska'
 FROM generate_series(1, 10);
 
--- B. Naturalne Wydawnictwa
-INSERT INTO wydawnictwa (nazwa, id_adresu, rok_zalozenia)
-SELECT (ARRAY['Znak', 'Wydawnictwo Literackie', 'Rebis', 'Czarna Owca', 'Muza'])[floor(random() * 5 + 1)],
-            (SELECT id_adresu FROM adresy ORDER BY random() LIMIT 1),
-            floor(random() * 40 + 1980)
+-- B. Naturalne Wydawnictwa (bez powiązania z adresami)
+INSERT INTO wydawnictwa (nazwa, rok_zalozenia, wlasciciel)
+SELECT
+    (ARRAY['Znak', 'Wydawnictwo Literackie', 'Rebis', 'Czarna Owca', 'Muza'])[floor(random() * 5 + 1)],
+    floor(random() * 40 + 1980),
+    (ARRAY['Jan Kowalski', 'Anna Nowak', 'Marek Rebis', 'Helena Owca', 'Piotr Muzowski'])[floor(random() * 5 + 1)]
 FROM generate_series(1, 5);
 
 -- C. Naturalne Tytuły Książek
