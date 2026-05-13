@@ -95,8 +95,6 @@ function toggleExclude(name: string) {
   if (ei === -1) excludeGenres.value.push(name); else excludeGenres.value.splice(ei, 1)
 }
 
-// ── Pages ─────────────────────────────────────────────────────────────────────
-const selectedPageBuckets = ref<string[]>([])
 
 // ── Year ──────────────────────────────────────────────────────────────────────
 const yearFrom = ref<number | null>(null)
@@ -113,7 +111,7 @@ const standaloneOnly = ref(false)
 const activeFilterCount = computed(() =>
     [selectedMoods.value.length > 0, selectedPaces.value.length > 0,
       selectedTypes.value.length > 0, includeGenres.value.length > 0,
-      excludeGenres.value.length > 0, selectedPageBuckets.value.length > 0,
+      excludeGenres.value.length > 0,
       !!(yearFrom.value || yearTo.value), standaloneOnly.value,
       !!addedFrom.value, !!addedTo.value
     ].filter(Boolean).length
@@ -147,11 +145,6 @@ const filteredBooks = computed(() => {
     if (excludeGenres.value.length) {
       const bg: string[] = book.genres?.map((g: any) => g.name) ?? []
       if (excludeGenres.value.some(g => bg.includes(g))) return false
-    }
-    if (selectedPageBuckets.value.length) {
-      const p = book.pageCount ?? 0
-      if (!selectedPageBuckets.value.some(b =>
-          b === '<300' ? p < 300 : b === '300-499' ? p >= 300 && p < 500 : p >= 500)) return false
     }
     if (yearFrom.value && (book.publicationYear ?? 0) < yearFrom.value) return false
     if (yearTo.value && (book.publicationYear ?? 9999) > yearTo.value) return false
@@ -193,10 +186,8 @@ function clearAll() {
   selectedTypes.value = []
   includeGenres.value = [];
   excludeGenres.value = [];
-  includeMode.value = 'any'
-  selectedPageBuckets.value = [];
-  yearFrom.value = null;
-  yearTo.value = null
+  includeGenres.value = []; excludeGenres.value = []; includeMode.value = 'any'
+  yearFrom.value = null; yearTo.value = null
   standaloneOnly.value = false;
   addedFrom.value = '';
   addedTo.value = ''
@@ -293,20 +284,8 @@ function toggle(arr: string[], val: string) {
         </div>
       </div>
 
-      <!-- Pages + Year + Standalone -->
+      <!-- Year + Date + Standalone -->
       <div>
-        <div class="subsection">
-          <strong>📄 Pages</strong>
-          <div class="page-buttons">
-            <button
-                v-for="[key, label] in ([['<300','< 300'],['300-499','300–499'],['500+','500+']] as [string,string][])"
-                :key="key"
-                @click="toggle(selectedPageBuckets, key)"
-                class="chip chip--page" :class="{ 'chip--active-amber': selectedPageBuckets.includes(key) }">
-              {{ label }}
-            </button>
-          </div>
-        </div>
 
         <div class="subsection">
           <strong>📅 Publication Year</strong>
@@ -504,23 +483,7 @@ function toggle(arr: string[], val: string) {
   border-color: #059669;
 }
 
-.chip--active-amber {
-  background: #d97706;
-  color: white;
-  border-color: #d97706;
-}
-
-.chip--md {
-  padding: 4px 14px;
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.chip--page {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
-}
+.chip--md   { padding: 4px 14px; border-radius: 6px; font-size: 0.9rem; }
 
 .pace-section {
   margin-bottom: 1rem;
@@ -593,11 +556,6 @@ function toggle(arr: string[], val: string) {
   color: #dc2626;
 }
 
-.page-buttons {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
 
 .year-range {
   display: flex;
