@@ -7,6 +7,13 @@ const allBooks = ref<any[]>([])
 const allGenres = ref<any[]>([])
 const filtersOpen = ref(true)
 
+// ── Current user & shelf ──────────────────────────────────────────────────────
+const user = computed(() => {
+  try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
+})
+const isLoggedIn = computed(() => !!user.value?.token)
+const shelfBookIds = ref<Set<number>>(new Set())
+
 // ── Sorting ───────────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
   {value: 'title', label: 'Title'},
@@ -34,9 +41,14 @@ function toggleDir() {
 }
 
 onMounted(async () => {
-  const [booksRes, genresRes] = await Promise.all([api.get('/books'), api.get('/genres')])
+  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres')]
+  if (isLoggedIn.value) requests.push(api.get('/reading-log'))
+  const [booksRes, genresRes, shelfRes] = await Promise.all(requests)
   allBooks.value = booksRes.data
   allGenres.value = genresRes.data
+  if (shelfRes) {
+    shelfBookIds.value = new Set(shelfRes.data.map((e: any) => e.book?.id))
+  }
 })
 
 // ── Search ────────────────────────────────────────────────────────────────────
@@ -107,13 +119,16 @@ const addedTo = ref<string>('')   // ISO date string
 // ── Series ────────────────────────────────────────────────────────────────────
 const standaloneOnly = ref(false)
 
+// ── Unread only (logged-in users) ─────────────────────────────────────────────
+const unreadOnly = ref(true)
+
 // ── Active filter count ───────────────────────────────────────────────────────
 const activeFilterCount = computed(() =>
     [selectedMoods.value.length > 0, selectedPaces.value.length > 0,
       selectedTypes.value.length > 0, includeGenres.value.length > 0,
       excludeGenres.value.length > 0,
       !!(yearFrom.value || yearTo.value), standaloneOnly.value,
-      !!addedFrom.value, !!addedTo.value
+      !!addedFrom.value, !!addedTo.value, unreadOnly.value
     ].filter(Boolean).length
 )
 
@@ -149,6 +164,8 @@ const filteredBooks = computed(() => {
     if (yearFrom.value && (book.publicationYear ?? 0) < yearFrom.value) return false
     if (yearTo.value && (book.publicationYear ?? 9999) > yearTo.value) return false
     if (standaloneOnly.value && book.series) return false
+    // unread only
+    if (unreadOnly.value && shelfBookIds.value.has(book.id)) return false
     // date-added range
     if (addedFrom.value && book.createdAt) {
       if (new Date(book.createdAt) < new Date(addedFrom.value)) return false
@@ -189,6 +206,7 @@ function clearAll() {
   includeGenres.value = []; excludeGenres.value = []; includeMode.value = 'any'
   yearFrom.value = null; yearTo.value = null
   standaloneOnly.value = false;
+  unreadOnly.value = false
   addedFrom.value = '';
   addedTo.value = ''
 }
@@ -314,6 +332,10 @@ function toggle(arr: string[], val: string) {
             <label class="standalone-label">
               <input type="checkbox" v-model="standaloneOnly"/>
               Not part of a series
+            </label>
+            <label v-if="isLoggedIn" class="standalone-label">
+              <input type="checkbox" v-model="unreadOnly"/>
+              📖 Not on my shelf (unread)
             </label>
           </div>
         </div>
@@ -557,8 +579,14 @@ function toggle(arr: string[], val: string) {
   font-size: 0.9rem;
   background: #3c3836;
   color: #ebdbb2;
+  -moz-appearance: textfield;
 }
 .year-input:focus { outline: none; border-color: #83a598; }
+.year-input::-webkit-outer-spin-button,
+.year-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
 
 .year-sep { color: #7c6f64; }
 
@@ -591,13 +619,86 @@ function toggle(arr: string[], val: string) {
 .standalone-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   font-size: 0.9rem;
   color: #d5c4a1;
+  user-select: none;
 }
 
-.other-options { margin-top: 6px; }
+/* ── Custom Gruvbox checkbox ─────────────────────────────────── */
+.standalone-label input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border: 2px solid #665c54;
+  border-radius: 4px;
+  background: #32302f;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.standalone-label input[type="checkbox"]:hover {
+  border-color: #83a598;
+}
+
+.standalone-label input[type="checkbox"]:checked {
+  background: #458588;
+  border-color: #458588;
+}
+
+.standalone-label input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #1d2021;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* radio buttons in filter mode labels */
+.filter-mode-label input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #665c54;
+  border-radius: 50%;
+  background: #32302f;
+  cursor: pointer;
+  position: relative;
+  vertical-align: middle;
+  transition: border-color 0.15s;
+}
+
+.filter-mode-label input[type="radio"]:hover {
+  border-color: #83a598;
+}
+
+.filter-mode-label input[type="radio"]:checked {
+  border-color: #458588;
+  background: #458588;
+}
+
+.filter-mode-label input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1d2021;
+}
+
+.other-options { margin-top: 6px; display: flex; flex-direction: column; gap: 6px; }
 
 .sort-bar {
   display: flex;
