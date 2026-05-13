@@ -159,9 +159,7 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
-.my-shelf h1 {
-  margin-bottom: 1rem;
-}
+.my-shelf h1 { margin-bottom: 1rem; color: #fabd2f; }
 
 .shelf-tabs {
   display: flex;
@@ -172,50 +170,37 @@ onMounted(() => {
 
 .tab-btn {
   padding: 8px 16px;
-  border: none;
+  border: 1px solid #504945;
   border-radius: 6px;
   cursor: pointer;
   font-weight: normal;
-  background: #e5e7eb;
-  color: #374151;
+  background: #3c3836;
+  color: #d5c4a1;
+  transition: background 0.12s;
 }
+.tab-btn:hover { background: #504945; }
 
 .tab-btn--active {
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
+  border-color: #458588;
   font-weight: bold;
 }
 
-.tab-count {
-  margin-left: 4px;
-  opacity: 0.8;
-}
+.tab-count { margin-left: 4px; opacity: 0.8; }
 
-.shelf-loading {
-  color: gray;
-}
+.shelf-loading { color: #a89984; }
+.shelf-empty { color: #a89984; font-style: italic; }
+.shelf-empty a { color: #83a598; }
 
-.shelf-empty {
-  color: gray;
-  font-style: italic;
-}
-
-.shelf-empty a {
-  color: #2563eb;
-}
-
-.shelf-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+.shelf-list { display: flex; flex-direction: column; gap: 1rem; }
 
 .shelf-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 10px;
   padding: 1rem;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #3c3836;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .shelf-item-body {
@@ -225,75 +210,55 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.shelf-item-info {
-  flex: 1;
-}
+.shelf-item-info { flex: 1; }
 
 .book-title-link {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e3a5f;
+  color: #d5c4a1;
   text-decoration: none;
 }
+.book-title-link:hover { color: #fabd2f; }
 
-.book-meta {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin-top: 2px;
-}
+.book-meta { color: #a89984; font-size: 0.9rem; margin-top: 2px; }
+.book-meta-pages { margin-left: 8px; }
 
-.book-meta-pages {
-  margin-left: 8px;
-}
-
-.progress-section {
-  margin-top: 10px;
-}
-
-.progress-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.progress-section { margin-top: 10px; }
+.progress-row { display: flex; align-items: center; gap: 8px; }
 
 .progress-input {
   width: 70px;
   padding: 4px 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
   font-size: 0.9rem;
+  background: #32302f;
+  color: #ebdbb2;
 }
 
-.progress-text {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
+.progress-text { font-size: 0.85rem; color: #a89984; }
 
 .progress-pct {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #2563eb;
+  color: #83a598;
 }
 
 .progress-bar-bg {
   margin-top: 6px;
   height: 6px;
-  background: #e5e7eb;
+  background: #504945;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: #2563eb;
+  background: #458588;
   transition: width 0.3s;
 }
 
-.shelf-dates {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-top: 6px;
-}
+.shelf-dates { font-size: 0.8rem; color: #7c6f64; margin-top: 6px; }
 
 .shelf-actions {
   display: flex;
@@ -304,17 +269,19 @@ onMounted(() => {
 
 .status-select {
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
+  background: #32302f;
+  color: #ebdbb2;
 }
 
 .activity-link {
   padding: 6px 10px;
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: rgba(104, 157, 106, 0.15);
+  color: #8ec07c;
+  border: 1px solid #689d6a;
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.85rem;
@@ -323,9 +290,9 @@ onMounted(() => {
 
 .btn-remove {
   padding: 6px 10px;
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(204, 36, 29, 0.15);
+  color: #fb4934;
+  border: 1px solid #cc241d;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;

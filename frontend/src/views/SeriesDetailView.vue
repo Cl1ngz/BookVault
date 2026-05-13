@@ -66,37 +66,21 @@ onMounted(async () => {
   padding: 1rem;
 }
 
-.series-content {
-  margin-top: 1rem;
-}
+.series-content { margin-top: 1rem; }
+.series-error { color: #fb4934; margin-top: 1rem; }
+.series-books-heading { margin-top: 1.5rem; color: #fabd2f; }
+.no-books { color: #a89984; }
 
-.series-error {
-  color: red;
-  margin-top: 1rem;
-}
-
-.series-books-heading {
-  margin-top: 1.5rem;
-}
-
-.no-books {
-  color: gray;
-}
-
-.series-books-list {
-  list-style: none;
-  padding: 0;
-}
+.series-books-list { list-style: none; padding: 0; }
 
 .series-book-item {
   padding: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 6px;
   margin-bottom: 8px;
+  background: #32302f;
 }
 
-.series-book-genres {
-  color: #6b7280;
-}
+.series-book-genres { color: #a89984; }
 </style>
 

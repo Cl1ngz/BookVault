@@ -224,48 +224,22 @@ onMounted(() => {
   margin-bottom: 1.5rem;
 }
 
-.journal-header a {
-  color: #2563eb;
-  text-decoration: none;
-  font-size: 0.9rem;
-}
+.journal-header a { color: #83a598; text-decoration: none; font-size: 0.9rem; }
+.journal-header h1 { margin: 0; font-size: 1.5rem; color: #fabd2f; }
 
-.journal-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-}
+.journal-loading { color: #a89984; }
+.journal-error { color: #fb4934; }
+.journal-empty { color: #a89984; font-style: italic; }
 
-.journal-loading {
-  color: gray;
-}
+.timeline-entry { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
 
-.journal-error {
-  color: red;
-}
-
-.journal-empty {
-  color: gray;
-  font-style: italic;
-}
-
-.timeline-entry {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.timeline-dot-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex-shrink: 0;
-}
+.timeline-dot-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
 
 .timeline-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #2563eb;
+  background: #458588;
   margin-top: 4px;
   flex-shrink: 0;
 }
@@ -273,155 +247,95 @@ onMounted(() => {
 .timeline-line {
   width: 2px;
   flex: 1;
-  background: #e5e7eb;
+  background: #504945;
   margin-top: 4px;
 }
 
 .entry-card {
   flex: 1;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 10px;
   padding: 1rem;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #3c3836;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .entry-book-link {
   display: block;
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #a89984;
   text-decoration: none;
   margin-bottom: 4px;
 }
 
-.entry-book-title {
-  font-weight: 600;
-  color: #1e3a5f;
-}
+.entry-book-title { font-weight: 600; color: #d5c4a1; }
 
-.entry-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
+.entry-top { display: flex; justify-content: space-between; align-items: flex-start; }
 
-.entry-date {
-  font-size: 0.85rem;
-  color: #9ca3af;
-  margin-bottom: 6px;
-}
+.entry-date { font-size: 0.85rem; color: #7c6f64; margin-bottom: 6px; }
 
-.status-started {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #2563eb;
-}
+.status-started { font-size: 1rem; font-weight: 600; color: #83a598; }
+.status-finished { font-size: 1rem; font-weight: 600; color: #b8bb26; }
+.status-dnf { font-size: 1rem; font-weight: 600; color: #fb4934; }
+.status-want-read { font-size: 1rem; font-weight: 600; color: #a89984; }
 
-.status-finished {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #16a34a;
-}
+.entry-pages-note { font-size: 0.9rem; color: #a89984; margin-top: 4px; }
 
-.status-dnf {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #dc2626;
-}
-
-.status-want-read {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #6b7280;
-}
-
-.entry-pages-note {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin-top: 4px;
-}
-
-.progress-pct {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: #1e3a5f;
-}
-
-.progress-pages {
-  font-size: 0.9rem;
-  color: #6b7280;
-  margin-top: 2px;
-}
+.progress-pct { font-size: 1.4rem; font-weight: 700; color: #d5c4a1; }
+.progress-pages { font-size: 0.9rem; color: #a89984; margin-top: 2px; }
 
 .mini-progress-bg {
   margin-top: 8px;
   height: 5px;
-  background: #e5e7eb;
+  background: #504945;
   border-radius: 3px;
   overflow: hidden;
   width: 200px;
   max-width: 100%;
 }
 
-.mini-progress-fill {
-  height: 100%;
-  background: #2563eb;
-}
+.mini-progress-fill { height: 100%; background: #458588; }
 
-.entry-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-  margin-left: 1rem;
-}
+.entry-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 1rem; }
 
 .btn-edit {
   padding: 4px 10px;
   font-size: 0.8rem;
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
+  background: #504945;
+  border: 1px solid #665c54;
   border-radius: 4px;
   cursor: pointer;
+  color: #d5c4a1;
 }
 
 .btn-delete {
   padding: 4px 10px;
   font-size: 0.8rem;
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(204, 36, 29, 0.15);
+  color: #fb4934;
+  border: 1px solid #cc241d;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.edit-row {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: flex-end;
-}
+.edit-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
 
-.edit-label {
-  font-size: 0.8rem;
-  color: #6b7280;
-  display: block;
-  margin-bottom: 3px;
-}
+.edit-label { font-size: 0.8rem; color: #a89984; display: block; margin-bottom: 3px; }
 
 .edit-input {
   padding: 5px 8px;
-  border: 1px solid #2563eb;
+  border: 1px solid #83a598;
   border-radius: 5px;
+  background: #32302f;
+  color: #ebdbb2;
 }
 
-.edit-input--pages {
-  width: 90px;
-}
+.edit-input--pages { width: 90px; }
 
 .btn-save {
   padding: 6px 16px;
-  background: #16a34a;
-  color: white;
+  background: #98971a;
+  color: #ebdbb2;
   border: none;
   border-radius: 5px;
   cursor: pointer;
@@ -429,7 +343,8 @@ onMounted(() => {
 
 .btn-cancel {
   padding: 6px 16px;
-  background: #e5e7eb;
+  background: #504945;
+  color: #d5c4a1;
   border: none;
   border-radius: 5px;
   cursor: pointer;

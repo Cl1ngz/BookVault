@@ -12,7 +12,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="authors-view">
     <h1>Authors</h1>
     <ul>
       <li v-for="a in authors" :key="a.id" class="list-item-spaced">
@@ -26,8 +26,17 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.authors-view {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.authors-view h1 { color: #fabd2f; }
+
 .list-item-spaced {
   margin-bottom: 6px;
+  color: #d5c4a1;
 }
 </style>
 

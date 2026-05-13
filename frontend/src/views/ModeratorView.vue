@@ -413,7 +413,7 @@ async function deleteReview(reviewId: number) {
           <td class="table-td">{{ r.reporterType }} #{{ r.reporterId }}</td>
           <td class="table-td">{{ r.reason }}</td>
           <td class="table-td">
-            <span :style="{color: r.status==='pending'?'orange':r.status==='resolved'?'green':'gray'}">{{
+            <span :style="{color: r.status==='pending'?'#fabd2f':r.status==='resolved'?'#b8bb26':'#7c6f64'}">{{
                 r.status
               }}</span>
           </td>
@@ -470,11 +470,14 @@ async function deleteReview(reviewId: number) {
   padding: 1rem;
 }
 
+.mod-panel h1 { color: #fe8019; }
+
 .tab-bar {
   display: flex;
   gap: 4px;
   margin-bottom: 1.5rem;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid #504945;
+  flex-wrap: wrap;
 }
 
 .tab-btn {
@@ -482,14 +485,16 @@ async function deleteReview(reviewId: number) {
   border: none;
   cursor: pointer;
   border-radius: 6px 6px 0 0;
-  background: #f3f4f6;
-  color: #374151;
+  background: #3c3836;
+  color: #d5c4a1;
   font-weight: 400;
+  transition: background 0.12s;
 }
+.tab-btn:hover { background: #504945; }
 
 .tab-btn--active {
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   font-weight: 600;
 }
 
@@ -499,100 +504,89 @@ async function deleteReview(reviewId: number) {
   gap: 1rem;
 }
 
-.form-grid--narrow {
-  max-width: 640px;
-}
+.form-grid--narrow { max-width: 640px; }
 
 .form-input,
 .form-select {
   width: 100%;
   padding: 6px;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
+.form-input:focus, .form-select:focus { outline: none; border-color: #83a598; }
 
 .form-select--full {
   width: 100%;
   padding: 6px;
   max-width: 400px;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
 
-.genres-row {
-  margin-top: 1rem;
-}
+.genres-row { margin-top: 1rem; color: #d5c4a1; }
 
-.genre-check {
-  margin-right: 12px;
-}
+.genre-check { margin-right: 12px; color: #d5c4a1; }
 
-.mod-msg--ok {
-  color: green;
-}
-
-.mod-msg--error {
-  color: red;
-}
+.mod-msg--ok { color: #b8bb26; }
+.mod-msg--error { color: #fb4934; }
 
 .btn-submit {
   padding: 8px 20px;
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: filter 0.12s;
 }
+.btn-submit:hover { filter: brightness(1.15); }
 
 .btn-add-series {
   margin-top: 0.75rem;
   padding: 8px 20px;
-  background: #16a34a;
-  color: white;
+  background: #98971a;
+  color: #ebdbb2;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: filter 0.12s;
 }
+.btn-add-series:hover { filter: brightness(1.15); }
 
-.filter-row {
-  margin-bottom: 1rem;
-}
+.filter-row { margin-bottom: 1rem; }
 
 .filter-select {
   padding: 4px 8px;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
 
-.no-data {
-  color: gray;
-}
+.no-data { color: #a89984; }
 
-.mod-table {
-  width: 100%;
-  border-collapse: collapse;
-}
+.mod-table { width: 100%; border-collapse: collapse; }
 
 .table-head-row {
-  background: #f3f4f6;
+  background: #3c3836;
   text-align: left;
 }
 
-.table-th {
-  padding: 8px;
-  border: 1px solid #ddd;
-}
+.table-th { padding: 8px; border: 1px solid #504945; color: #a89984; }
 
-.table-td {
-  padding: 8px;
-  border: 1px solid #ddd;
-}
+.table-td { padding: 8px; border: 1px solid #504945; color: #d5c4a1; }
 
-.table-td--nowrap {
-  padding: 8px;
-  border: 1px solid #ddd;
-  white-space: nowrap;
-}
+.table-td--nowrap { padding: 8px; border: 1px solid #504945; white-space: nowrap; }
 
 .btn-resolve {
   margin-right: 4px;
   padding: 4px 10px;
-  background: #16a34a;
-  color: white;
+  background: #98971a;
+  color: #ebdbb2;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -601,8 +595,8 @@ async function deleteReview(reviewId: number) {
 .btn-dismiss {
   margin-right: 4px;
   padding: 4px 10px;
-  background: #6b7280;
-  color: white;
+  background: #665c54;
+  color: #ebdbb2;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -610,29 +604,29 @@ async function deleteReview(reviewId: number) {
 
 .btn-delete-review {
   padding: 4px 10px;
-  background: #dc2626;
-  color: white;
+  background: #cc241d;
+  color: #ebdbb2;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.readers-search {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 1rem;
-}
+.readers-search { display: flex; gap: 8px; margin-bottom: 1rem; }
 
 .readers-search-input {
   padding: 6px;
   flex: 1;
   max-width: 300px;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
 
 .btn-search {
   padding: 6px 14px;
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -640,26 +634,25 @@ async function deleteReview(reviewId: number) {
 
 .btn-clear {
   padding: 6px 14px;
-  background: #6b7280;
-  color: white;
+  background: #665c54;
+  color: #ebdbb2;
   border: none;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.role--mod {
-  color: #2563eb;
-}
-
-.role--reader {
-  color: #374151;
-}
+.role--mod { color: #fe8019; font-weight: 600; }
+.role--reader { color: #d5c4a1; }
 
 .bio-textarea {
   width: 100%;
   padding: 6px;
   font-family: inherit;
   resize: vertical;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
 </style>
 
