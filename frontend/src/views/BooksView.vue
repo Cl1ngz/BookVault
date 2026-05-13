@@ -215,8 +215,8 @@ function toggle(arr: string[], val: string) {
     <!-- Filter panel -->
     <div v-show="filtersOpen" class="filter-panel">
 
-      <!-- Mood -->
-      <div>
+      <!-- Mood — full width -->
+      <div class="filter-section filter-section--full">
         <div class="filter-header">
           <strong>🎭 Mood</strong>
           <span class="filter-mode-label">
@@ -233,7 +233,7 @@ function toggle(arr: string[], val: string) {
       </div>
 
       <!-- Pace + Type -->
-      <div>
+      <div class="filter-section">
         <div class="pace-section">
           <strong>⚡ Pace</strong>
           <div class="pace-buttons">
@@ -256,7 +256,7 @@ function toggle(arr: string[], val: string) {
       </div>
 
       <!-- Genres -->
-      <div>
+      <div class="filter-section">
         <div class="filter-header">
           <strong>🏷️ Genres</strong>
           <span class="filter-mode-label">
@@ -268,11 +268,9 @@ function toggle(arr: string[], val: string) {
         <div class="genre-list">
           <div v-for="g in allGenres" :key="g.id" class="genre-row">
             <button @click="toggleInclude(g.name)"
-                    class="btn-genre" :class="{ 'btn-genre--include': includeGenres.includes(g.name) }">+
-            </button>
+                    class="btn-genre" :class="{ 'btn-genre--include': includeGenres.includes(g.name) }">+</button>
             <button @click="toggleExclude(g.name)"
-                    class="btn-genre" :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }">−
-            </button>
+                    class="btn-genre" :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }">−</button>
             <span class="genre-name"
                   :class="{
                     'genre-name--include': includeGenres.includes(g.name),
@@ -285,8 +283,7 @@ function toggle(arr: string[], val: string) {
       </div>
 
       <!-- Year + Date + Standalone -->
-      <div>
-
+      <div class="filter-section">
         <div class="subsection">
           <strong>📅 Publication Year</strong>
           <div class="year-range">
@@ -297,7 +294,7 @@ function toggle(arr: string[], val: string) {
         </div>
 
         <div class="subsection">
-          <strong>🗓️ Date Added to Catalog</strong>
+          <strong>🗓️ Date Added</strong>
           <div class="date-filter">
             <label class="date-label">From
               <input v-model="addedFrom" type="date" class="date-input"/>
@@ -313,7 +310,7 @@ function toggle(arr: string[], val: string) {
 
         <div>
           <strong>📌 Other</strong>
-          <div style="margin-top:6px;">
+          <div class="other-options">
             <label class="standalone-label">
               <input type="checkbox" v-model="standaloneOnly"/>
               Not part of a series
@@ -429,8 +426,40 @@ function toggle(arr: string[], val: string) {
   margin-bottom: 1.5rem;
   background: #fafafa;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: auto auto;
+  gap: 1rem 1.5rem;
+}
+
+/* Mood spans all 3 columns */
+.filter-section--full {
+  grid-column: 1 / -1;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* The three column sections get a left border divider (except first) */
+.filter-section {
+  padding-left: 1rem;
+  border-left: 1px solid #e5e7eb;
+}
+
+.filter-section:first-of-type {
+  padding-left: 0;
+  border-left: none;
+}
+
+/* Responsive: collapse to 1 column on small screens */
+@media (max-width: 700px) {
+  .filter-panel {
+    grid-template-columns: 1fr;
+  }
+  .filter-section {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 1rem;
+  }
 }
 
 .filter-header {
@@ -616,6 +645,10 @@ function toggle(arr: string[], val: string) {
   gap: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+}
+
+.other-options {
+  margin-top: 6px;
 }
 
 .sort-bar {
