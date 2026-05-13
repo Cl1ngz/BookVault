@@ -38,17 +38,36 @@ FROM generate_series(1, 20) s(i);
 
 RAISE
 NOTICE 'Baza została nakarmiona naturalnymi danymi!';
-        -- SYNCHRONIZACJA SEKWENCJI (Tylko jeśli dane zostały wstawione)
-        PERFORM
-setval(pg_get_serial_sequence('ksiazki', 'id_ksiazki'), MAX(id_ksiazki)) FROM ksiazki;
-        PERFORM
-setval(pg_get_serial_sequence('autorzy', 'id_autora'), MAX(id_autora)) FROM autorzy;
-        PERFORM
-setval(pg_get_serial_sequence('wydawnictwa', 'id_wydawnictwa'), MAX(id_wydawnictwa)) FROM wydawnictwa;
-        PERFORM
-setval(pg_get_serial_sequence('czytelnicy', 'id_czytelnika'), MAX(id_czytelnika)) FROM czytelnicy;
-        PERFORM
-setval(pg_get_serial_sequence('serie', 'id_serii'), MAX(id_serii)) FROM serie;
+-- SYNCHRONIZACJA SEKWENCJI
+PERFORM setval(
+    pg_get_serial_sequence('ksiazki', 'id_ksiazki'),
+    COALESCE((SELECT MAX(id_ksiazki) FROM ksiazki), 1),
+    true
+);
+
+PERFORM setval(
+    pg_get_serial_sequence('autorzy', 'id_autora'),
+    COALESCE((SELECT MAX(id_autora) FROM autorzy), 1),
+    true
+);
+
+PERFORM setval(
+    pg_get_serial_sequence('wydawnictwa', 'id_wydawnictwa'),
+    COALESCE((SELECT MAX(id_wydawnictwa) FROM wydawnictwa), 1),
+    true
+);
+
+PERFORM setval(
+    pg_get_serial_sequence('czytelnicy', 'id_czytelnika'),
+    COALESCE((SELECT MAX(id_czytelnika) FROM czytelnicy), 1),
+    true
+);
+
+PERFORM setval(
+    pg_get_serial_sequence('serie', 'id_serii'),
+    COALESCE((SELECT MAX(id_serii) FROM serie), 1),
+    true
+);
 END IF;
 
         -- D. Gatunki literackie (StoryGraph/Goodreads style)

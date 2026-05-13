@@ -31,28 +31,16 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println(">>> ROZPOCZYNAM ANALIZĘ STANU BAZY DANYCH...");
 
-        // 1. GATUNKI (Niezależne)
-        List<Genre> genres = seedGenres();
+        seedGenres();
 
-        // 2. AUTORZY (Niezależni)
         List<Author> authors = seedAuthors(20);
-
-        // 3. WYDAWNICTWA (Poprawione: usunęliśmy 'addresses')
         List<Publisher> publishers = seedPublishers(8);
-
-        // 4. SERIE (Potrzebują autorów)
         List<Series> seriesList = seedSeries(10, authors);
+        seedBooks(50, authors, publishers, seriesList, genreRepository.findAll());
 
-        // 5. KSIĄŻKI (Potrzebują autorów, wydawnictw, serii i gatunków)
-        List<Book> books = seedBooks(50, authors, publishers, seriesList, genres);
+        seedReaders(15);
+        seedReviews(100);
 
-        // 6. CZYTELNICY (Niezależni)
-        List<Reader> readers = seedReaders(15);
-
-        // 7. RECENZJE (Potrzebują książek i czytelników)
-        seedReviews(100, books, readers);
-
-        // 8. MODERATOR (Twoja nowa metoda)
         seedModerator();
 
         System.out.println(">>> SYNCHRONIZACJA DANYCH ZAKOŃCZONA!");
@@ -102,9 +90,8 @@ public class DataInitializer implements CommandLineRunner {
             a.setBiography(faker.lorem().paragraph(3));
             // Poprawka dla DataFaker 2.4.0
             a.setBirthDate(faker.timeAndDate().birthday(25, 90));
-            a.setEmail(faker.internet().emailAddress());
-            a.setPasswordHash(faker.internet().password(12, 20));
-
+            a.setEmail("author" + i + "@bookvault.test");
+            a.setPasswordHash(passwordEncoder.encode("author123"));
             list.add(authorRepository.save(a));
         }
         return list;
@@ -187,28 +174,43 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Reader> seedReaders(int count) {
         if (readerRepository.count() > 0) return readerRepository.findAll();
+
         System.out.println("-> Generowanie czytelników...");
         List<Reader> list = new ArrayList<>();
+
         for (int i = 0; i < count; i++) {
             Reader r = new Reader();
+
             r.setUsername(faker.internet().username() + faker.number().numberBetween(10, 999));
             r.setNationality("Polska");
             r.setBirthDate(faker.timeAndDate().birthday(18, 75));
-            r.setEmail(faker.internet().emailAddress());
-            r.setPasswordHash(faker.internet().password(12, 20));
+            r.setEmail("reader" + i + "@bookvault.test");
+
+            // Wspólne hasło testowe dla użytkowników wygenerowanych Fakerem
+            r.setPasswordHash(passwordEncoder.encode("user123"));
+
+            r.setRole("USER");
 
             list.add(readerRepository.save(r));
         }
+
+        System.out.println("   Czytelnicy testowi mają hasło: user123");
         return list;
     }
 
-    private void seedReviews(int count, List<Book> books, List<Reader> readers) {
+    private void seedReviews(int count) {
         if (reviewRepository.count() > 0) return;
+
+        List<Book> books = bookRepository.findAll();
+        List<Reader> readers = readerRepository.findAll();
+
         if (books.isEmpty() || readers.isEmpty()) return;
+
         System.out.println("-> Generowanie recenzji...");
+
         for (int i = 0; i < count; i++) {
             Review r = new Review();
-            r.setRating(Math.round(faker.number().randomDouble(2, 25, 500)) / 100.0); // 0.25 – 5.00
+            r.setRating(Math.round(faker.number().randomDouble(2, 25, 500)) / 100.0);
             r.setContent(faker.lorem().paragraph(2));
             r.setBook(books.get(faker.random().nextInt(books.size())));
             r.setReader(readers.get(faker.random().nextInt(readers.size())));
@@ -218,14 +220,20 @@ public class DataInitializer implements CommandLineRunner {
 
     private void seedModerator() {
         String moderatorEmail = "moderator@bookvault.com";
+
         if (readerRepository.findByEmail(moderatorEmail).isPresent()) return;
+
         System.out.println("-> Tworzenie konta moderatora...");
+
         Reader mod = new Reader();
         mod.setUsername("moderator");
         mod.setEmail(moderatorEmail);
         mod.setPasswordHash(passwordEncoder.encode("moderator123"));
         mod.setRole("MODERATOR");
+        mod.setNationality("Polska");
+
         readerRepository.save(mod);
+
         System.out.println("   Moderator: moderator@bookvault.com / moderator123");
     }
 }
