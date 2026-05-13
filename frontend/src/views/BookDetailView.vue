@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import api from '@/api'
 
@@ -15,6 +15,10 @@ const user = computed(() => JSON.parse(localStorage.getItem('user') || 'null'))
 const shelfEntry = ref<any>(null)
 const shelfLoading = ref(false)
 const shelfMsg = ref({text: '', ok: true})
+
+// Local draft for pages input — only saved when user clicks Save
+const draftPages = ref(0)
+watch(() => shelfEntry.value?.pagesRead, (v) => { draftPages.value = v ?? 0 }, { immediate: true })
 
 async function loadShelfEntry() {
   if (!user.value) return
@@ -56,17 +60,24 @@ async function updateShelfStatus(newStatus: string) {
 
 async function updatePages() {
   if (!shelfEntry.value) return
+  // clamp to valid range
+  const clamped = Math.min(Math.max(0, draftPages.value ?? 0), book.value?.pageCount ?? 999999)
+  draftPages.value = clamped
+  shelfEntry.value.pagesRead = clamped
   try {
-    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {pagesRead: shelfEntry.value.pagesRead})
+    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {pagesRead: clamped})
     shelfEntry.value = res.data
+    draftPages.value = res.data.pagesRead ?? clamped
+    shelfMsg.value = {text: 'Progress saved!', ok: true}
   } catch {
+    shelfMsg.value = {text: 'Failed to save progress.', ok: false}
   }
 }
 
 function progressPercent() {
   const total = book.value?.pageCount
-  if (!total || !shelfEntry.value?.pagesRead) return 0
-  return Math.min(100, Math.round((shelfEntry.value.pagesRead / total) * 100))
+  if (!total || !draftPages.value) return 0
+  return Math.min(100, Math.round((draftPages.value / total) * 100))
 }
 
 // Star rating options: 0.25, 0.50, … 5.00
@@ -197,12 +208,15 @@ function renderStars(rating: number) {
           <!-- Progress tracking when reading -->
           <div v-if="shelfEntry.status === 'READING' && book.pageCount" class="progress-section">
             <div class="progress-row">
-              <input type="number" v-model.number="shelfEntry.pagesRead"
-                     :max="book.pageCount" min="0" @change="updatePages()"
+              <input type="number" v-model.number="draftPages"
+                     :max="book.pageCount" min="0"
+                     @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                     @input="draftPages = draftPages < 0 ? 0 : draftPages > book.pageCount ? book.pageCount : draftPages"
                      class="progress-pages-input"/>
               <span class="progress-info">/ {{ book.pageCount }} pages · <strong>{{
                   progressPercent()
                 }}%</strong></span>
+              <button @click="updatePages()" class="btn-save-pages" :disabled="shelfLoading">Save</button>
             </div>
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" :style="{ width: progressPercent() + '%' }"></div>
@@ -374,10 +388,29 @@ function renderStars(rating: number) {
   border-radius: 6px;
   background: #3c3836;
   color: #ebdbb2;
+  -moz-appearance: textfield;
+}
+.progress-pages-input::-webkit-outer-spin-button,
+.progress-pages-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .progress-info { font-size: 0.9rem; color: #a89984; }
 .progress-info strong { color: #83a598; }
+
+.btn-save-pages {
+  padding: 5px 12px;
+  background: #458588;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.btn-save-pages:hover:not(:disabled) { filter: brightness(1.15); }
+.btn-save-pages:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .progress-bar-bg {
   height: 6px;

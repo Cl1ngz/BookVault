@@ -20,11 +20,22 @@ const tabs = [
 
 const filtered = computed(() => shelf.value.filter(e => e.status === activeTab.value))
 
+// Draft pages map — keyed by entry.id, only saved on button click
+const draftPages = ref<Record<number, number>>({})
+
+function initDraft(entry: any) {
+  if (!(entry.id in draftPages.value)) {
+    draftPages.value[entry.id] = entry.pagesRead ?? 0
+  }
+}
+
 async function loadShelf() {
   loading.value = true
   try {
     const res = await api.get('/reading-log')
     shelf.value = res.data
+    // initialise drafts for all entries
+    res.data.forEach((e: any) => { draftPages.value[e.id] = e.pagesRead ?? 0 })
   } finally {
     loading.value = false
   }
@@ -34,15 +45,21 @@ async function updateStatus(entry: any, newStatus: string) {
   try {
     const res = await api.put(`/reading-log/${entry.id}`, {status: newStatus})
     Object.assign(entry, res.data)
+    draftPages.value[entry.id] = res.data.pagesRead ?? 0
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update status')
   }
 }
 
-async function updatePages(entry: any) {
+async function savePages(entry: any) {
+  // clamp: no negatives, no more than total pages
+  const max = entry.book?.pageCount ?? 999999
+  const clamped = Math.min(Math.max(0, draftPages.value[entry.id] ?? 0), max)
+  draftPages.value[entry.id] = clamped
   try {
-    const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: entry.pagesRead})
+    const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: clamped})
     Object.assign(entry, res.data)
+    draftPages.value[entry.id] = res.data.pagesRead ?? clamped
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update progress')
   }
@@ -52,12 +69,14 @@ async function removeEntry(entry: any) {
   if (!confirm(`Remove "${entry.book?.title}" from your shelf?`)) return
   await api.delete(`/reading-log/${entry.id}`)
   shelf.value = shelf.value.filter(e => e.id !== entry.id)
+  delete draftPages.value[entry.id]
 }
 
 function progressPercent(entry: any) {
   const total = entry.book?.pageCount
-  if (!total || !entry.pagesRead) return 0
-  return Math.min(100, Math.round((entry.pagesRead / total) * 100))
+  const pages = draftPages.value[entry.id] ?? entry.pagesRead ?? 0
+  if (!total || !pages) return 0
+  return Math.min(100, Math.round((pages / total) * 100))
 }
 
 onMounted(() => {
@@ -110,12 +129,15 @@ onMounted(() => {
             <div v-if="entry.status === 'READING'" class="progress-section">
               <div class="progress-row">
                 <input
-                    type="number" v-model.number="entry.pagesRead"
+                    type="number" v-model.number="draftPages[entry.id]"
                     :max="entry.book?.pageCount ?? 9999" min="0"
-                    @change="updatePages(entry)"
+                    @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                    @input="draftPages[entry.id] = draftPages[entry.id] < 0 ? 0 : draftPages[entry.id] > (entry.book?.pageCount ?? 9999) ? (entry.book?.pageCount ?? 9999) : draftPages[entry.id]"
+                    @vue:mounted="initDraft(entry)"
                     class="progress-input"/>
                 <span class="progress-text">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
                 <span class="progress-pct">{{ progressPercent(entry) }}%</span>
+                <button @click="savePages(entry)" class="btn-save-pages">Save</button>
               </div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" :style="{ width: progressPercent(entry) + '%' }"></div>
@@ -234,6 +256,12 @@ onMounted(() => {
   font-size: 0.9rem;
   background: #32302f;
   color: #ebdbb2;
+  -moz-appearance: textfield;
+}
+.progress-input::-webkit-outer-spin-button,
+.progress-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
 .progress-text { font-size: 0.85rem; color: #a89984; }
@@ -243,6 +271,18 @@ onMounted(() => {
   font-weight: 600;
   color: #83a598;
 }
+
+.btn-save-pages {
+  padding: 4px 10px;
+  background: #458588;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.btn-save-pages:hover { filter: brightness(1.15); }
 
 .progress-bar-bg {
   margin-top: 6px;
