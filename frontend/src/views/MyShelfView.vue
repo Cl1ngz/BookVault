@@ -2,6 +2,7 @@
 import {ref, onMounted, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/api'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 
 const router = useRouter()
@@ -19,6 +20,11 @@ const tabs = [
 ]
 
 const filtered = computed(() => shelf.value.filter(e => e.status === activeTab.value))
+
+// Finish-book confirmation modal
+const finishTarget = ref<any>(null)
+function onFinishConfirm() { if (finishTarget.value) updateStatus(finishTarget.value, 'FINISHED'); finishTarget.value = null }
+function onFinishCancel() { finishTarget.value = null }
 
 // Draft pages map — keyed by entry.id, only saved on button click
 const draftPages = ref<Record<number, number>>({})
@@ -60,6 +66,11 @@ async function savePages(entry: any) {
     const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: clamped})
     Object.assign(entry, res.data)
     draftPages.value[entry.id] = res.data.pagesRead ?? clamped
+
+    // Offer to mark as finished when max pages reached
+    if (entry.book?.pageCount && clamped >= entry.book.pageCount) {
+      finishTarget.value = entry
+    }
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update progress')
   }
@@ -172,6 +183,16 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="finishTarget"
+    title="Last page reached!"
+    :message="`You've read all ${finishTarget.book?.pageCount} pages of &quot;${finishTarget.book?.title}&quot;. Mark it as Finished?`"
+    confirm-label="✅ Yes, mark as Finished"
+    cancel-label="📖 Keep Reading"
+    @confirm="onFinishConfirm"
+    @cancel="onFinishCancel"
+  />
 </template>
 
 <style scoped>

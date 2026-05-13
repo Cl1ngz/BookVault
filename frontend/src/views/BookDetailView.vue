@@ -2,6 +2,7 @@
 import {ref, onMounted, computed, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import api from '@/api'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 
 const route = useRoute()
@@ -19,6 +20,11 @@ const shelfMsg = ref({text: '', ok: true})
 // Local draft for pages input — only saved when user clicks Save
 const draftPages = ref(0)
 watch(() => shelfEntry.value?.pagesRead, (v) => { draftPages.value = v ?? 0 }, { immediate: true })
+
+// Finish-book confirmation modal
+const showFinishModal = ref(false)
+function onFinishConfirm() { showFinishModal.value = false; updateShelfStatus('FINISHED') }
+function onFinishCancel() { showFinishModal.value = false }
 
 async function loadShelfEntry() {
   if (!user.value) return
@@ -69,6 +75,11 @@ async function updatePages() {
     shelfEntry.value = res.data
     draftPages.value = res.data.pagesRead ?? clamped
     shelfMsg.value = {text: 'Progress saved!', ok: true}
+
+    // Offer to mark as finished when max pages reached
+    if (book.value?.pageCount && clamped >= book.value.pageCount) {
+      showFinishModal.value = true
+    }
   } catch {
     shelfMsg.value = {text: 'Failed to save progress.', ok: false}
   }
@@ -279,6 +290,16 @@ function renderStars(rating: number) {
 
     <p v-else>Loading...</p>
   </div>
+
+  <ConfirmModal
+    v-if="showFinishModal"
+    title="Last page reached!"
+    :message="`You've read all ${book?.pageCount} pages of &quot;${book?.title}&quot;. Mark it as Finished?`"
+    confirm-label="✅ Yes, mark as Finished"
+    cancel-label="📖 Keep Reading"
+    @confirm="onFinishConfirm"
+    @cancel="onFinishCancel"
+  />
 </template>
 
 <style scoped>
