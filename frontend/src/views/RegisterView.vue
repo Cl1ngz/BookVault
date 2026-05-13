@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import {ref} from 'vue'
+import {useRouter} from 'vue-router'
 import api from '@/api'
+
 
 const router = useRouter()
 const username = ref('')
@@ -28,11 +29,20 @@ async function register() {
 <template>
   <div>
     <h1>Register</h1>
-    <input v-model="username" placeholder="Username" /><br/>
-    <input v-model="email" type="email" placeholder="Email" /><br/>
-    <input v-model="password" type="password" placeholder="Password" /><br/>
+    <input v-model="username" placeholder="Username"/><br/>
+    <input v-model="email" type="email" placeholder="Email"/><br/>
+    <input v-model="password" type="password" placeholder="Password"/><br/>
     <button @click="register">Register</button>
-    <p style="color:red">{{ error }}</p>
-    <p>Already have an account? <RouterLink to="/login">Login</RouterLink></p>
+    <p class="auth-error">{{ error }}</p>
+    <p>Already have an account?
+      <RouterLink to="/login">Login</RouterLink>
+    </p>
   </div>
 </template>
+
+<style scoped>
+.auth-error {
+  color: red;
+}
+</style>
+
