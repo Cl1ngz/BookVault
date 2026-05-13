@@ -2,10 +2,11 @@
 
 /* Global link baseline — scoped component styles override where needed */
 a {
-    color: #2563eb;
+    color: #83a598;
     text-decoration: none;
 }
 
 a:hover {
-    text-decoration: underline;
+    color: #fabd2f;
+    text-decoration: none;
 }

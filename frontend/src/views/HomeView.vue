@@ -153,10 +153,11 @@ onMounted(async () => {
 
 <style scoped>
 .hero {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-  color: white;
+  background: linear-gradient(135deg, #1d2021 0%, #3c3836 100%);
+  color: #ebdbb2;
   padding: 4rem 1rem;
   text-align: center;
+  border-bottom: 2px solid #504945;
 }
 
 .hero h1 {
@@ -164,15 +165,16 @@ onMounted(async () => {
   margin: 0 0 0.5rem;
   font-weight: 800;
   letter-spacing: -1px;
+  color: #fabd2f;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .hero-subtitle {
   font-size: 1.2rem;
-  margin: 0 0 2rem;
-  opacity: 0.88;
+  margin: 0 auto 2rem;
+  opacity: 0.9;
   max-width: 540px;
-  margin-left: auto;
-  margin-right: auto;
+  color: #d5c4a1;
 }
 
 .hero-actions {
@@ -184,39 +186,45 @@ onMounted(async () => {
 
 .hero-btn-primary {
   padding: 12px 28px;
-  background: white;
-  color: #1e3a5f;
+  background: #fabd2f;
+  color: #1d2021;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 700;
   font-size: 1rem;
+  transition: filter 0.15s;
 }
+.hero-btn-primary:hover { filter: brightness(1.1); }
 
 .hero-btn-secondary {
   padding: 12px 28px;
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: rgba(69, 133, 136, 0.2);
+  color: #83a598;
+  border: 2px solid #458588;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   font-size: 1rem;
+  transition: background 0.15s;
 }
+.hero-btn-secondary:hover { background: rgba(69,133,136,0.35); }
 
 .hero-btn-ghost {
   padding: 12px 28px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(80, 73, 69, 0.4);
+  color: #d5c4a1;
+  border: 2px solid #665c54;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 600;
   font-size: 1rem;
+  transition: border-color 0.15s;
 }
+.hero-btn-ghost:hover { border-color: #fabd2f; color: #fabd2f; }
 
 .stats-bar {
-  background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
+  background: #32302f;
+  border-bottom: 1px solid #504945;
   padding: 1.5rem 1rem;
 }
 
@@ -234,24 +242,13 @@ onMounted(async () => {
   font-weight: 800;
 }
 
-.stat-value--navy {
-  color: #1e3a5f;
-}
-
-.stat-value--blue {
-  color: #2563eb;
-}
-
-.stat-value--purple {
-  color: #7c3aed;
-}
-
-.stat-value--green {
-  color: #059669;
-}
+.stat-value--navy   { color: #83a598; }
+.stat-value--blue   { color: #8ec07c; }
+.stat-value--purple { color: #d3869b; }
+.stat-value--green  { color: #b8bb26; }
 
 .stat-label {
-  color: #6b7280;
+  color: #a89984;
   font-size: 0.9rem;
 }
 
@@ -263,7 +260,7 @@ onMounted(async () => {
 
 .features-section h2 {
   text-align: center;
-  color: #1e3a5f;
+  color: #fabd2f;
   margin-bottom: 2rem;
 }
 
@@ -274,12 +271,14 @@ onMounted(async () => {
 }
 
 .feature-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 12px;
   padding: 1.5rem;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  background: #3c3836;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.15s;
 }
+.feature-card:hover { border-color: #fabd2f; }
 
 .feature-icon {
   font-size: 2rem;
@@ -288,11 +287,11 @@ onMounted(async () => {
 
 .feature-card h3 {
   margin: 0 0 0.5rem;
-  color: #1e3a5f;
+  color: #d5c4a1;
 }
 
 .feature-card p {
-  color: #6b7280;
+  color: #a89984;
   font-size: 0.9rem;
   margin: 0;
 }
@@ -304,7 +303,7 @@ onMounted(async () => {
 }
 
 .recent-section h2 {
-  color: #1e3a5f;
+  color: #fabd2f;
   margin-bottom: 1.25rem;
 }
 
@@ -315,29 +314,32 @@ onMounted(async () => {
 }
 
 .book-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 10px;
   padding: 1rem;
-  background: white;
+  background: #3c3836;
   text-decoration: none;
-  color: #111;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  color: #ebdbb2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   display: block;
+  transition: border-color 0.15s;
 }
+.book-card:hover { border-color: #fabd2f; }
 
 .book-card-title {
   font-weight: 700;
   margin-bottom: 2px;
+  color: #ebdbb2;
 }
 
 .book-card-author {
   font-size: 0.85rem;
-  color: #6b7280;
+  color: #a89984;
 }
 
 .book-card-meta {
   font-size: 0.8rem;
-  color: #9ca3af;
+  color: #7c6f64;
   margin-top: 4px;
 }
 
@@ -350,8 +352,9 @@ onMounted(async () => {
 
 .genre-tag {
   padding: 1px 7px;
-  background: #eff6ff;
-  color: #2563eb;
+  background: #32302f;
+  color: #83a598;
+  border: 1px solid #458588;
   border-radius: 999px;
   font-size: 0.75rem;
 }
@@ -362,36 +365,39 @@ onMounted(async () => {
 }
 
 .view-all a {
-  color: #2563eb;
+  color: #83a598;
   text-decoration: none;
   font-weight: 600;
 }
+.view-all a:hover { color: #fabd2f; }
 
 .cta-section {
-  background: #eff6ff;
-  border-top: 1px solid #bfdbfe;
+  background: #32302f;
+  border-top: 1px solid #504945;
   padding: 2.5rem 1rem;
   text-align: center;
 }
 
 .cta-section h2 {
-  color: #1e3a5f;
+  color: #fabd2f;
   margin: 0 0 0.5rem;
 }
 
 .cta-section p {
-  color: #4b5563;
+  color: #d5c4a1;
   margin: 0 0 1.5rem;
 }
 
 .btn-cta {
   padding: 12px 32px;
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   border-radius: 8px;
   text-decoration: none;
   font-weight: 700;
   font-size: 1rem;
+  transition: filter 0.15s;
 }
+.btn-cta:hover { filter: brightness(1.15); }
 </style>
 

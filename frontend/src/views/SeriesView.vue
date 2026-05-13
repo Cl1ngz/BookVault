@@ -1,32 +1,241 @@
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import api from '@/api'
 
-
 const series = ref<any[]>([])
+const search = ref('')
 
 onMounted(async () => {
   const res = await api.get('/series')
   series.value = res.data
 })
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  if (!q) return series.value
+  return series.value.filter(s =>
+    s.name?.toLowerCase().includes(q) ||
+    s.author?.firstName?.toLowerCase().includes(q) ||
+    s.author?.lastName?.toLowerCase().includes(q)
+  )
+})
+
+function volumeDots(count: number) {
+  const n = Math.min(count ?? 0, 12)
+  return '📗'.repeat(n) + (count > 12 ? ` +${count - 12}` : '')
+}
+
+function initials(s: any) {
+  const a = s.author
+  if (!a) return '?'
+  return `${a.firstName?.[0] ?? ''}${a.lastName?.[0] ?? ''}`.toUpperCase()
+}
 </script>
 
 <template>
-  <div>
-    <h1>Series</h1>
-    <ul>
-      <li v-for="s in series" :key="s.id" class="list-item-spaced">
-        <RouterLink :to="`/series/${s.id}`"><strong>{{ s.name }}</strong></RouterLink>
-        — {{ s.volumeCount }} volumes
-        <em>({{ s.author?.firstName }} {{ s.author?.lastName }})</em>
-      </li>
-    </ul>
+  <div class="series-view">
+
+    <div class="series-header">
+      <h1>📚 Series</h1>
+      <span class="series-count">{{ series.length }} series</span>
+    </div>
+
+    <input
+      v-model="search"
+      placeholder="Search by name or author…"
+      class="series-search"
+    />
+
+    <p v-if="filtered.length === 0" class="series-empty">No series match your search.</p>
+
+    <div class="series-grid">
+      <RouterLink
+        v-for="s in filtered" :key="s.id"
+        :to="`/series/${s.id}`"
+        class="series-card"
+      >
+        <!-- Left accent stripe + volume count bubble -->
+        <div class="series-stripe">
+          <div class="series-vol-bubble">{{ s.volumeCount ?? '?' }}</div>
+          <div class="series-vol-label">vol.</div>
+        </div>
+
+        <!-- Main content -->
+        <div class="series-body">
+          <div class="series-name">{{ s.name }}</div>
+
+          <div v-if="s.author" class="series-author">
+            <div class="series-author-avatar">{{ initials(s) }}</div>
+            <span>{{ s.author.firstName }} {{ s.author.lastName }}</span>
+          </div>
+          <div v-else class="series-author series-author--none">Unknown author</div>
+
+          <div class="series-dots" :title="`${s.volumeCount} volumes`">
+            {{ volumeDots(s.volumeCount) }}
+          </div>
+        </div>
+
+        <div class="series-arrow">→</div>
+      </RouterLink>
+    </div>
+
   </div>
 </template>
 
 <style scoped>
-.list-item-spaced {
-  margin-bottom: 6px;
+.series-view {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+.series-header {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.series-header h1 { margin: 0; color: #fabd2f; }
+.series-count { font-size: 0.9rem; color: #7c6f64; }
+
+/* ── Search ──────────────────────────────────────────────────── */
+.series-search {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 1.25rem;
+  font-size: 0.95rem;
+  background: #32302f;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.series-search::placeholder { color: #7c6f64; }
+.series-search:focus { outline: none; border-color: #83a598; }
+
+.series-empty { color: #a89984; font-style: italic; margin-top: 1rem; }
+
+/* ── Grid ────────────────────────────────────────────────────── */
+.series-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.series-card {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: #3c3836;
+  border: 1px solid #504945;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.series-card:hover {
+  border-color: #fabd2f;
+  background: #32302f;
+}
+
+/* ── Left colour stripe ──────────────────────────────────────── */
+.series-stripe {
+  flex-shrink: 0;
+  width: 64px;
+  background: #458588;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 1rem 0;
+}
+
+.series-vol-bubble {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1d2021;
+  line-height: 1;
+}
+
+.series-vol-label {
+  font-size: 0.7rem;
+  color: #1d2021;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Body ────────────────────────────────────────────────────── */
+.series-body {
+  flex: 1;
+  padding: 0.9rem 1.1rem;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.series-name {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #d5c4a1;
+  transition: color 0.15s;
+}
+
+.series-card:hover .series-name { color: #fabd2f; }
+
+/* ── Author row ──────────────────────────────────────────────── */
+.series-author {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.85rem;
+  color: #83a598;
+}
+
+.series-author--none { color: #665c54; font-style: italic; }
+
+.series-author-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #504945;
+  color: #d5c4a1;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Volume dots ─────────────────────────────────────────────── */
+.series-dots {
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  line-height: 1.2;
+  color: #7c6f64;
+}
+
+/* ── Arrow ───────────────────────────────────────────────────── */
+.series-arrow {
+  flex-shrink: 0;
+  color: #665c54;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  padding-right: 1.1rem;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.series-card:hover .series-arrow {
+  color: #fabd2f;
+  transform: translateX(3px);
 }
 </style>
-

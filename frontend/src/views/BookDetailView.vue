@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import {ref, onMounted, computed} from 'vue'
+import {ref, onMounted, computed, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import api from '@/api'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 
 const route = useRoute()
@@ -15,6 +16,15 @@ const user = computed(() => JSON.parse(localStorage.getItem('user') || 'null'))
 const shelfEntry = ref<any>(null)
 const shelfLoading = ref(false)
 const shelfMsg = ref({text: '', ok: true})
+
+// Local draft for pages input — only saved when user clicks Save
+const draftPages = ref(0)
+watch(() => shelfEntry.value?.pagesRead, (v) => { draftPages.value = v ?? 0 }, { immediate: true })
+
+// Finish-book confirmation modal
+const showFinishModal = ref(false)
+function onFinishConfirm() { showFinishModal.value = false; updateShelfStatus('FINISHED') }
+function onFinishCancel() { showFinishModal.value = false }
 
 async function loadShelfEntry() {
   if (!user.value) return
@@ -56,17 +66,29 @@ async function updateShelfStatus(newStatus: string) {
 
 async function updatePages() {
   if (!shelfEntry.value) return
+  // clamp to valid range
+  const clamped = Math.min(Math.max(0, draftPages.value ?? 0), book.value?.pageCount ?? 999999)
+  draftPages.value = clamped
+  shelfEntry.value.pagesRead = clamped
   try {
-    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {pagesRead: shelfEntry.value.pagesRead})
+    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {pagesRead: clamped})
     shelfEntry.value = res.data
+    draftPages.value = res.data.pagesRead ?? clamped
+    shelfMsg.value = {text: 'Progress saved!', ok: true}
+
+    // Offer to mark as finished when max pages reached
+    if (book.value?.pageCount && clamped >= book.value.pageCount) {
+      showFinishModal.value = true
+    }
   } catch {
+    shelfMsg.value = {text: 'Failed to save progress.', ok: false}
   }
 }
 
 function progressPercent() {
   const total = book.value?.pageCount
-  if (!total || !shelfEntry.value?.pagesRead) return 0
-  return Math.min(100, Math.round((shelfEntry.value.pagesRead / total) * 100))
+  if (!total || !draftPages.value) return 0
+  return Math.min(100, Math.round((draftPages.value / total) * 100))
 }
 
 // Star rating options: 0.25, 0.50, … 5.00
@@ -197,12 +219,15 @@ function renderStars(rating: number) {
           <!-- Progress tracking when reading -->
           <div v-if="shelfEntry.status === 'READING' && book.pageCount" class="progress-section">
             <div class="progress-row">
-              <input type="number" v-model.number="shelfEntry.pagesRead"
-                     :max="book.pageCount" min="0" @change="updatePages()"
+              <input type="number" v-model.number="draftPages"
+                     :max="book.pageCount" min="0"
+                     @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                     @input="draftPages = draftPages < 0 ? 0 : draftPages > book.pageCount ? book.pageCount : draftPages"
                      class="progress-pages-input"/>
               <span class="progress-info">/ {{ book.pageCount }} pages · <strong>{{
                   progressPercent()
                 }}%</strong></span>
+              <button @click="updatePages()" class="btn-save-pages" :disabled="shelfLoading">Save</button>
             </div>
             <div class="progress-bar-bg">
               <div class="progress-bar-fill" :style="{ width: progressPercent() + '%' }"></div>
@@ -265,6 +290,16 @@ function renderStars(rating: number) {
 
     <p v-else>Loading...</p>
   </div>
+
+  <ConfirmModal
+    v-if="showFinishModal"
+    title="Last page reached!"
+    :message="`You've read all ${book?.pageCount} pages of &quot;${book?.title}&quot;. Mark it as Finished?`"
+    confirm-label="✅ Yes, mark as Finished"
+    cancel-label="📖 Keep Reading"
+    @confirm="onFinishConfirm"
+    @cancel="onFinishCancel"
+  />
 </template>
 
 <style scoped>
@@ -279,18 +314,18 @@ function renderStars(rating: number) {
 .reading-status-section {
   margin-top: 1.5rem;
   padding: 1rem;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #458588;
   border-radius: 8px;
-  background: #eff6ff;
+  background: #32302f;
 }
 
 .reading-status-section h3 {
   margin: 0 0 0.75rem;
-  color: #1d4ed8;
+  color: #83a598;
 }
 
 .shelf-not-added p {
-  color: #6b7280;
+  color: #a89984;
   margin: 0 0 0.75rem;
   font-size: 0.95rem;
 }
@@ -306,27 +341,29 @@ function renderStars(rating: number) {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
+  transition: filter 0.12s;
 }
+.btn:hover { filter: brightness(1.15); }
 
 .btn-want-to-read {
-  background: #fef08a;
-  color: #854d0e;
-  border: 1px solid #fde047;
+  background: rgba(215, 153, 33, 0.2);
+  color: #fabd2f;
+  border: 1px solid #d79921;
 }
 
 .btn-start-reading {
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   border: none;
 }
 
 .btn-mark-finished {
-  background: #16a34a;
-  color: white;
+  background: #98971a;
+  color: #ebdbb2;
   border: none;
 }
 
-/* ── Shelf controls (select + journal link) ─────────────────── */
+/* ── Shelf controls ─────────────────────────────────────────── */
 .shelf-controls {
   display: flex;
   align-items: center;
@@ -337,27 +374,26 @@ function renderStars(rating: number) {
 
 .status-select {
   padding: 7px 12px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid #504945;
   border-radius: 6px;
   font-size: 0.95rem;
   cursor: pointer;
-  background: white;
+  background: #3c3836;
+  color: #ebdbb2;
 }
 
 .journal-link {
   padding: 7px 14px;
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: rgba(104, 157, 106, 0.15);
+  color: #8ec07c;
+  border: 1px solid #689d6a;
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.9rem;
 }
 
 /* ── Progress tracking ──────────────────────────────────────── */
-.progress-section {
-  margin-top: 0.5rem;
-}
+.progress-section { margin-top: 0.5rem; }
 
 .progress-row {
   display: flex;
@@ -369,124 +405,104 @@ function renderStars(rating: number) {
 .progress-pages-input {
   width: 70px;
   padding: 5px 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
+  background: #3c3836;
+  color: #ebdbb2;
+  -moz-appearance: textfield;
+}
+.progress-pages-input::-webkit-outer-spin-button,
+.progress-pages-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.progress-info {
-  font-size: 0.9rem;
-  color: #6b7280;
-}
+.progress-info { font-size: 0.9rem; color: #a89984; }
+.progress-info strong { color: #83a598; }
 
-.progress-info strong {
-  color: #2563eb;
+.btn-save-pages {
+  padding: 5px 12px;
+  background: #458588;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.12s;
 }
+.btn-save-pages:hover:not(:disabled) { filter: brightness(1.15); }
+.btn-save-pages:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .progress-bar-bg {
   height: 6px;
-  background: #e5e7eb;
+  background: #504945;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: #2563eb;
+  background: #458588;
   transition: width 0.3s;
 }
 
 /* ── Shelf dates & messages ─────────────────────────────────── */
-.shelf-dates {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-top: 6px;
-}
+.shelf-dates { font-size: 0.8rem; color: #7c6f64; margin-top: 6px; }
 
-.shelf-msg {
-  margin: 8px 0 0;
-  font-size: 0.9rem;
-}
-
-.shelf-msg--ok {
-  color: #16a34a;
-}
-
-.shelf-msg--error {
-  color: #dc2626;
-}
+.shelf-msg { margin: 8px 0 0; font-size: 0.9rem; }
+.shelf-msg--ok { color: #b8bb26; }
+.shelf-msg--error { color: #fb4934; }
 
 /* ── Reviews list ───────────────────────────────────────────── */
-.reviews-list {
-  list-style: none;
-  padding: 0;
-}
+.reviews-list { list-style: none; padding: 0; }
 
 .review-item {
   padding: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 6px;
   margin-bottom: 8px;
+  background: #32302f;
 }
 
-.review-stars {
-  font-size: 1.1rem;
-  color: #f59e0b;
-}
-
-.review-rating {
-  margin-left: 6px;
-}
-
-.review-author {
-  color: #6b7280;
-  margin-left: 8px;
-}
-
-.review-content {
-  margin: 4px 0;
-}
+.review-stars { font-size: 1.1rem; color: #fabd2f; }
+.review-rating { margin-left: 6px; color: #ebdbb2; }
+.review-author { color: #a89984; margin-left: 8px; }
+.review-content { margin: 4px 0; color: #d5c4a1; }
 
 .btn-report {
   font-size: 0.8rem;
   padding: 2px 8px;
   background: none;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 4px;
   cursor: pointer;
-  color: #6b7280;
+  color: #a89984;
 }
 
 /* ── Review form ────────────────────────────────────────────── */
 .review-form {
   margin-top: 1.5rem;
   padding: 1rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 8px;
-  background: #f9fafb;
+  background: #32302f;
 }
 
-.review-form h3 {
-  margin-top: 0;
-}
-
-.login-prompt {
-  color: #6b7280;
-}
+.review-form h3 { margin-top: 0; color: #d5c4a1; }
+.login-prompt { color: #a89984; }
 
 .review-rating-select {
   padding: 6px 12px;
   margin: 8px 0;
   font-size: 1rem;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
   cursor: pointer;
+  background: #3c3836;
+  color: #ebdbb2;
 }
 
-.review-stars-preview {
-  margin: 4px 0 10px;
-  font-size: 1.2rem;
-  color: #f59e0b;
-}
+.review-stars-preview { margin: 4px 0 10px; font-size: 1.2rem; color: #fabd2f; }
 
 .review-textarea {
   width: 100%;
@@ -495,32 +511,28 @@ function renderStars(rating: number) {
   font-family: inherit;
   resize: vertical;
   box-sizing: border-box;
+  background: #3c3836;
+  color: #ebdbb2;
+  border: 1px solid #504945;
+  border-radius: 4px;
 }
 
-.review-msg {
-  margin: 6px 0;
-}
-
-.review-msg--ok {
-  color: green;
-}
-
-.review-msg--error {
-  color: red;
-}
+.review-msg { margin: 6px 0; }
+.review-msg--ok { color: #b8bb26; }
+.review-msg--error { color: #fb4934; }
 
 .btn-post {
   padding: 8px 20px;
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  transition: filter 0.12s;
 }
+.btn-post:hover { filter: brightness(1.15); }
 
 /* ── Misc ───────────────────────────────────────────────────── */
-.error-msg {
-  color: red;
-}
+.error-msg { color: #fb4934; }
 </style>
 

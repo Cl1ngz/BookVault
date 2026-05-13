@@ -2,6 +2,7 @@
 import {ref, onMounted, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/api'
+import ConfirmModal from '@/components/ConfirmModal.vue'
 
 
 const router = useRouter()
@@ -20,11 +21,27 @@ const tabs = [
 
 const filtered = computed(() => shelf.value.filter(e => e.status === activeTab.value))
 
+// Finish-book confirmation modal
+const finishTarget = ref<any>(null)
+function onFinishConfirm() { if (finishTarget.value) updateStatus(finishTarget.value, 'FINISHED'); finishTarget.value = null }
+function onFinishCancel() { finishTarget.value = null }
+
+// Draft pages map — keyed by entry.id, only saved on button click
+const draftPages = ref<Record<number, number>>({})
+
+function initDraft(entry: any) {
+  if (!(entry.id in draftPages.value)) {
+    draftPages.value[entry.id] = entry.pagesRead ?? 0
+  }
+}
+
 async function loadShelf() {
   loading.value = true
   try {
     const res = await api.get('/reading-log')
     shelf.value = res.data
+    // initialise drafts for all entries
+    res.data.forEach((e: any) => { draftPages.value[e.id] = e.pagesRead ?? 0 })
   } finally {
     loading.value = false
   }
@@ -34,15 +51,26 @@ async function updateStatus(entry: any, newStatus: string) {
   try {
     const res = await api.put(`/reading-log/${entry.id}`, {status: newStatus})
     Object.assign(entry, res.data)
+    draftPages.value[entry.id] = res.data.pagesRead ?? 0
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update status')
   }
 }
 
-async function updatePages(entry: any) {
+async function savePages(entry: any) {
+  // clamp: no negatives, no more than total pages
+  const max = entry.book?.pageCount ?? 999999
+  const clamped = Math.min(Math.max(0, draftPages.value[entry.id] ?? 0), max)
+  draftPages.value[entry.id] = clamped
   try {
-    const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: entry.pagesRead})
+    const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: clamped})
     Object.assign(entry, res.data)
+    draftPages.value[entry.id] = res.data.pagesRead ?? clamped
+
+    // Offer to mark as finished when max pages reached
+    if (entry.book?.pageCount && clamped >= entry.book.pageCount) {
+      finishTarget.value = entry
+    }
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update progress')
   }
@@ -52,12 +80,14 @@ async function removeEntry(entry: any) {
   if (!confirm(`Remove "${entry.book?.title}" from your shelf?`)) return
   await api.delete(`/reading-log/${entry.id}`)
   shelf.value = shelf.value.filter(e => e.id !== entry.id)
+  delete draftPages.value[entry.id]
 }
 
 function progressPercent(entry: any) {
   const total = entry.book?.pageCount
-  if (!total || !entry.pagesRead) return 0
-  return Math.min(100, Math.round((entry.pagesRead / total) * 100))
+  const pages = draftPages.value[entry.id] ?? entry.pagesRead ?? 0
+  if (!total || !pages) return 0
+  return Math.min(100, Math.round((pages / total) * 100))
 }
 
 onMounted(() => {
@@ -110,12 +140,15 @@ onMounted(() => {
             <div v-if="entry.status === 'READING'" class="progress-section">
               <div class="progress-row">
                 <input
-                    type="number" v-model.number="entry.pagesRead"
+                    type="number" v-model.number="draftPages[entry.id]"
                     :max="entry.book?.pageCount ?? 9999" min="0"
-                    @change="updatePages(entry)"
+                    @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                    @input="draftPages[entry.id] = draftPages[entry.id] < 0 ? 0 : draftPages[entry.id] > (entry.book?.pageCount ?? 9999) ? (entry.book?.pageCount ?? 9999) : draftPages[entry.id]"
+                    @vue:mounted="initDraft(entry)"
                     class="progress-input"/>
                 <span class="progress-text">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
                 <span class="progress-pct">{{ progressPercent(entry) }}%</span>
+                <button @click="savePages(entry)" class="btn-save-pages">Save</button>
               </div>
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" :style="{ width: progressPercent(entry) + '%' }"></div>
@@ -150,6 +183,16 @@ onMounted(() => {
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    v-if="finishTarget"
+    title="Last page reached!"
+    :message="`You've read all ${finishTarget.book?.pageCount} pages of &quot;${finishTarget.book?.title}&quot;. Mark it as Finished?`"
+    confirm-label="✅ Yes, mark as Finished"
+    cancel-label="📖 Keep Reading"
+    @confirm="onFinishConfirm"
+    @cancel="onFinishCancel"
+  />
 </template>
 
 <style scoped>
@@ -159,9 +202,7 @@ onMounted(() => {
   padding: 1.5rem;
 }
 
-.my-shelf h1 {
-  margin-bottom: 1rem;
-}
+.my-shelf h1 { margin-bottom: 1rem; color: #fabd2f; }
 
 .shelf-tabs {
   display: flex;
@@ -172,50 +213,37 @@ onMounted(() => {
 
 .tab-btn {
   padding: 8px 16px;
-  border: none;
+  border: 1px solid #504945;
   border-radius: 6px;
   cursor: pointer;
   font-weight: normal;
-  background: #e5e7eb;
-  color: #374151;
+  background: #3c3836;
+  color: #d5c4a1;
+  transition: background 0.12s;
 }
+.tab-btn:hover { background: #504945; }
 
 .tab-btn--active {
-  background: #2563eb;
-  color: white;
+  background: #458588;
+  color: #ebdbb2;
+  border-color: #458588;
   font-weight: bold;
 }
 
-.tab-count {
-  margin-left: 4px;
-  opacity: 0.8;
-}
+.tab-count { margin-left: 4px; opacity: 0.8; }
 
-.shelf-loading {
-  color: gray;
-}
+.shelf-loading { color: #a89984; }
+.shelf-empty { color: #a89984; font-style: italic; }
+.shelf-empty a { color: #83a598; }
 
-.shelf-empty {
-  color: gray;
-  font-style: italic;
-}
-
-.shelf-empty a {
-  color: #2563eb;
-}
-
-.shelf-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
+.shelf-list { display: flex; flex-direction: column; gap: 1rem; }
 
 .shelf-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 10px;
   padding: 1rem;
-  background: white;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: #3c3836;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .shelf-item-body {
@@ -225,75 +253,73 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.shelf-item-info {
-  flex: 1;
-}
+.shelf-item-info { flex: 1; }
 
 .book-title-link {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1e3a5f;
+  color: #d5c4a1;
   text-decoration: none;
 }
+.book-title-link:hover { color: #fabd2f; }
 
-.book-meta {
-  color: #6b7280;
-  font-size: 0.9rem;
-  margin-top: 2px;
-}
+.book-meta { color: #a89984; font-size: 0.9rem; margin-top: 2px; }
+.book-meta-pages { margin-left: 8px; }
 
-.book-meta-pages {
-  margin-left: 8px;
-}
-
-.progress-section {
-  margin-top: 10px;
-}
-
-.progress-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.progress-section { margin-top: 10px; }
+.progress-row { display: flex; align-items: center; gap: 8px; }
 
 .progress-input {
   width: 70px;
   padding: 4px 8px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
   font-size: 0.9rem;
+  background: #32302f;
+  color: #ebdbb2;
+  -moz-appearance: textfield;
+}
+.progress-input::-webkit-outer-spin-button,
+.progress-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 
-.progress-text {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
+.progress-text { font-size: 0.85rem; color: #a89984; }
 
 .progress-pct {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #2563eb;
+  color: #83a598;
 }
+
+.btn-save-pages {
+  padding: 4px 10px;
+  background: #458588;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.btn-save-pages:hover { filter: brightness(1.15); }
 
 .progress-bar-bg {
   margin-top: 6px;
   height: 6px;
-  background: #e5e7eb;
+  background: #504945;
   border-radius: 3px;
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: #2563eb;
+  background: #458588;
   transition: width 0.3s;
 }
 
-.shelf-dates {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-top: 6px;
-}
+.shelf-dates { font-size: 0.8rem; color: #7c6f64; margin-top: 6px; }
 
 .shelf-actions {
   display: flex;
@@ -304,17 +330,19 @@ onMounted(() => {
 
 .status-select {
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #504945;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
+  background: #32302f;
+  color: #ebdbb2;
 }
 
 .activity-link {
   padding: 6px 10px;
-  background: #f0fdf4;
-  color: #16a34a;
-  border: 1px solid #bbf7d0;
+  background: rgba(104, 157, 106, 0.15);
+  color: #8ec07c;
+  border: 1px solid #689d6a;
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.85rem;
@@ -323,9 +351,9 @@ onMounted(() => {
 
 .btn-remove {
   padding: 6px 10px;
-  background: #fef2f2;
-  color: #dc2626;
-  border: 1px solid #fecaca;
+  background: rgba(204, 36, 29, 0.15);
+  color: #fb4934;
+  border: 1px solid #cc241d;
   border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;

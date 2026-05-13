@@ -91,62 +91,39 @@ const booksBySeries = computed(() => {
   padding: 1rem;
 }
 
-.author-content {
-  margin-top: 1rem;
-}
+.author-content { margin-top: 1rem; }
 
-.author-error {
-  color: red;
-  margin-top: 1rem;
-}
+.author-error { color: #fb4934; margin-top: 1rem; }
 
 .author-biography {
-  background: #f9fafb;
-  border-left: 4px solid #2563eb;
+  background: #32302f;
+  border-left: 4px solid #458588;
   padding: 12px 16px;
   border-radius: 4px;
   margin: 1rem 0;
 }
 
-.author-biography p {
-  margin: 8px 0 0;
-  color: #374151;
-}
+.author-biography p { margin: 8px 0 0; color: #d5c4a1; }
 
-.books-heading {
-  margin-top: 1.5rem;
-}
+.books-heading { margin-top: 1.5rem; color: #fabd2f; }
 
-.no-books {
-  color: gray;
-}
+.no-books { color: #a89984; }
 
-.series-group {
-  margin-bottom: 1.5rem;
-}
+.series-group { margin-bottom: 1.5rem; }
 
-.series-title {
-  color: #1e3a5f;
-}
+.series-title { color: #83a598; }
+.standalone-title { color: #a89984; }
 
-.standalone-title {
-  color: #6b7280;
-}
-
-.books-list {
-  list-style: none;
-  padding: 0;
-}
+.books-list { list-style: none; padding: 0; }
 
 .book-item {
   padding: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #504945;
   border-radius: 6px;
   margin-bottom: 6px;
+  background: #32302f;
 }
 
-.book-genres {
-  color: #6b7280;
-}
+.book-genres { color: #a89984; }
 </style>
 

@@ -88,33 +88,58 @@ window.addEventListener('storage', () => {
 </template>
 
 <style scoped>
+/* Gruvbox palette
+   bg-hard: #1d2021  bg: #282828  bg-soft: #32302f
+   bg1: #3c3836  bg2: #504945  bg3: #665c54  bg4: #7c6f64
+   fg:  #ebdbb2  fg1: #d5c4a1  fg4: #a89984
+   yellow: #d79921  bright-yellow: #fabd2f
+   aqua:   #689d6a  bright-aqua:   #8ec07c
+   blue:   #458588  bright-blue:   #83a598
+   green:  #98971a  bright-green:  #b8bb26
+   red:    #cc241d  bright-red:    #fb4934
+   orange: #d65d0e  bright-orange: #fe8019
+*/
+
 .app-nav {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  background: #1e3a5f;
-  color: white;
+  padding: 0.6rem 1.2rem;
+  background: #3c3836;
+  border-bottom: 2px solid #504945;
+  color: #ebdbb2;
 }
 
 .nav-brand {
-  color: white;
+  color: #fabd2f;
   text-decoration: none;
   font-weight: 700;
   font-size: 1.05rem;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
 .nav-sep {
-  color: #aaa;
+  color: #665c54;
 }
 
 .nav-link {
-  color: white;
+  color: #d5c4a1;
   text-decoration: none;
+  transition: color 0.15s;
+}
+
+.nav-link:hover {
+  color: #fabd2f;
 }
 
 .nav-link--mod {
-  color: #fbbf24;
+  color: #fe8019;
+  font-weight: 600;
+}
+
+.nav-link--mod:hover {
+  color: #fabd2f;
 }
 
 .nav-spacer {
@@ -129,14 +154,21 @@ window.addEventListener('storage', () => {
 .user-menu-btn {
   padding: 4px 12px;
   background: transparent;
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ebdbb2;
+  border: 1px solid #665c54;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 6px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.user-menu-btn:hover {
+  background: #504945;
+  border-color: #fabd2f;
+  color: #fabd2f;
 }
 
 .user-menu-caret {
@@ -148,10 +180,10 @@ window.addEventListener('storage', () => {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: #32302f;
+  border: 1px solid #504945;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
   min-width: 170px;
   z-index: 100;
   overflow: hidden;
@@ -162,10 +194,20 @@ window.addEventListener('storage', () => {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  color: #1e3a5f;
+  color: #d5c4a1;
   text-decoration: none;
   font-size: 0.9rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid #3c3836;
+  transition: background 0.12s, color 0.12s;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #504945;
+  color: #fabd2f;
 }
 
 .dropdown-item--logout {
@@ -173,25 +215,38 @@ window.addEventListener('storage', () => {
   background: none;
   border: none;
   border-bottom: none;
-  color: #dc2626;
+  color: #fb4934;
   cursor: pointer;
   text-align: left;
+}
+
+.dropdown-item--logout:hover {
+  background: #504945;
+  color: #fb4934;
 }
 
 /* ── Auth buttons ────────────────────────────────────────────── */
 .nav-btn {
   padding: 4px 14px;
-  color: white;
+  color: #1d2021;
   border-radius: 6px;
   text-decoration: none;
   font-size: 0.9rem;
+  font-weight: 600;
+  transition: filter 0.15s;
+}
+
+.nav-btn:hover {
+  filter: brightness(1.15);
 }
 
 .nav-btn--login {
-  background: #2563eb;
+  background: #458588;
+  color: #ebdbb2;
 }
 
 .nav-btn--register {
-  background: #16a34a;
+  background: #98971a;
+  color: #ebdbb2;
 }
 </style>
