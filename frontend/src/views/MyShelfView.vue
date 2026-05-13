@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import {ref, onMounted, computed} from 'vue'
+import {useRouter} from 'vue-router'
 import api from '@/api'
+
 
 const router = useRouter()
 const user = computed(() => JSON.parse(localStorage.getItem('user') || 'null'))
@@ -11,10 +12,10 @@ const loading = ref(true)
 const activeTab = ref<'TO_READ' | 'READING' | 'FINISHED' | 'DNF'>('READING')
 
 const tabs = [
-  { key: 'READING', label: '📖 Currently Reading' },
-  { key: 'TO_READ', label: '🔖 Want to Read' },
-  { key: 'FINISHED', label: '✅ Finished' },
-  { key: 'DNF', label: '❌ Did Not Finish' },
+  {key: 'READING', label: '📖 Currently Reading'},
+  {key: 'TO_READ', label: '🔖 Want to Read'},
+  {key: 'FINISHED', label: '✅ Finished'},
+  {key: 'DNF', label: '❌ Did Not Finish'},
 ]
 
 const filtered = computed(() => shelf.value.filter(e => e.status === activeTab.value))
@@ -31,7 +32,7 @@ async function loadShelf() {
 
 async function updateStatus(entry: any, newStatus: string) {
   try {
-    const res = await api.put(`/reading-log/${entry.id}`, { status: newStatus })
+    const res = await api.put(`/reading-log/${entry.id}`, {status: newStatus})
     Object.assign(entry, res.data)
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update status')
@@ -40,7 +41,7 @@ async function updateStatus(entry: any, newStatus: string) {
 
 async function updatePages(entry: any) {
   try {
-    const res = await api.put(`/reading-log/${entry.id}`, { pagesRead: entry.pagesRead })
+    const res = await api.put(`/reading-log/${entry.id}`, {pagesRead: entry.pagesRead})
     Object.assign(entry, res.data)
   } catch (e: any) {
     alert(e.response?.data ?? 'Failed to update progress')
@@ -60,105 +61,274 @@ function progressPercent(entry: any) {
 }
 
 onMounted(() => {
-  if (!user.value) { router.push('/login'); return }
+  if (!user.value) {
+    router.push('/login');
+    return
+  }
   loadShelf()
 })
 </script>
 
 <template>
-  <div style="max-width:900px; margin:0 auto; padding:1.5rem;">
-    <h1 style="margin-bottom:1rem;">📚 My Shelf</h1>
+  <div class="my-shelf">
+    <h1>📚 My Shelf</h1>
 
     <!-- Tabs -->
-    <div style="display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+    <div class="shelf-tabs">
       <button
-        v-for="tab in tabs" :key="tab.key"
-        @click="activeTab = tab.key as any"
-        :style="{
-          padding: '8px 16px',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontWeight: activeTab === tab.key ? 'bold' : 'normal',
-          background: activeTab === tab.key ? '#2563eb' : '#e5e7eb',
-          color: activeTab === tab.key ? 'white' : '#374151',
-        }">
+          v-for="tab in tabs" :key="tab.key"
+          @click="activeTab = tab.key as any"
+          class="tab-btn"
+          :class="{ 'tab-btn--active': activeTab === tab.key }">
         {{ tab.label }}
-        <span style="margin-left:4px; opacity:0.8;">({{ shelf.filter(e => e.status === tab.key).length }})</span>
+        <span class="tab-count">({{ shelf.filter(e => e.status === tab.key).length }})</span>
       </button>
     </div>
 
-    <div v-if="loading" style="color:gray;">Loading your shelf…</div>
+    <div v-if="loading" class="shelf-loading">Loading your shelf…</div>
 
-    <div v-else-if="filtered.length === 0" style="color:gray; font-style:italic;">
+    <div v-else-if="filtered.length === 0" class="shelf-empty">
       No books here yet.
-      <RouterLink to="/books" style="color:#2563eb;"> Browse books →</RouterLink>
+      <RouterLink to="/books"> Browse books →</RouterLink>
     </div>
 
-    <div v-else style="display:flex; flex-direction:column; gap:1rem;">
-      <div
-        v-for="entry in filtered" :key="entry.id"
-        style="border:1px solid #e5e7eb; border-radius:10px; padding:1rem; background:white; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem;">
-          <div style="flex:1;">
-            <RouterLink :to="`/books/${entry.book?.id}`" style="font-size:1.1rem; font-weight:600; color:#1e3a5f; text-decoration:none;">
+    <div v-else class="shelf-list">
+      <div v-for="entry in filtered" :key="entry.id" class="shelf-item">
+        <div class="shelf-item-body">
+          <div class="shelf-item-info">
+            <RouterLink :to="`/books/${entry.book?.id}`" class="book-title-link">
               {{ entry.book?.title }}
             </RouterLink>
-            <div style="color:#6b7280; font-size:0.9rem; margin-top:2px;">
+            <div class="book-meta">
               <span v-if="entry.book?.author">
                 {{ entry.book.author.firstName }} {{ entry.book.author.lastName }}
               </span>
-              <span v-if="entry.book?.pageCount" style="margin-left:8px;">· {{ entry.book.pageCount }} pages</span>
+              <span v-if="entry.book?.pageCount" class="book-meta-pages">· {{ entry.book.pageCount }} pages</span>
             </div>
 
             <!-- Progress bar (reading) -->
-            <div v-if="entry.status === 'READING'" style="margin-top:10px;">
-              <div style="display:flex; align-items:center; gap:8px;">
+            <div v-if="entry.status === 'READING'" class="progress-section">
+              <div class="progress-row">
                 <input
-                  type="number" v-model.number="entry.pagesRead"
-                  :max="entry.book?.pageCount ?? 9999" min="0"
-                  @change="updatePages(entry)"
-                  style="width:70px; padding:4px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:0.9rem;" />
-                <span style="font-size:0.85rem; color:#6b7280;">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
-                <span style="font-size:0.85rem; font-weight:600; color:#2563eb;">{{ progressPercent(entry) }}%</span>
+                    type="number" v-model.number="entry.pagesRead"
+                    :max="entry.book?.pageCount ?? 9999" min="0"
+                    @change="updatePages(entry)"
+                    class="progress-input"/>
+                <span class="progress-text">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
+                <span class="progress-pct">{{ progressPercent(entry) }}%</span>
               </div>
-              <div style="margin-top:6px; height:6px; background:#e5e7eb; border-radius:3px; overflow:hidden;">
-                <div :style="{ width: progressPercent(entry) + '%', height:'100%', background:'#2563eb', transition:'width 0.3s' }"></div>
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" :style="{ width: progressPercent(entry) + '%' }"></div>
               </div>
             </div>
 
-            <div v-if="entry.startedAt" style="font-size:0.8rem; color:#9ca3af; margin-top:6px;">
+            <div v-if="entry.startedAt" class="shelf-dates">
               Started: {{ entry.startedAt }}
               <span v-if="entry.finishedAt"> · Finished: {{ entry.finishedAt }}</span>
             </div>
           </div>
 
           <!-- Actions -->
-          <div style="display:flex; flex-direction:column; gap:6px; min-width:140px;">
+          <div class="shelf-actions">
             <select
-              :value="entry.status"
-              @change="updateStatus(entry, ($event.target as HTMLSelectElement).value)"
-              style="padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:0.85rem; cursor:pointer;">
+                :value="entry.status"
+                @change="updateStatus(entry, ($event.target as HTMLSelectElement).value)"
+                class="status-select">
               <option value="TO_READ">🔖 Want to Read</option>
               <option value="READING">📖 Reading</option>
               <option value="FINISHED">✅ Finished</option>
               <option value="DNF">❌ Did Not Finish</option>
             </select>
 
-            <RouterLink :to="`/journal?readingLogId=${entry.id}`"
-              style="padding:6px 10px; background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0; border-radius:6px; text-decoration:none; font-size:0.85rem; text-align:center;">
+            <RouterLink :to="`/journal?readingLogId=${entry.id}`" class="activity-link">
               📖 Activity
             </RouterLink>
 
-            <button @click="removeEntry(entry)"
-              style="padding:6px 10px; background:#fef2f2; color:#dc2626; border:1px solid #fecaca; border-radius:6px; font-size:0.85rem; cursor:pointer;">
-              🗑️ Remove
-            </button>
+            <button @click="removeEntry(entry)" class="btn-remove">🗑️ Remove</button>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.my-shelf {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.my-shelf h1 {
+  margin-bottom: 1rem;
+}
+
+.shelf-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: normal;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.tab-btn--active {
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+}
+
+.tab-count {
+  margin-left: 4px;
+  opacity: 0.8;
+}
+
+.shelf-loading {
+  color: gray;
+}
+
+.shelf-empty {
+  color: gray;
+  font-style: italic;
+}
+
+.shelf-empty a {
+  color: #2563eb;
+}
+
+.shelf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.shelf-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 1rem;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.shelf-item-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.shelf-item-info {
+  flex: 1;
+}
+
+.book-title-link {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  text-decoration: none;
+}
+
+.book-meta {
+  color: #6b7280;
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+
+.book-meta-pages {
+  margin-left: 8px;
+}
+
+.progress-section {
+  margin-top: 10px;
+}
+
+.progress-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-input {
+  width: 70px;
+  padding: 4px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.progress-pct {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.progress-bar-bg {
+  margin-top: 6px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.3s;
+}
+
+.shelf-dates {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 6px;
+}
+
+.shelf-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 140px;
+}
+
+.status-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.activity-link {
+  padding: 6px 10px;
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.btn-remove {
+  padding: 6px 10px;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+</style>
 

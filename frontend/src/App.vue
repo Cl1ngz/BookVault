@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import {computed, ref} from 'vue'
+import {useRouter} from 'vue-router'
 
 const router = useRouter()
 
@@ -26,6 +26,7 @@ function handleGlobalClick(e: MouseEvent) {
     dropdownOpen.value = false
   }
 }
+
 document.addEventListener('click', handleGlobalClick)
 
 function logout() {
@@ -41,46 +42,37 @@ window.addEventListener('storage', () => {
 </script>
 
 <template>
-  <nav style="display:flex; align-items:center; gap:0.75rem; padding:0.6rem 1rem; background:#1e3a5f; color:white;">
-    <RouterLink to="/" style="color:white; text-decoration:none; font-weight:700; font-size:1.05rem;">📚 BookVault</RouterLink>
-    <span style="color:#aaa;">|</span>
-    <RouterLink to="/books" style="color:white; text-decoration:none;">Books</RouterLink>
-    <span style="color:#aaa;">|</span>
-    <RouterLink to="/authors" style="color:white; text-decoration:none;">Authors</RouterLink>
-    <span style="color:#aaa;">|</span>
-    <RouterLink to="/series" style="color:white; text-decoration:none;">Series</RouterLink>
+  <nav class="app-nav">
+    <RouterLink to="/" class="nav-brand">📚 BookVault</RouterLink>
+    <span class="nav-sep">|</span>
+    <RouterLink to="/books" class="nav-link">Books</RouterLink>
+    <span class="nav-sep">|</span>
+    <RouterLink to="/authors" class="nav-link">Authors</RouterLink>
+    <span class="nav-sep">|</span>
+    <RouterLink to="/series" class="nav-link">Series</RouterLink>
 
     <template v-if="isModerator">
-      <span style="color:#aaa;">|</span>
-      <RouterLink to="/moderator" style="color:#fbbf24; text-decoration:none;">🛡️ Moderator</RouterLink>
+      <span class="nav-sep">|</span>
+      <RouterLink to="/moderator" class="nav-link nav-link--mod">️ Moderator</RouterLink>
     </template>
 
-    <span style="flex:1;"></span>
+    <span class="nav-spacer"></span>
 
     <template v-if="isLoggedIn">
-      <!-- Username button that opens dropdown -->
-      <div id="user-menu" style="position:relative;">
-        <button
-          @click.stop="toggleDropdown"
-          style="padding:4px 12px; background:transparent; color:white; border:1px solid rgba(255,255,255,0.3); border-radius:6px; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:6px;">
-          👤 {{ user.username }}
-          <span style="font-size:0.7rem; opacity:0.7;">{{ dropdownOpen ? '▲' : '▼' }}</span>
+      <div id="user-menu" class="user-menu">
+        <button @click.stop="toggleDropdown" class="user-menu-btn">
+          {{ user.username }}
+          <span class="user-menu-caret">{{ dropdownOpen ? '▲' : '▼' }}</span>
         </button>
 
-        <!-- Dropdown menu -->
-        <div
-          v-if="dropdownOpen"
-          style="position:absolute; right:0; top:calc(100% + 6px); background:white; border:1px solid #e5e7eb; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.15); min-width:170px; z-index:100; overflow:hidden;">
-          <RouterLink to="/my-shelf" @click="closeDropdown"
-            style="display:flex; align-items:center; gap:8px; padding:10px 16px; color:#1e3a5f; text-decoration:none; font-size:0.9rem; border-bottom:1px solid #f3f4f6;">
+        <div v-if="dropdownOpen" class="dropdown">
+          <RouterLink to="/my-shelf" @click="closeDropdown" class="dropdown-item">
             📚 My Shelf
           </RouterLink>
-          <RouterLink to="/dashboard" @click="closeDropdown"
-            style="display:flex; align-items:center; gap:8px; padding:10px 16px; color:#1e3a5f; text-decoration:none; font-size:0.9rem; border-bottom:1px solid #f3f4f6;">
+          <RouterLink to="/dashboard" @click="closeDropdown" class="dropdown-item">
             📊 Dashboard
           </RouterLink>
-          <button @click="logout"
-            style="width:100%; padding:10px 16px; background:none; border:none; color:#dc2626; font-size:0.9rem; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px;">
+          <button @click="logout" class="dropdown-item dropdown-item--logout">
             🚪 Logout
           </button>
         </div>
@@ -88,15 +80,118 @@ window.addEventListener('storage', () => {
     </template>
 
     <template v-else>
-      <RouterLink to="/login"
-        style="padding:4px 14px; background:#2563eb; color:white; border-radius:6px; text-decoration:none; font-size:0.9rem;">
-        Login
-      </RouterLink>
-      <RouterLink to="/register"
-        style="padding:4px 14px; background:#16a34a; color:white; border-radius:6px; text-decoration:none; font-size:0.9rem;">
-        Register
-      </RouterLink>
+      <RouterLink to="/login" class="nav-btn nav-btn--login">Login</RouterLink>
+      <RouterLink to="/register" class="nav-btn nav-btn--register">Register</RouterLink>
     </template>
   </nav>
-  <RouterView />
+  <RouterView/>
 </template>
+
+<style scoped>
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #1e3a5f;
+  color: white;
+}
+
+.nav-brand {
+  color: white;
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.nav-sep {
+  color: #aaa;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+}
+
+.nav-link--mod {
+  color: #fbbf24;
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+/* ── User menu ───────────────────────────────────────────────── */
+.user-menu {
+  position: relative;
+}
+
+.user-menu-btn {
+  padding: 4px 12px;
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-menu-caret {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 170px;
+  z-index: 100;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #1e3a5f;
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dropdown-item--logout {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: none;
+  color: #dc2626;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ── Auth buttons ────────────────────────────────────────────── */
+.nav-btn {
+  padding: 4px 14px;
+  color: white;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.nav-btn--login {
+  background: #2563eb;
+}
+
+.nav-btn--register {
+  background: #16a34a;
+}
+</style>

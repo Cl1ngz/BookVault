@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import {ref, onMounted} from 'vue'
 import api from '@/api'
+
 
 const authors = ref<any[]>([])
 
@@ -14,7 +15,7 @@ onMounted(async () => {
   <div>
     <h1>Authors</h1>
     <ul>
-      <li v-for="a in authors" :key="a.id" style="margin-bottom:6px;">
+      <li v-for="a in authors" :key="a.id" class="list-item-spaced">
         <RouterLink :to="`/authors/${a.id}`">
           <strong>{{ a.firstName }} {{ a.lastName }}</strong>
         </RouterLink>
@@ -23,3 +24,10 @@ onMounted(async () => {
     </ul>
   </div>
 </template>
+
+<style scoped>
+.list-item-spaced {
+  margin-bottom: 6px;
+}
+</style>
+

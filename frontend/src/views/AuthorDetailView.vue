@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import {ref, onMounted, computed} from 'vue'
+import {useRoute} from 'vue-router'
 import api from '@/api'
+
 
 const route = useRoute()
 const author = ref<any>(null)
@@ -34,47 +35,42 @@ const booksBySeries = computed(() => {
 </script>
 
 <template>
-  <div style="max-width:800px; margin:0 auto; padding:1rem;">
+  <div class="author-detail">
     <RouterLink to="/authors">← Back to Authors</RouterLink>
 
-    <div v-if="error" style="color:red; margin-top:1rem;">{{ error }}</div>
+    <div v-if="error" class="author-error">{{ error }}</div>
 
-    <div v-else-if="author" style="margin-top:1rem;">
-      <!-- Author profile -->
+    <div v-else-if="author" class="author-content">
       <h1>✍️ {{ author.firstName }} {{ author.lastName }}</h1>
       <p v-if="author.nationality"><strong>Nationality:</strong> {{ author.nationality }}</p>
       <p v-if="author.birthDate"><strong>Born:</strong> {{ author.birthDate }}</p>
-      <div v-if="author.biography"
-           style="background:#f9fafb; border-left:4px solid #2563eb; padding:12px 16px; border-radius:4px; margin:1rem 0;">
+      <div v-if="author.biography" class="author-biography">
         <strong>Biography</strong>
-        <p style="margin:8px 0 0; color:#374151;">{{ author.biography }}</p>
+        <p>{{ author.biography }}</p>
       </div>
 
-      <!-- Books -->
-      <h2 style="margin-top:1.5rem;">Books ({{ books.length }})</h2>
-      <p v-if="books.length === 0" style="color:gray;">No books found for this author.</p>
+      <h2 class="books-heading">Books ({{ books.length }})</h2>
+      <p v-if="books.length === 0" class="no-books">No books found for this author.</p>
 
       <div v-else>
-        <!-- Books belonging to a series -->
         <template v-for="[key, seriesBooks] in booksBySeries" :key="key">
-          <div style="margin-bottom:1.5rem;">
-            <h3 v-if="key !== 'standalone'" style="color:#1e3a5f;">
+          <div class="series-group">
+            <h3 v-if="key !== 'standalone'" class="series-title">
               📚
               <RouterLink :to="`/series/${seriesBooks[0].series.id}`">
                 {{ seriesBooks[0].series.name }}
               </RouterLink>
             </h3>
-            <h3 v-else style="color:#6b7280;">📖 Standalone books</h3>
+            <h3 v-else class="standalone-title">📖 Standalone books</h3>
 
-            <ul style="list-style:none; padding:0;">
-              <li v-for="book in seriesBooks" :key="book.id"
-                  style="padding:10px; border:1px solid #e5e7eb; border-radius:6px; margin-bottom:6px;">
+            <ul class="books-list">
+              <li v-for="book in seriesBooks" :key="book.id" class="book-item">
                 <RouterLink :to="`/books/${book.id}`"><strong>{{ book.title }}</strong></RouterLink>
                 <span v-if="book.publicationYear"> · {{ book.publicationYear }}</span>
                 <span v-if="book.pageCount"> · {{ book.pageCount }} pages</span>
                 <span v-if="book.mood"> · 🎭 {{ book.mood }}</span>
                 <br/>
-                <small style="color:#6b7280;">
+                <small class="book-genres">
                   {{ book.genres?.map((g: any) => g.name).join(', ') }}
                 </small>
               </li>
@@ -87,4 +83,70 @@ const booksBySeries = computed(() => {
     <p v-else>Loading...</p>
   </div>
 </template>
+
+<style scoped>
+.author-detail {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.author-content {
+  margin-top: 1rem;
+}
+
+.author-error {
+  color: red;
+  margin-top: 1rem;
+}
+
+.author-biography {
+  background: #f9fafb;
+  border-left: 4px solid #2563eb;
+  padding: 12px 16px;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.author-biography p {
+  margin: 8px 0 0;
+  color: #374151;
+}
+
+.books-heading {
+  margin-top: 1.5rem;
+}
+
+.no-books {
+  color: gray;
+}
+
+.series-group {
+  margin-bottom: 1.5rem;
+}
+
+.series-title {
+  color: #1e3a5f;
+}
+
+.standalone-title {
+  color: #6b7280;
+}
+
+.books-list {
+  list-style: none;
+  padding: 0;
+}
+
+.book-item {
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.book-genres {
+  color: #6b7280;
+}
+</style>
 
