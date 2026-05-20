@@ -35,13 +35,30 @@ public class ReaderController {
 
     // Any logged-in user can fetch their own profile by ID
     @GetMapping("/{id}")
-    public ResponseEntity<?> getReaderById(@PathVariable Integer id) {
+    public ResponseEntity<?> getReaderById(
+            @PathVariable Integer id,
+            org.springframework.security.core.Authentication authentication
+    ) {
         return readerRepository.findById(id)
-                .map(r -> ResponseEntity.ok(Map.of(
-                        "id", r.getId(),
-                        "username", r.getUsername(),
-                        "nationality", r.getNationality() != null ? r.getNationality() : ""
-                )))
+                .map(r -> {
+                    boolean isOwner = r.getEmail() != null
+                            && r.getEmail().equalsIgnoreCase(authentication.getName());
+
+                    boolean isModerator = authentication.getAuthorities().stream()
+                            .anyMatch(a -> a.getAuthority().equals("ROLE_MODERATOR"));
+
+                    if (!isOwner && !isModerator) {
+                        return ResponseEntity.status(403).body("You can only access your own profile");
+                    }
+
+                    return ResponseEntity.ok(Map.of(
+                            "id", r.getId(),
+                            "username", r.getUsername(),
+                            "email", r.getEmail() != null ? r.getEmail() : "",
+                            "nationality", r.getNationality() != null ? r.getNationality() : "",
+                            "role", r.getRole() != null ? r.getRole() : "USER"
+                    ));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 }

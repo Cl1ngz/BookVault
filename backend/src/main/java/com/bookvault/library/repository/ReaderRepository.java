@@ -16,4 +16,5 @@ public interface ReaderRepository extends JpaRepository<Reader, Integer> {
 
     Optional<Reader> findByEmail(String email);
 
+    Optional<Reader> findByEmailIgnoreCase(String email);
 }

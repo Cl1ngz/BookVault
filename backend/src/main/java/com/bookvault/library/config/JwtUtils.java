@@ -1,11 +1,14 @@
 package com.bookvault.library.config;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -18,7 +21,7 @@ public class JwtUtils {
     private long expiration;
 
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(String email, Integer id, String username, String role) {
@@ -26,7 +29,7 @@ public class JwtUtils {
                 .subject(email)
                 .claim("id", id)
                 .claim("username", username)
-                .claim("role", role)
+                .claim("role", role != null ? role : "USER")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getKey())
@@ -34,21 +37,45 @@ public class JwtUtils {
     }
 
     public String extractEmail(String token) {
-        return Jwts.parser().verifyWith(getKey()).build()
-                .parseSignedClaims(token).getPayload().getSubject();
+        return extractClaims(token).getSubject();
+    }
+
+    public Integer extractId(String token) {
+        Object id = extractClaims(token).get("id");
+
+        if (id instanceof Integer) {
+            return (Integer) id;
+        }
+
+        if (id instanceof Number) {
+            return ((Number) id).intValue();
+        }
+
+        return null;
+    }
+
+    public String extractUsername(String token) {
+        return extractClaims(token).get("username", String.class);
     }
 
     public String extractRole(String token) {
-        return (String) Jwts.parser().verifyWith(getKey()).build()
-                .parseSignedClaims(token).getPayload().get("role");
+        return extractClaims(token).get("role", String.class);
     }
 
     public boolean isValid(String token) {
         try {
-            Jwts.parser().verifyWith(getKey()).build().parseSignedClaims(token);
+            extractClaims(token);
             return true;
-        } catch (JwtException e) {
+        } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    private Claims extractClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }
