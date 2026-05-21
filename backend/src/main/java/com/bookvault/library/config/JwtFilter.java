@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 @Component
 @RequiredArgsConstructor
@@ -31,21 +31,40 @@ public class JwtFilter extends OncePerRequestFilter {
 
         String header = request.getHeader("Authorization");
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            if (jwtUtils.isValid(token)) {
-                String email = jwtUtils.extractEmail(token);
-                String role = jwtUtils.extractRole(token);
-                readerRepository.findByEmail(email).ifPresent(reader -> {
-                    var authority = new SimpleGrantedAuthority("ROLE_" + (role != null ? role : "USER"));
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            User.withUsername(email).password("").authorities(authority).build(),
-                            null, List.of(authority)
-                    );
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                });
-            }
+        if (header == null || !header.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
         }
+
+        String token = header.substring(7);
+
+        if (!jwtUtils.isValid(token)) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String email = jwtUtils.extractEmail(token);
+
+        readerRepository.findByEmailIgnoreCase(email).ifPresent(reader ->  {
+            String role = reader.getRole() != null ? reader.getRole() : "USER";
+
+            SimpleGrantedAuthority authority =
+                    new SimpleGrantedAuthority("ROLE_" + role);
+
+            User userDetails = User.withUsername(reader.getEmail())
+                    .password(reader.getPasswordHash())
+                    .authorities(authority)
+                    .build();
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            List.of(authority)
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        });
 
         chain.doFilter(request, response);
     }

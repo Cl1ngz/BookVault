@@ -34,18 +34,24 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/", "/error").permitAll()
+
+                        .requestMatchers(
+                                "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs/**", "/webjars/**"
+                        ).permitAll()
+
+                        .requestMatchers("/api/v1/moderator/**").hasRole("MODERATOR")
+
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/genres/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/authors/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/series/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/reviews/**").permitAll()
-                        .requestMatchers("/api/v1/moderator/**").hasRole("MODERATOR")
-                        .requestMatchers(
-                                "/swagger-ui/**", "/swagger-ui.html",
-                                "/v3/api-docs/**", "/webjars/**"
-                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
