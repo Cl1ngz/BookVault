@@ -32,6 +32,7 @@ onMounted(async () => {
     <div v-else-if="series" class="series-content">
       <h1>📚 {{ series.name }}</h1>
       <p><strong>Volumes:</strong> {{ series.volumeCount }}</p>
+      <p v-if="series.description" class="series-description">{{ series.description }}</p>
       <p v-if="series.author">
         <strong>Author:</strong>
         <RouterLink :to="`/authors/${series.author.id}`">
@@ -82,5 +83,12 @@ onMounted(async () => {
 }
 
 .series-book-genres { color: #a89984; }
+
+.series-description {
+  color: #d5c4a1;
+  line-height: 1.6;
+  margin: 0.5rem 0 1rem;
+  white-space: pre-line;
+}
 </style>
 

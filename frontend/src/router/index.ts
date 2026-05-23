@@ -7,6 +7,7 @@ import AuthorDetailView from '@/views/AuthorDetailView.vue'
 import ReadersView from '@/views/ReadersView.vue'
 import SeriesView from '@/views/SeriesView.vue'
 import SeriesDetailView from '@/views/SeriesDetailView.vue'
+import PublisherDetailView from '@/views/PublisherDetailView.vue'
 import LoginView from '@/views/LoginView.vue'
 import RegisterView from '@/views/RegisterView.vue'
 import ModeratorView from '@/views/ModeratorView.vue'
@@ -30,6 +31,7 @@ export default createRouter({
         {path: '/readers', component: ReadersView},
         {path: '/series', component: SeriesView},
         {path: '/series/:id', component: SeriesDetailView},
+        {path: '/publishers/:id', component: PublisherDetailView},
         {path: '/login', component: LoginView},
         {path: '/register', component: RegisterView},
         {
