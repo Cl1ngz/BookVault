@@ -172,7 +172,9 @@ function renderStars(rating: number) {
           }}
         </RouterLink>
       </p>
-      <p v-if="book.publisher"><strong>Publisher:</strong> {{ book.publisher.name }}</p>
+      <p v-if="book.publisher"><strong>Publisher:</strong>
+        <RouterLink :to="`/publishers/${book.publisher.id}`">{{ book.publisher.name }}</RouterLink>
+      </p>
       <p v-if="book.series"><strong>Series:</strong>
         <RouterLink :to="`/series/${book.series.id}`">{{ book.series.name }}</RouterLink>
       </p>
