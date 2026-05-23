@@ -29,11 +29,11 @@ class ReviewReportControllerTest {
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired JwtUtils jwtUtils;
     @Autowired ReviewRepository reviewRepository;
-    @Autowired ReviewReportRepository reportRepository;  // ← ADDED
+    @Autowired ReviewReportRepository reportRepository;  
 
     private String token;
     private Integer reviewId;
-    private Integer readerId;  // ← ADDED
+    private Integer readerId;  
 
     @BeforeEach
     void setup() {
@@ -45,8 +45,8 @@ class ReviewReportControllerTest {
             r.setPasswordHash(passwordEncoder.encode("pass123"));
             return readerRepository.save(r);
         });
-        readerId = reader.getId();  // ← ADDED
-        token = jwtUtils.generateToken(reader.getEmail(), reader.getId(), reader.getUsername());
+        readerId = reader.getId();  
+        token = jwtUtils.generateToken(reader.getEmail(), reader.getId(), reader.getUsername(), reader.getRole());
 
         // Get any existing review ID
         reviewId = reviewRepository.findAll().stream()
@@ -54,7 +54,6 @@ class ReviewReportControllerTest {
                 .map(r -> r.getId())
                 .orElse(1);
 
-        // ← ADDED: delete any previous reports from this test reader on this review
         reportRepository.findByReview_Id(reviewId).stream()
                 .filter(rep -> rep.getReporterId().equals(readerId))
                 .forEach(reportRepository::delete);
