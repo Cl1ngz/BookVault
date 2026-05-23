@@ -24,6 +24,9 @@ public class Series extends BaseEntity {
     @Column(name = "liczba_tomow")
     private Short volumeCount;
 
+    @Column(name = "opis", columnDefinition = "TEXT")
+    private String description;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_autora")
     private Author author;

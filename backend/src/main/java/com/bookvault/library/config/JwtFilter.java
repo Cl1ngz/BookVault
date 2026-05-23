@@ -51,7 +51,7 @@ public class JwtFilter extends OncePerRequestFilter {
             SimpleGrantedAuthority authority =
                     new SimpleGrantedAuthority("ROLE_" + role);
 
-            User userDetails = User.withUsername(reader.getEmail())
+            User userDetails = (User) User.withUsername(reader.getEmail())
                     .password(reader.getPasswordHash())
                     .authorities(authority)
                     .build();

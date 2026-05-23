@@ -1,13 +1,12 @@
 package com.bookvault.library.controller;
 
+import com.bookvault.library.model.Book;
 import com.bookvault.library.model.Publisher;
+import com.bookvault.library.repository.BookRepository;
 import com.bookvault.library.repository.PublisherRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -17,6 +16,7 @@ import java.util.List;
 public class PublisherController {
 
     private final PublisherRepository publisherRepository;
+    private final BookRepository bookRepository;
 
     @GetMapping
     public ResponseEntity<List<Publisher>> getAllPublishers(
@@ -39,7 +39,19 @@ public class PublisherController {
             return ResponseEntity.ok(publisherRepository.findByFoundationYear(year));
         }
 
-        // 4. Domyślnie - zwróć wszystko
+        // 4. Domyślnie - zwrć wszystko
         return ResponseEntity.ok(publisherRepository.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Publisher> getPublisherById(@PathVariable Integer id) {
+        return publisherRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/books")
+    public ResponseEntity<List<Book>> getBooksByPublisher(@PathVariable Integer id) {
+        return ResponseEntity.ok(bookRepository.findByPublisher_Id(id));
     }
 }
