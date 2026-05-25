@@ -40,17 +40,6 @@ function toggleDir() {
   sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
 }
 
-onMounted(async () => {
-  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres')]
-  if (isLoggedIn.value) requests.push(api.get('/reading-log'))
-  const [booksRes, genresRes, shelfRes] = await Promise.all(requests)
-  allBooks.value = booksRes.data
-  allGenres.value = genresRes.data
-  if (shelfRes) {
-    shelfBookIds.value = new Set(shelfRes.data.map((e: any) => e.book?.id))
-  }
-})
-
 // ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 
@@ -215,36 +204,83 @@ function toggle(arr: string[], val: string) {
   const i = arr.indexOf(val);
   if (i === -1) arr.push(val); else arr.splice(i, 1)
 }
+
+onMounted(async () => {
+  document.title = 'Books — BookVault'
+  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres')]
+  if (isLoggedIn.value) requests.push(api.get('/reading-log'))
+  const [booksRes, genresRes, shelfRes] = await Promise.all(requests)
+  allBooks.value = booksRes.data
+  allGenres.value = genresRes.data
+  if (shelfRes) {
+    shelfBookIds.value = new Set(shelfRes.data.map((e: any) => e.book?.id))
+  }
+})
 </script>
 
 <template>
   <div class="books-view">
 
     <!-- Search bar -->
-    <div class="search-bar">
-      <input v-model="searchQuery" placeholder="Search by title, author or series…" class="search-input"/>
-      <button @click="filtersOpen = !filtersOpen"
-              class="btn-filters" :class="{ 'btn-filters--active': filtersOpen }">
-        🔍 Filters{{ activeFilterCount ? ` (${activeFilterCount})` : '' }}
+    <div class="search-bar" role="search">
+      <label for="book-search" class="visually-hidden">Search books</label>
+      <input
+        id="book-search"
+        v-model="searchQuery"
+        type="search"
+        placeholder="Search by title, author or series…"
+        class="search-input"
+        aria-label="Search by title, author or series"
+      />
+      <button
+        @click="filtersOpen = !filtersOpen"
+        class="btn-filters"
+        :class="{ 'btn-filters--active': filtersOpen }"
+        :aria-expanded="filtersOpen"
+        aria-controls="filter-panel"
+      >
+        <span aria-hidden="true">🔍</span>
+        Filters{{ activeFilterCount ? ` (${activeFilterCount})` : '' }}
       </button>
-      <button v-if="activeFilterCount" @click="clearAll" class="btn-clear-all">✕ Clear all</button>
+      <button
+        v-if="activeFilterCount"
+        @click="clearAll"
+        class="btn-clear-all"
+        aria-label="Clear all active filters"
+      >
+        <span aria-hidden="true">✕</span> Clear all
+      </button>
     </div>
 
     <!-- Filter panel -->
-    <div v-show="filtersOpen" class="filter-panel">
+    <div
+      v-show="filtersOpen"
+      id="filter-panel"
+      class="filter-panel"
+      role="region"
+      aria-label="Filter options"
+    >
 
       <!-- Mood — full width -->
       <div class="filter-section filter-section--full">
         <div class="filter-header">
-          <strong>🎭 Mood</strong>
-          <span class="filter-mode-label">
-            <label><input type="radio" v-model="moodMode" value="any"/> any</label>
-            <label><input type="radio" v-model="moodMode" value="all"/> all</label>
+          <strong id="mood-label"><span aria-hidden="true">🎭</span> Mood</strong>
+          <span class="filter-mode-label" role="group" aria-labelledby="mood-mode-label">
+            <span id="mood-mode-label" class="visually-hidden">Mood match mode</span>
+            <label><input type="radio" v-model="moodMode" value="any" aria-label="Match any mood"/> any</label>
+            <label><input type="radio" v-model="moodMode" value="all" aria-label="Match all moods"/> all</label>
           </span>
         </div>
-        <div class="chips">
-          <button v-for="m in MOODS" :key="m" @click="toggle(selectedMoods, m)"
-                  class="chip" :class="{ 'chip--active-blue': selectedMoods.includes(m) }">
+        <div class="chips" role="group" aria-labelledby="mood-label">
+          <button
+            v-for="m in MOODS"
+            :key="m"
+            @click="toggle(selectedMoods, m)"
+            class="chip"
+            :class="{ 'chip--active-blue': selectedMoods.includes(m) }"
+            :aria-pressed="selectedMoods.includes(m)"
+            :aria-label="`Filter by mood: ${m}`"
+          >
             {{ m }}
           </button>
         </div>
@@ -253,20 +289,36 @@ function toggle(arr: string[], val: string) {
       <!-- Pace + Type -->
       <div class="filter-section">
         <div class="pace-section">
-          <strong>⚡ Pace</strong>
-          <div class="pace-buttons">
-            <button v-for="p in ['Slow','Medium','Fast']" :key="p" @click="toggle(selectedPaces, p)"
-                    class="chip chip--md" :class="{ 'chip--active-purple': selectedPaces.includes(p) }">
+          <strong id="pace-label"><span aria-hidden="true">⚡</span> Pace</strong>
+          <div class="pace-buttons" role="group" aria-labelledby="pace-label">
+            <button
+              v-for="p in ['Slow','Medium','Fast']"
+              :key="p"
+              @click="toggle(selectedPaces, p)"
+              class="chip chip--md"
+              :class="{ 'chip--active-purple': selectedPaces.includes(p) }"
+              :aria-pressed="selectedPaces.includes(p)"
+              :aria-label="`Filter by pace: ${p}`"
+            >
               {{ p }}
             </button>
           </div>
-          <p class="pace-hint">Slow ≥500p · Medium 300–499p · Fast &lt;300p</p>
+          <p class="pace-hint" aria-label="Pace categories: Slow 500 or more pages, Medium 300 to 499 pages, Fast under 300 pages">
+            Slow ≥500p · Medium 300–499p · Fast &lt;300p
+          </p>
         </div>
         <div>
-          <strong>📂 Type</strong>
-          <div class="type-buttons">
-            <button v-for="t in ['Fiction','Nonfiction']" :key="t" @click="toggle(selectedTypes, t)"
-                    class="chip chip--md" :class="{ 'chip--active-green': selectedTypes.includes(t) }">
+          <strong id="type-label"><span aria-hidden="true">📂</span> Type</strong>
+          <div class="type-buttons" role="group" aria-labelledby="type-label">
+            <button
+              v-for="t in ['Fiction','Nonfiction']"
+              :key="t"
+              @click="toggle(selectedTypes, t)"
+              class="chip chip--md"
+              :class="{ 'chip--active-green': selectedTypes.includes(t) }"
+              :aria-pressed="selectedTypes.includes(t)"
+              :aria-label="`Filter by type: ${t}`"
+            >
               {{ t }}
             </button>
           </div>
@@ -276,24 +328,37 @@ function toggle(arr: string[], val: string) {
       <!-- Genres -->
       <div class="filter-section">
         <div class="filter-header">
-          <strong>🏷️ Genres</strong>
-          <span class="filter-mode-label">
-            Include:
-            <label><input type="radio" v-model="includeMode" value="any"/> any</label>
-            <label><input type="radio" v-model="includeMode" value="all"/> all</label>
+          <strong id="genres-label"><span aria-hidden="true">🏷️</span> Genres</strong>
+          <span class="filter-mode-label" role="group" aria-labelledby="include-mode-label">
+            <span id="include-mode-label">Include:</span>
+            <label><input type="radio" v-model="includeMode" value="any" aria-label="Include any of the selected genres"/> any</label>
+            <label><input type="radio" v-model="includeMode" value="all" aria-label="Include all of the selected genres"/> all</label>
           </span>
         </div>
-        <div class="genre-list">
+        <div class="genre-list" role="group" aria-labelledby="genres-label">
           <div v-for="g in allGenres" :key="g.id" class="genre-row">
-            <button @click="toggleInclude(g.name)"
-                    class="btn-genre" :class="{ 'btn-genre--include': includeGenres.includes(g.name) }">+</button>
-            <button @click="toggleExclude(g.name)"
-                    class="btn-genre" :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }">−</button>
-            <span class="genre-name"
-                  :class="{
-                    'genre-name--include': includeGenres.includes(g.name),
-                    'genre-name--exclude': excludeGenres.includes(g.name)
-                  }">
+            <button
+              @click="toggleInclude(g.name)"
+              class="btn-genre"
+              :class="{ 'btn-genre--include': includeGenres.includes(g.name) }"
+              :aria-pressed="includeGenres.includes(g.name)"
+              :aria-label="`Include genre: ${g.name}`"
+            >+</button>
+            <button
+              @click="toggleExclude(g.name)"
+              class="btn-genre"
+              :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }"
+              :aria-pressed="excludeGenres.includes(g.name)"
+              :aria-label="`Exclude genre: ${g.name}`"
+            >−</button>
+            <span
+              class="genre-name"
+              :class="{
+                'genre-name--include': includeGenres.includes(g.name),
+                'genre-name--exclude': excludeGenres.includes(g.name)
+              }"
+              aria-hidden="true"
+            >
               {{ g.name }}
             </span>
           </div>
@@ -303,39 +368,63 @@ function toggle(arr: string[], val: string) {
       <!-- Year + Date + Standalone -->
       <div class="filter-section">
         <div class="subsection">
-          <strong>📅 Publication Year</strong>
-          <div class="year-range">
-            <input v-model.number="yearFrom" type="number" placeholder="From" min="1000" max="2100" class="year-input"/>
-            <span class="year-sep">—</span>
-            <input v-model.number="yearTo" type="number" placeholder="To" min="1000" max="2100" class="year-input"/>
+          <strong id="year-label"><span aria-hidden="true">📅</span> Publication Year</strong>
+          <div class="year-range" role="group" aria-labelledby="year-label">
+            <label for="year-from" class="visually-hidden">From year</label>
+            <input
+              id="year-from"
+              v-model.number="yearFrom"
+              type="number"
+              placeholder="From"
+              min="1000"
+              max="2100"
+              class="year-input"
+              aria-label="Publication year from"
+            />
+            <span class="year-sep" aria-hidden="true">—</span>
+            <label for="year-to" class="visually-hidden">To year</label>
+            <input
+              id="year-to"
+              v-model.number="yearTo"
+              type="number"
+              placeholder="To"
+              min="1000"
+              max="2100"
+              class="year-input"
+              aria-label="Publication year to"
+            />
           </div>
         </div>
 
         <div class="subsection">
-          <strong>🗓️ Date Added</strong>
-          <div class="date-filter">
-            <label class="date-label">From
-              <input v-model="addedFrom" type="date" class="date-input"/>
+          <strong id="date-added-label"><span aria-hidden="true">🗓️</span> Date Added</strong>
+          <div class="date-filter" role="group" aria-labelledby="date-added-label">
+            <label class="date-label" for="added-from">From
+              <input id="added-from" v-model="addedFrom" type="date" class="date-input"/>
             </label>
-            <label class="date-label">To
-              <input v-model="addedTo" type="date" class="date-input"/>
+            <label class="date-label" for="added-to">To
+              <input id="added-to" v-model="addedTo" type="date" class="date-input"/>
             </label>
-            <button @click="addedFrom = new Date().toISOString().slice(0,10); addedTo = ''" class="btn-today">
-              📅 From today onwards
+            <button
+              @click="addedFrom = new Date().toISOString().slice(0,10); addedTo = ''"
+              class="btn-today"
+              aria-label="Set date added filter from today onwards"
+            >
+              <span aria-hidden="true">📅</span> From today onwards
             </button>
           </div>
         </div>
 
         <div>
-          <strong>📌 Other</strong>
-          <div class="other-options">
+          <strong id="other-label"><span aria-hidden="true">📌</span> Other</strong>
+          <div class="other-options" role="group" aria-labelledby="other-label">
             <label class="standalone-label">
-              <input type="checkbox" v-model="standaloneOnly"/>
+              <input type="checkbox" v-model="standaloneOnly" aria-label="Show only books not part of a series"/>
               Not part of a series
             </label>
             <label v-if="isLoggedIn" class="standalone-label">
-              <input type="checkbox" v-model="unreadOnly"/>
-              📖 Not on my shelf (unread)
+              <input type="checkbox" v-model="unreadOnly" aria-label="Show only books not on my shelf"/>
+              <span aria-hidden="true">📖</span> Not on my shelf (unread)
             </label>
           </div>
         </div>
@@ -344,44 +433,54 @@ function toggle(arr: string[], val: string) {
     </div>
 
     <!-- Sort bar -->
-    <div class="sort-bar">
-      <span class="sort-label">Sort by:</span>
-      <button v-for="opt in SORT_OPTIONS" :key="opt.value"
-              @click="sortBy = opt.value"
-              class="sort-btn" :class="{ 'sort-btn--active': sortBy === opt.value }">
+    <div class="sort-bar" role="group" aria-label="Sort books">
+      <span class="sort-label" id="sort-label">Sort by:</span>
+      <button
+        v-for="opt in SORT_OPTIONS"
+        :key="opt.value"
+        @click="sortBy = opt.value"
+        class="sort-btn"
+        :class="{ 'sort-btn--active': sortBy === opt.value }"
+        :aria-pressed="sortBy === opt.value"
+        :aria-label="`Sort by ${opt.label}`"
+      >
         {{ opt.label }}
       </button>
-      <button @click="toggleDir"
-              :title="sortDir === 'asc' ? 'Currently ascending — click for descending' : 'Currently descending — click for ascending'"
-              class="sort-dir-btn">
+      <button
+        @click="toggleDir"
+        :title="sortDir === 'asc' ? 'Currently ascending — click for descending' : 'Currently descending — click for ascending'"
+        :aria-label="sortDir === 'asc' ? 'Sort direction: ascending. Click for descending' : 'Sort direction: descending. Click for ascending'"
+        class="sort-dir-btn"
+      >
         {{ sortDir === 'asc' ? '↑ ASC' : '↓ DESC' }}
       </button>
     </div>
 
     <!-- Results -->
-    <p class="results-count">
+    <p class="results-count" role="status" aria-live="polite" aria-atomic="true">
       <strong>{{ filteredBooks.length }}</strong> book{{ filteredBooks.length !== 1 ? 's' : '' }} found
       <span v-if="activeFilterCount"> with {{ activeFilterCount }} active filter{{
           activeFilterCount !== 1 ? 's' : ''
         }}</span>
     </p>
 
-    <ul class="book-list">
+    <ul class="book-list" aria-label="Books list">
       <li v-for="book in filteredBooks" :key="book.id" class="book-list-item">
         <div class="book-info">
           <RouterLink :to="`/books/${book.id}`" class="book-title-link"><strong>{{ book.title }}</strong></RouterLink>
           <span v-if="book.author" class="book-meta">
-            — <RouterLink :to="`/authors/${book.author.id}`">{{ book.author.firstName }} {{
+            — <RouterLink :to="`/authors/${book.author.id}`" :aria-label="`Author: ${book.author.firstName} ${book.author.lastName}`">{{ book.author.firstName }} {{
               book.author.lastName
             }}</RouterLink>
           </span>
           <span v-if="book.series" class="book-meta">
-            · 📚 <RouterLink :to="`/series/${book.series.id}`">{{ book.series.name }}</RouterLink>
+            · <span aria-hidden="true">📚</span>
+            <RouterLink :to="`/series/${book.series.id}`" :aria-label="`Series: ${book.series.name}`">{{ book.series.name }}</RouterLink>
           </span>
           <br/>
           <small class="book-small">
             <span v-if="book.genres?.length">{{ book.genres.map((g: any) => g.name).join(', ') }}</span>
-            <span v-if="book.mood"> · 🎭 {{ book.mood }}</span>
+            <span v-if="book.mood"> · <span aria-hidden="true">🎭</span> {{ book.mood }}</span>
             <span v-if="book.pageCount"> · {{ book.pageCount }}p</span>
             <span v-if="book.publicationYear"> · {{ book.publicationYear }}</span>
           </small>
@@ -389,7 +488,7 @@ function toggle(arr: string[], val: string) {
       </li>
     </ul>
 
-    <p v-if="filteredBooks.length === 0 && allBooks.length > 0" class="no-results">
+    <p v-if="filteredBooks.length === 0 && allBooks.length > 0" class="no-results" role="status">
       No books match your filters.
       <button @click="clearAll" class="btn-clear-inline">Clear all filters</button>
     </p>
@@ -397,6 +496,19 @@ function toggle(arr: string[], val: string) {
 </template>
 
 <style scoped>
+/* Visually hidden utility (WCAG) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .books-view {
   max-width: 1100px;
   margin: 0 auto;

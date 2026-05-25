@@ -111,6 +111,7 @@ onMounted(async () => {
       loadReviews()
     ])
     book.value = bookRes.data
+    document.title = `${bookRes.data.title} — BookVault`
     await loadShelfEntry()
   } catch {
     error.value = 'Failed to load book.'
@@ -161,7 +162,7 @@ function renderStars(rating: number) {
 
 <template>
   <div class="book-detail">
-    <div v-if="error" class="error-msg">{{ error }}</div>
+    <div v-if="error" class="error-msg" role="alert">{{ error }}</div>
 
     <div v-else-if="book">
       <RouterLink to="/books">← Back to Books</RouterLink>
@@ -184,21 +185,21 @@ function renderStars(rating: number) {
       <p v-if="book.genres?.length"><strong>Genres:</strong> {{ book.genres.map((g: any) => g.name).join(', ') }}</p>
 
       <!-- Reading Status Section -->
-      <div v-if="user" class="reading-status-section">
-        <h3>📚 My Reading Status</h3>
+      <section v-if="user" class="reading-status-section" aria-label="My reading status">
+        <h3><span aria-hidden="true">📚</span> My Reading Status</h3>
 
         <!-- Not on shelf -->
         <div v-if="!shelfEntry" class="shelf-not-added">
           <p>This book isn't on your shelf yet.</p>
-          <div class="shelf-buttons">
+          <div class="shelf-buttons" role="group" aria-label="Add to shelf">
             <button @click="addToShelf('TO_READ')" :disabled="shelfLoading" class="btn btn-want-to-read">
-              🔖 Want to Read
+              <span aria-hidden="true">🔖</span> Want to Read
             </button>
             <button @click="addToShelf('READING')" :disabled="shelfLoading" class="btn btn-start-reading">
-              📖 Start Reading
+              <span aria-hidden="true">📖</span> Start Reading
             </button>
             <button @click="addToShelf('FINISHED')" :disabled="shelfLoading" class="btn btn-mark-finished">
-              ✅ Mark as Finished
+              <span aria-hidden="true">✅</span> Mark as Finished
             </button>
           </div>
         </div>
@@ -206,32 +207,59 @@ function renderStars(rating: number) {
         <!-- On shelf -->
         <div v-else>
           <div class="shelf-controls">
-            <select :value="shelfEntry.status" @change="updateShelfStatus(($event.target as HTMLSelectElement).value)"
-                    class="status-select">
+            <label for="shelf-status" class="visually-hidden">Reading status</label>
+            <select
+              id="shelf-status"
+              :value="shelfEntry.status"
+              @change="updateShelfStatus(($event.target as HTMLSelectElement).value)"
+              class="status-select"
+              aria-label="Update reading status"
+            >
               <option value="TO_READ">🔖 Want to Read</option>
               <option value="READING">📖 Reading</option>
               <option value="FINISHED">✅ Finished</option>
               <option value="DNF">❌ Did Not Finish</option>
             </select>
             <RouterLink :to="`/journal?readingLogId=${shelfEntry.id}`" class="journal-link">
-              📖 Activity Log
+              <span aria-hidden="true">📖</span> Activity Log
             </RouterLink>
           </div>
 
           <!-- Progress tracking when reading -->
           <div v-if="shelfEntry.status === 'READING' && book.pageCount" class="progress-section">
             <div class="progress-row">
-              <input type="number" v-model.number="draftPages"
-                     :max="book.pageCount" min="0"
-                     @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
-                     @input="draftPages = draftPages < 0 ? 0 : draftPages > book.pageCount ? book.pageCount : draftPages"
-                     class="progress-pages-input"/>
-              <span class="progress-info">/ {{ book.pageCount }} pages · <strong>{{
-                  progressPercent()
-                }}%</strong></span>
-              <button @click="updatePages()" class="btn-save-pages" :disabled="shelfLoading">Save</button>
+              <label :for="`pages-input-${shelfEntry.id}`" class="visually-hidden">
+                Pages read (out of {{ book.pageCount }})
+              </label>
+              <input
+                :id="`pages-input-${shelfEntry.id}`"
+                type="number"
+                v-model.number="draftPages"
+                :max="book.pageCount"
+                min="0"
+                :aria-label="`Pages read, enter a value between 0 and ${book.pageCount}`"
+                @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                @input="draftPages = draftPages < 0 ? 0 : draftPages > book.pageCount ? book.pageCount : draftPages"
+                class="progress-pages-input"
+              />
+              <span class="progress-info" aria-live="polite">
+                / {{ book.pageCount }} pages · <strong>{{ progressPercent() }}%</strong>
+              </span>
+              <button
+                @click="updatePages()"
+                class="btn-save-pages"
+                :disabled="shelfLoading"
+                aria-label="Save reading progress"
+              >Save</button>
             </div>
-            <div class="progress-bar-bg">
+            <div
+              class="progress-bar-bg"
+              role="progressbar"
+              :aria-valuenow="progressPercent()"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :aria-label="`Reading progress: ${progressPercent()}%`"
+            >
               <div class="progress-bar-fill" :style="{ width: progressPercent() + '%' }"></div>
             </div>
           </div>
@@ -242,27 +270,41 @@ function renderStars(rating: number) {
           </div>
         </div>
 
-        <p v-if="shelfMsg.text" class="shelf-msg" :class="shelfMsg.ok ? 'shelf-msg--ok' : 'shelf-msg--error'">
+        <p
+          v-if="shelfMsg.text"
+          class="shelf-msg"
+          :class="shelfMsg.ok ? 'shelf-msg--ok' : 'shelf-msg--error'"
+          role="status"
+          aria-live="polite"
+        >
           {{ shelfMsg.text }}
         </p>
-      </div>
+      </section>
 
       <!-- Reviews list -->
-      <h2 style="margin-top:1.5rem;">Reviews ({{ reviews.length }})</h2>
-      <ul v-if="reviews.length" class="reviews-list">
-        <li v-for="r in reviews" :key="r.id" class="review-item">
-          <span class="review-stars">{{ renderStars(r.rating) }}</span>
-          <strong class="review-rating">{{ r.rating.toFixed(2) }} / 5</strong>
-          <em class="review-author">({{ r.reader?.username }})</em>
-          <p v-if="r.content" class="review-content">{{ r.content }}</p>
-          <button @click="reportReview(r.id)" class="btn-report">🚩 Report</button>
-        </li>
-      </ul>
-      <p v-else style="color:gray;">No reviews yet. Be the first!</p>
+      <section aria-label="Reviews" style="margin-top:1.5rem;">
+        <h2>Reviews ({{ reviews.length }})</h2>
+        <ul v-if="reviews.length" class="reviews-list" aria-label="Book reviews">
+          <li v-for="r in reviews" :key="r.id" class="review-item">
+            <span class="review-stars" aria-hidden="true">{{ renderStars(r.rating) }}</span>
+            <strong class="review-rating">{{ r.rating.toFixed(2) }} / 5</strong>
+            <em class="review-author">({{ r.reader?.username }})</em>
+            <p v-if="r.content" class="review-content">{{ r.content }}</p>
+            <button
+              @click="reportReview(r.id)"
+              class="btn-report"
+              :aria-label="`Report review by ${r.reader?.username}`"
+            >
+              <span aria-hidden="true">🚩</span> Report
+            </button>
+          </li>
+        </ul>
+        <p v-else style="color:gray;">No reviews yet. Be the first!</p>
+      </section>
 
       <!-- Add review form -->
-      <div class="review-form">
-        <h3>✍️ Write a Review</h3>
+      <section class="review-form" aria-label="Write a review">
+        <h3><span aria-hidden="true">✍️</span> Write a Review</h3>
 
         <div v-if="!user" class="login-prompt">
           <RouterLink to="/login">Log in</RouterLink>
@@ -270,24 +312,40 @@ function renderStars(rating: number) {
         </div>
 
         <div v-else>
-          <label><strong>Rating:</strong></label><br/>
-          <select v-model="newRating" class="review-rating-select">
-            <option v-for="val in ratingOptions" :key="val" :value="val">
-              {{ val.toFixed(2) }} ★
-            </option>
-          </select>
-          <p class="review-stars-preview">
-            {{ renderStars(newRating) }} <strong>{{ newRating.toFixed(2) }} / 5</strong>
+          <div class="form-group">
+            <label for="review-rating"><strong>Rating:</strong></label>
+            <select id="review-rating" v-model="newRating" class="review-rating-select" aria-label="Select rating">
+              <option v-for="val in ratingOptions" :key="val" :value="val">
+                {{ val.toFixed(2) }} ★
+              </option>
+            </select>
+          </div>
+          <p class="review-stars-preview" aria-label="Rating preview: {{ newRating.toFixed(2) }} out of 5">
+            <span aria-hidden="true">{{ renderStars(newRating) }}</span>
+            <strong>{{ newRating.toFixed(2) }} / 5</strong>
           </p>
 
-          <label><strong>Comment (optional):</strong></label><br/>
-          <textarea v-model="newContent" rows="3" placeholder="Share your thoughts…"
-                    class="review-textarea"></textarea>
+          <div class="form-group">
+            <label for="review-content"><strong>Comment (optional):</strong></label>
+            <textarea
+              id="review-content"
+              v-model="newContent"
+              rows="3"
+              placeholder="Share your thoughts…"
+              class="review-textarea"
+              aria-label="Write your review comment"
+            ></textarea>
+          </div>
 
-          <p class="review-msg" :class="reviewMsg.ok ? 'review-msg--ok' : 'review-msg--error'">{{ reviewMsg.text }}</p>
+          <p
+            class="review-msg"
+            :class="reviewMsg.ok ? 'review-msg--ok' : 'review-msg--error'"
+            role="status"
+            aria-live="polite"
+          >{{ reviewMsg.text }}</p>
           <button @click="submitReview" class="btn-post">Post Review</button>
         </div>
-      </div>
+      </section>
     </div>
 
     <p v-else>Loading...</p>
@@ -306,6 +364,22 @@ function renderStars(rating: number) {
 
 <style scoped>
 /* ── BookDetailView ─────────────────────────────────────────── */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.form-group {
+  margin-bottom: 0.5rem;
+}
+
 .book-detail {
   max-width: 800px;
   margin: 0 auto;
@@ -413,6 +487,7 @@ function renderStars(rating: number) {
   color: #ebdbb2;
   -moz-appearance: textfield;
 }
+.progress-pages-input:focus-visible { outline: 3px solid #83a598; outline-offset: 1px; }
 .progress-pages-input::-webkit-outer-spin-button,
 .progress-pages-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
