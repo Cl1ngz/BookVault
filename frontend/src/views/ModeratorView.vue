@@ -18,6 +18,7 @@ const seriesList = ref<any[]>([])
 const genres = ref<any[]>([])
 
 onMounted(async () => {
+  document.title = 'Moderator Panel — BookVault'
   const [aRes, pRes, sRes, gRes] = await Promise.all([
     api.get('/authors'), api.get('/publishers'), api.get('/series'), api.get('/genres'),
   ])
@@ -214,145 +215,213 @@ async function deleteReview(reviewId: number) {
 
 <template>
   <div class="mod-panel">
-    <h1>🛡️ Moderator Panel</h1>
+    <h1><span aria-hidden="true">🛡️</span> Moderator Panel</h1>
 
     <!-- Tabs -->
-    <div class="tab-bar">
+    <div class="tab-bar" role="tablist" aria-label="Moderator sections">
       <button v-for="tab in [
-          {key:'books',    label:'📚 Add Book'},
-          {key:'editBook', label:'✏️ Edit Book'},
-          {key:'authors',  label:'✍️ Edit Author'},
-          {key:'series',   label:'📖 Series'},
-          {key:'reports',  label:'🚨 Reports'},
-          {key:'readers',  label:'👥 Readers'},
+          {key:'books',    label:'Add Book',    emoji:'📚'},
+          {key:'editBook', label:'Edit Book',   emoji:'✏️'},
+          {key:'authors',  label:'Edit Author', emoji:'✍️'},
+          {key:'series',   label:'Series',      emoji:'📖'},
+          {key:'reports',  label:'Reports',     emoji:'🚨'},
+          {key:'readers',  label:'Readers',     emoji:'👥'},
         ]" :key="tab.key"
               @click="activeTab = tab.key as any; tab.key === 'editBook' && loadBooksForEdit(); tab.key === 'readers' && loadReaders()"
               class="tab-btn"
-              :class="{ 'tab-btn--active': activeTab === tab.key }">
-        {{ tab.label }}
+              :class="{ 'tab-btn--active': activeTab === tab.key }"
+              role="tab"
+              :aria-selected="activeTab === tab.key"
+              :aria-controls="`mod-panel-${tab.key}`"
+              :id="`mod-tab-${tab.key}`"
+      >
+        <span aria-hidden="true">{{ tab.emoji }}</span> {{ tab.label }}
       </button>
     </div>
 
     <!-- ── Add Book tab ──────────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'books'">
-      <h2>📚 Add New Book</h2>
+    <section v-if="activeTab === 'books'" id="mod-panel-books" role="tabpanel" aria-labelledby="mod-tab-books">
+      <h2><span aria-hidden="true">📚</span> Add New Book</h2>
       <div class="form-grid">
-        <div><label>Title *</label><br/><input v-model="newBook.title" placeholder="Book title" class="form-input"/>
+        <div>
+          <label for="new-book-title">Title *</label>
+          <input id="new-book-title" v-model="newBook.title" placeholder="Book title" class="form-input"/>
         </div>
-        <div><label>Mood</label><br/><input v-model="newBook.mood" placeholder="e.g. dark" class="form-input"/></div>
-        <div><label>Author</label><br/>
-          <select v-model="newBook.authorId" class="form-select">
+        <div>
+          <label for="new-book-mood">Mood</label>
+          <input id="new-book-mood" v-model="newBook.mood" placeholder="e.g. dark" class="form-input"/>
+        </div>
+        <div>
+          <label for="new-book-author">Author</label>
+          <select id="new-book-author" v-model="newBook.authorId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
           </select>
         </div>
-        <div><label>Publisher</label><br/>
-          <select v-model="newBook.publisherId" class="form-select">
+        <div>
+          <label for="new-book-publisher">Publisher</label>
+          <select id="new-book-publisher" v-model="newBook.publisherId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="p in publishers" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </div>
-        <div><label>Series</label><br/>
-          <select v-model="newBook.seriesId" class="form-select">
+        <div>
+          <label for="new-book-series">Series</label>
+          <select id="new-book-series" v-model="newBook.seriesId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
         </div>
-        <div><label>Publication Year</label><br/><input v-model.number="newBook.publicationYear" type="number"
-                                                        class="form-input"/></div>
-        <div><label>Page Count</label><br/><input v-model.number="newBook.pageCount" type="number" class="form-input"/>
+        <div>
+          <label for="new-book-year">Publication Year</label>
+          <input id="new-book-year" v-model.number="newBook.publicationYear" type="number" class="form-input"/>
+        </div>
+        <div>
+          <label for="new-book-pages">Page Count</label>
+          <input id="new-book-pages" v-model.number="newBook.pageCount" type="number" class="form-input"/>
         </div>
       </div>
-      <div class="genres-row"><label>Genres</label><br/>
+      <fieldset class="genres-row">
+        <legend>Genres</legend>
         <span v-for="g in genres" :key="g.id" class="genre-check">
-          <label><input type="checkbox" :checked="newBook.genreIds.includes(g.id)"
-                        @change="toggleGenre(newBook.genreIds, g.id)"/> {{ g.name }}</label>
+          <label>
+            <input type="checkbox" :checked="newBook.genreIds.includes(g.id)"
+                   @change="toggleGenre(newBook.genreIds, g.id)"
+                   :aria-label="g.name"/> {{ g.name }}
+          </label>
         </span>
-      </div>
-      <p :class="bookMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'">{{ bookMsg.text }}</p>
+      </fieldset>
+      <p
+        v-if="bookMsg.text"
+        :class="bookMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'"
+        role="status"
+        aria-live="polite"
+      >{{ bookMsg.text }}</p>
       <button @click="addBook" class="btn-submit">Add Book</button>
     </section>
 
     <!-- ── Edit Book tab ─────────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'editBook'">
-      <h2>✏️ Edit Book</h2>
+    <section v-if="activeTab === 'editBook'" id="mod-panel-editBook" role="tabpanel" aria-labelledby="mod-tab-editBook">
+      <h2><span aria-hidden="true">✏️</span> Edit Book</h2>
       <div style="margin-bottom:1rem;">
-        <label>Select book to edit:</label><br/>
-        <select v-model="selectedBookId" @change="selectBookToEdit(selectedBookId!)" class="form-select--full">
+        <label for="edit-book-select">Select book to edit:</label>
+        <select id="edit-book-select" v-model="selectedBookId" @change="selectBookToEdit(selectedBookId!)" class="form-select--full">
           <option :value="null">-- choose a book --</option>
           <option v-for="b in allBooks" :key="b.id" :value="b.id">{{ b.title }}</option>
         </select>
       </div>
       <div v-if="editBook" class="form-grid">
-        <div><label>Title</label><br/><input v-model="editBook.title" class="form-input"/></div>
-        <div><label>Mood</label><br/><input v-model="editBook.mood" class="form-input"/></div>
-        <div><label>Author</label><br/>
-          <select v-model="editBook.authorId" class="form-select">
+        <div>
+          <label for="edit-book-title">Title</label>
+          <input id="edit-book-title" v-model="editBook.title" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-book-mood">Mood</label>
+          <input id="edit-book-mood" v-model="editBook.mood" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-book-author">Author</label>
+          <select id="edit-book-author" v-model="editBook.authorId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
           </select>
         </div>
-        <div><label>Publisher</label><br/>
-          <select v-model="editBook.publisherId" class="form-select">
+        <div>
+          <label for="edit-book-publisher">Publisher</label>
+          <select id="edit-book-publisher" v-model="editBook.publisherId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="p in publishers" :key="p.id" :value="p.id">{{ p.name }}</option>
           </select>
         </div>
-        <div><label>Series</label><br/>
-          <select v-model="editBook.seriesId" class="form-select">
+        <div>
+          <label for="edit-book-series">Series</label>
+          <select id="edit-book-series" v-model="editBook.seriesId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
         </div>
-        <div><label>Publication Year</label><br/><input v-model.number="editBook.publicationYear" type="number"
-                                                        class="form-input"/></div>
-        <div><label>Page Count</label><br/><input v-model.number="editBook.pageCount" type="number" class="form-input"/>
+        <div>
+          <label for="edit-book-year">Publication Year</label>
+          <input id="edit-book-year" v-model.number="editBook.publicationYear" type="number" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-book-pages">Page Count</label>
+          <input id="edit-book-pages" v-model.number="editBook.pageCount" type="number" class="form-input"/>
         </div>
       </div>
-      <div v-if="editBook" class="genres-row"><label>Genres</label><br/>
+      <fieldset v-if="editBook" class="genres-row">
+        <legend>Genres</legend>
         <span v-for="g in genres" :key="g.id" class="genre-check">
-          <label><input type="checkbox" :checked="editBook.genreIds.includes(g.id)"
-                        @change="toggleGenre(editBook.genreIds, g.id)"/> {{ g.name }}</label>
+          <label>
+            <input type="checkbox" :checked="editBook.genreIds.includes(g.id)"
+                   @change="toggleGenre(editBook.genreIds, g.id)"
+                   :aria-label="g.name"/> {{ g.name }}
+          </label>
         </span>
-      </div>
-      <p :class="editBookMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'">{{ editBookMsg.text }}</p>
+      </fieldset>
+      <p
+        v-if="editBookMsg.text"
+        :class="editBookMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'"
+        role="status"
+        aria-live="polite"
+      >{{ editBookMsg.text }}</p>
       <button v-if="editBook" @click="saveEditBook" class="btn-submit">Save Changes</button>
     </section>
 
     <!-- ── Edit Author tab ───────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'authors'">
-      <h2>✍️ Edit Author</h2>
+    <section v-if="activeTab === 'authors'" id="mod-panel-authors" role="tabpanel" aria-labelledby="mod-tab-authors">
+      <h2><span aria-hidden="true">✍️</span> Edit Author</h2>
       <div style="margin-bottom:1rem;">
-        <label>Select author:</label><br/>
-        <select v-model="selectedAuthorId" @change="selectAuthorToEdit(selectedAuthorId!)" class="form-select--full">
+        <label for="edit-author-select">Select author:</label>
+        <select id="edit-author-select" v-model="selectedAuthorId" @change="selectAuthorToEdit(selectedAuthorId!)" class="form-select--full">
           <option :value="null">-- choose an author --</option>
           <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
         </select>
       </div>
       <div v-if="editAuthor" class="form-grid">
-        <div><label>First Name</label><br/><input v-model="editAuthor.firstName" class="form-input"/></div>
-        <div><label>Last Name</label><br/><input v-model="editAuthor.lastName" class="form-input"/></div>
-        <div><label>Nationality</label><br/><input v-model="editAuthor.nationality" class="form-input"/></div>
+        <div>
+          <label for="edit-author-first">First Name</label>
+          <input id="edit-author-first" v-model="editAuthor.firstName" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-author-last">Last Name</label>
+          <input id="edit-author-last" v-model="editAuthor.lastName" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-author-nationality">Nationality</label>
+          <input id="edit-author-nationality" v-model="editAuthor.nationality" class="form-input"/>
+        </div>
       </div>
       <div v-if="editAuthor" style="margin-top:1rem;">
-        <label>Biography</label><br/>
-        <textarea v-model="editAuthor.biography" rows="6" class="bio-textarea"></textarea>
+        <label for="edit-author-bio">Biography</label>
+        <textarea id="edit-author-bio" v-model="editAuthor.biography" rows="6" class="bio-textarea"></textarea>
       </div>
-      <p :class="authorMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'">{{ authorMsg.text }}</p>
+      <p
+        v-if="authorMsg.text"
+        :class="authorMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'"
+        role="status"
+        aria-live="polite"
+      >{{ authorMsg.text }}</p>
       <button v-if="editAuthor" @click="saveEditAuthor" class="btn-submit">Save Author</button>
     </section>
 
     <!-- ── Series tab ────────────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'series'">
-      <h2>📖 Manage Series</h2>
+    <section v-if="activeTab === 'series'" id="mod-panel-series" role="tabpanel" aria-labelledby="mod-tab-series">
+      <h2><span aria-hidden="true">📖</span> Manage Series</h2>
 
       <h3>Add New Series</h3>
       <div class="form-grid form-grid--narrow">
-        <div><label>Name *</label><br/><input v-model="newSeries.name" class="form-input"/></div>
-        <div><label>Volume Count</label><br/><input v-model.number="newSeries.volumeCount" type="number"
-                                                    class="form-input"/></div>
-        <div><label>Author</label><br/>
-          <select v-model="newSeries.authorId" class="form-select">
+        <div>
+          <label for="new-series-name">Name *</label>
+          <input id="new-series-name" v-model="newSeries.name" class="form-input"/>
+        </div>
+        <div>
+          <label for="new-series-volumes">Volume Count</label>
+          <input id="new-series-volumes" v-model.number="newSeries.volumeCount" type="number" class="form-input"/>
+        </div>
+        <div>
+          <label for="new-series-author">Author</label>
+          <select id="new-series-author" v-model="newSeries.authorId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
           </select>
@@ -362,32 +431,45 @@ async function deleteReview(reviewId: number) {
 
       <h3 style="margin-top:1.5rem;">Edit Existing Series</h3>
       <div style="margin-bottom:1rem;">
-        <select v-model="selectedSeriesId" @change="selectSeriestoEdit(selectedSeriesId!)" class="form-select--full">
+        <label for="edit-series-select" class="visually-hidden">Select series to edit</label>
+        <select id="edit-series-select" v-model="selectedSeriesId" @change="selectSeriestoEdit(selectedSeriesId!)"
+                class="form-select--full" aria-label="Select series to edit">
           <option :value="null">-- choose a series --</option>
           <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
         </select>
       </div>
       <div v-if="editSeries" class="form-grid form-grid--narrow">
-        <div><label>Name</label><br/><input v-model="editSeries.name" class="form-input"/></div>
-        <div><label>Volume Count</label><br/><input v-model.number="editSeries.volumeCount" type="number"
-                                                    class="form-input"/></div>
-        <div><label>Author</label><br/>
-          <select v-model="editSeries.authorId" class="form-select">
+        <div>
+          <label for="edit-series-name">Name</label>
+          <input id="edit-series-name" v-model="editSeries.name" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-series-volumes">Volume Count</label>
+          <input id="edit-series-volumes" v-model.number="editSeries.volumeCount" type="number" class="form-input"/>
+        </div>
+        <div>
+          <label for="edit-series-author">Author</label>
+          <select id="edit-series-author" v-model="editSeries.authorId" class="form-select">
             <option :value="null">-- none --</option>
             <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
           </select>
         </div>
       </div>
-      <p :class="seriesMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'">{{ seriesMsg.text }}</p>
+      <p
+        v-if="seriesMsg.text"
+        :class="seriesMsg.ok ? 'mod-msg--ok' : 'mod-msg--error'"
+        role="status"
+        aria-live="polite"
+      >{{ seriesMsg.text }}</p>
       <button v-if="editSeries" @click="saveEditSeries" class="btn-submit">Save Series</button>
     </section>
 
     <!-- ── Reports tab ───────────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'reports'">
-      <h2>🚨 Flagged Reviews</h2>
+    <section v-if="activeTab === 'reports'" id="mod-panel-reports" role="tabpanel" aria-labelledby="mod-tab-reports">
+      <h2><span aria-hidden="true">🚨</span> Flagged Reviews</h2>
       <div class="filter-row">
-        <label>Filter: </label>
-        <select v-model="reportsFilter" @change="loadReports" class="filter-select">
+        <label for="reports-filter">Filter:</label>
+        <select id="reports-filter" v-model="reportsFilter" @change="loadReports" class="filter-select">
           <option value="pending">Pending</option>
           <option value="resolved">Resolved</option>
           <option value="dismissed">Dismissed</option>
@@ -396,14 +478,15 @@ async function deleteReview(reviewId: number) {
       </div>
       <p v-if="reports.length === 0" class="no-data">No reports found.</p>
       <table v-else class="mod-table">
+        <caption class="visually-hidden">Flagged reviews</caption>
         <thead>
         <tr class="table-head-row">
-          <th class="table-th">ID</th>
-          <th class="table-th">Review ID</th>
-          <th class="table-th">Reporter</th>
-          <th class="table-th">Reason</th>
-          <th class="table-th">Status</th>
-          <th class="table-th">Actions</th>
+          <th class="table-th" scope="col">ID</th>
+          <th class="table-th" scope="col">Review ID</th>
+          <th class="table-th" scope="col">Reporter</th>
+          <th class="table-th" scope="col">Reason</th>
+          <th class="table-th" scope="col">Status</th>
+          <th class="table-th" scope="col">Actions</th>
         </tr>
         </thead>
         <tbody>
@@ -418,9 +501,18 @@ async function deleteReview(reviewId: number) {
               }}</span>
           </td>
           <td class="table-td--nowrap">
-            <button v-if="r.status==='pending'" @click="resolveReport(r.id)" class="btn-resolve">✅ Resolve</button>
-            <button v-if="r.status==='pending'" @click="dismissReport(r.id)" class="btn-dismiss">❌ Dismiss</button>
-            <button @click="deleteReview(r.review?.id)" class="btn-delete-review">🗑️ Delete Review</button>
+            <button v-if="r.status==='pending'" @click="resolveReport(r.id)" class="btn-resolve"
+                    :aria-label="`Resolve report #${r.id}`">
+              <span aria-hidden="true">✅</span> Resolve
+            </button>
+            <button v-if="r.status==='pending'" @click="dismissReport(r.id)" class="btn-dismiss"
+                    :aria-label="`Dismiss report #${r.id}`">
+              <span aria-hidden="true">❌</span> Dismiss
+            </button>
+            <button @click="deleteReview(r.review?.id)" class="btn-delete-review"
+                    :aria-label="`Delete review #${r.review?.id}`">
+              <span aria-hidden="true">🗑️</span> Delete Review
+            </button>
           </td>
         </tr>
         </tbody>
@@ -428,22 +520,26 @@ async function deleteReview(reviewId: number) {
     </section>
 
     <!-- ── Readers tab ────────────────────────────────────────────────────── -->
-    <section v-if="activeTab === 'readers'">
-      <h2>👥 Registered Readers</h2>
-      <div class="readers-search">
-        <input v-model="readerSearch" placeholder="Search by username…" class="readers-search-input"/>
+    <section v-if="activeTab === 'readers'" id="mod-panel-readers" role="tabpanel" aria-labelledby="mod-tab-readers">
+      <h2><span aria-hidden="true">👥</span> Registered Readers</h2>
+      <div class="readers-search" role="search">
+        <label for="reader-search" class="visually-hidden">Search readers by username</label>
+        <input id="reader-search" v-model="readerSearch" type="search"
+               placeholder="Search by username…" class="readers-search-input"
+               aria-label="Search readers by username"/>
         <button @click="loadReaders" class="btn-search">Search</button>
         <button @click="readerSearch=''; loadReaders()" class="btn-clear">Clear</button>
       </div>
       <p v-if="readers.length === 0" class="no-data">No readers found.</p>
       <table v-else class="mod-table">
+        <caption class="visually-hidden">Registered readers</caption>
         <thead>
         <tr class="table-head-row">
-          <th class="table-th">ID</th>
-          <th class="table-th">Username</th>
-          <th class="table-th">Email</th>
-          <th class="table-th">Nationality</th>
-          <th class="table-th">Role</th>
+          <th class="table-th" scope="col">ID</th>
+          <th class="table-th" scope="col">Username</th>
+          <th class="table-th" scope="col">Email</th>
+          <th class="table-th" scope="col">Nationality</th>
+          <th class="table-th" scope="col">Role</th>
         </tr>
         </thead>
         <tbody>
@@ -464,6 +560,31 @@ async function deleteReview(reviewId: number) {
 </template>
 
 <style scoped>
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── fieldset used for genre groups ───────────────────────────── */
+fieldset.genres-row {
+  border: 1px solid #504945;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+fieldset.genres-row legend {
+  color: #a89984;
+  font-size: 0.9rem;
+  padding: 0 4px;
+}
+
 .mod-panel {
   max-width: 1000px;
   margin: 0 auto;
