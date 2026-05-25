@@ -63,6 +63,7 @@ async function deleteGoal(goal: any) {
 }
 
 onMounted(() => {
+  document.title = 'Reading Dashboard — BookVault'
   if (!user.value) {
     router.push('/login');
     return
@@ -73,42 +74,54 @@ onMounted(() => {
 
 <template>
   <div class="dashboard">
-    <h1>📊 Reading Dashboard</h1>
+    <h1><span aria-hidden="true">📊</span> Reading Dashboard</h1>
 
-    <div v-if="loading" class="dashboard-loading">Loading…</div>
+    <div v-if="loading" class="dashboard-loading" aria-live="polite">Loading…</div>
     <div v-else>
 
-      <!-- Stats cards — background/border/text color are data-driven, kept as :style -->
-      <div class="stats-grid">
+      <!-- Stats cards -->
+      <section class="stats-grid" aria-label="Reading statistics">
         <div v-for="card in [
-          { label: '📖 Reading',      value: stats.reading ?? 0,          color: '#32302f', border: '#458588', text: '#83a598' },
-          { label: '🔖 Want to Read', value: stats.toRead ?? 0,           color: '#32302f', border: '#d79921', text: '#fabd2f' },
-          { label: '✅ Finished',     value: stats.finished ?? 0,         color: '#32302f', border: '#98971a', text: '#b8bb26' },
-          { label: '❌ DNF',          value: stats.dnf ?? 0,              color: '#32302f', border: '#cc241d', text: '#fb4934' },
-          { label: '🗓️ This Year',   value: stats.finishedThisYear ?? 0, color: '#32302f', border: '#b16286', text: '#d3869b' },
+          { label: 'Reading',      emoji: '📖', value: stats.reading ?? 0,          color: '#32302f', border: '#458588', text: '#83a598' },
+          { label: 'Want to Read', emoji: '🔖', value: stats.toRead ?? 0,           color: '#32302f', border: '#d79921', text: '#fabd2f' },
+          { label: 'Finished',     emoji: '✅', value: stats.finished ?? 0,         color: '#32302f', border: '#98971a', text: '#b8bb26' },
+          { label: 'Did Not Finish', emoji: '❌', value: stats.dnf ?? 0,            color: '#32302f', border: '#cc241d', text: '#fb4934' },
+          { label: 'Finished This Year', emoji: '🗓️', value: stats.finishedThisYear ?? 0, color: '#32302f', border: '#b16286', text: '#d3869b' },
         ]" :key="card.label"
              class="stat-card"
              :style="{ background: card.color, border: `1px solid ${card.border}` }">
-          <div class="stat-value" :style="{ color: card.text }">{{ card.value }}</div>
-          <div class="stat-label">{{ card.label }}</div>
+          <div class="stat-value" :style="{ color: card.text }" aria-hidden="true">{{ card.value }}</div>
+          <div class="stat-label">
+            <span aria-hidden="true">{{ card.emoji }}</span>
+            {{ card.label }}: <span class="visually-hidden">{{ card.value }}</span>
+          </div>
         </div>
-      </div>
+      </section>
 
       <!-- Yearly goal widget -->
-      <div class="dash-card">
-        <h2>🎯 {{ currentYear }} Reading Goal</h2>
+      <section class="dash-card" aria-label="Reading goal">
+        <h2><span aria-hidden="true">🎯</span> {{ currentYear }} Reading Goal</h2>
 
         <div v-if="currentYearGoal">
           <div class="goal-progress-top">
             <span class="goal-target">
               <strong>{{ stats.finishedThisYear ?? 0 }}</strong> / <strong>{{ currentYearGoal.targetBooks }}</strong> books
             </span>
-            <span class="goal-pct">{{ goalProgress }}%</span>
+            <span class="goal-pct" aria-live="polite">{{ goalProgress }}%</span>
           </div>
-          <div class="goal-bar-bg">
+          <div
+            class="goal-bar-bg"
+            role="progressbar"
+            :aria-valuenow="goalProgress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            :aria-label="`${currentYear} reading goal: ${stats.finishedThisYear ?? 0} of ${currentYearGoal.targetBooks} books (${goalProgress}%)`"
+          >
             <div class="goal-bar-fill" :style="{ width: goalProgress + '%' }"></div>
           </div>
-          <p v-if="goalProgress >= 100" class="goal-achieved">🎉 Goal achieved!</p>
+          <p v-if="goalProgress >= 100" class="goal-achieved" role="status">
+            <span aria-hidden="true">🎉</span> Goal achieved!
+          </p>
         </div>
         <p v-else class="no-goal-msg">No goal set for {{ currentYear }}.</p>
 
@@ -117,30 +130,37 @@ onMounted(() => {
           <h3>Set a Goal</h3>
           <div class="goal-inputs">
             <div class="goal-input-group">
-              <label>Year</label><br/>
-              <input type="number" v-model.number="newGoalYear" :min="2020" :max="2030" class="goal-input"/>
+              <label for="goal-year">Year</label>
+              <input id="goal-year" type="number" v-model.number="newGoalYear" :min="2020" :max="2030" class="goal-input"/>
             </div>
             <div class="goal-input-group">
-              <label>Books Target</label><br/>
-              <input type="number" v-model.number="newGoalTarget" min="1" class="goal-input goal-input--wide"/>
+              <label for="goal-target">Books Target</label>
+              <input id="goal-target" type="number" v-model.number="newGoalTarget" min="1" class="goal-input goal-input--wide"/>
             </div>
             <button @click="saveGoal" class="btn-save-goal">Save Goal</button>
           </div>
-          <p v-if="goalMsg.text" class="goal-msg" :class="goalMsg.ok ? 'goal-msg--ok' : 'goal-msg--error'">
+          <p
+            v-if="goalMsg.text"
+            class="goal-msg"
+            :class="goalMsg.ok ? 'goal-msg--ok' : 'goal-msg--error'"
+            role="status"
+            aria-live="polite"
+          >
             {{ goalMsg.text }}
           </p>
         </div>
-      </div>
+      </section>
 
       <!-- Past goals -->
-      <div v-if="goals.length" class="dash-card">
-        <h2>📅 All Goals</h2>
+      <section v-if="goals.length" class="dash-card" aria-label="All reading goals">
+        <h2><span aria-hidden="true">📅</span> All Goals</h2>
         <table class="goals-table">
+          <caption class="visually-hidden">Reading goals by year</caption>
           <thead class="goals-thead">
           <tr>
-            <th class="goals-th">Year</th>
-            <th class="goals-th">Target</th>
-            <th class="goals-th"></th>
+            <th class="goals-th" scope="col">Year</th>
+            <th class="goals-th" scope="col">Target</th>
+            <th class="goals-th" scope="col"><span class="visually-hidden">Actions</span></th>
           </tr>
           </thead>
           <tbody class="goals-tbody">
@@ -148,17 +168,21 @@ onMounted(() => {
             <td class="goals-td goals-td--bold">{{ g.year }}</td>
             <td class="goals-td">{{ g.targetBooks }} books</td>
             <td class="goals-td">
-              <button @click="deleteGoal(g)" class="btn-delete-goal">Delete</button>
+              <button
+                @click="deleteGoal(g)"
+                class="btn-delete-goal"
+                :aria-label="`Delete reading goal for ${g.year}`"
+              >Delete</button>
             </td>
           </tr>
           </tbody>
         </table>
-      </div>
+      </section>
 
       <!-- Recent reading activity -->
-      <div class="dash-card">
+      <section class="dash-card" aria-label="Recent reading activity">
         <div class="activity-header">
-          <h2>📖 Recent Activity</h2>
+          <h2><span aria-hidden="true">📖</span> Recent Activity</h2>
           <RouterLink to="/journal" class="activity-link">View all →</RouterLink>
         </div>
         <p v-if="!recentJournal.length" class="activity-empty">No activity yet. Start reading!</p>
@@ -187,13 +211,25 @@ onMounted(() => {
             </template>
           </div>
         </div>
-      </div>
+      </section>
 
     </div>
   </div>
 </template>
 
 <style scoped>
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .dashboard {
   max-width: 900px;
   margin: 0 auto;

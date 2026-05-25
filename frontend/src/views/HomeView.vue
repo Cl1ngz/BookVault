@@ -19,6 +19,7 @@ const user = computed(() => {
 const isLoggedIn = computed(() => !!user.value?.token)
 
 onMounted(async () => {
+  document.title = 'BookVault — Your Personal Reading Tracker'
   try {
     const [booksRes, authorsRes, seriesRes, genresRes] = await Promise.all([
       api.get('/books'),
@@ -40,8 +41,8 @@ onMounted(async () => {
 <template>
   <div>
     <!-- Hero -->
-    <div class="hero">
-      <h1>📚 BookVault</h1>
+    <section class="hero" aria-label="BookVault hero">
+      <h1><span aria-hidden="true">📚</span> BookVault</h1>
       <p class="hero-subtitle">
         Your personal reading tracker. Discover books, track your progress, and keep a reading journal.
       </p>
@@ -55,10 +56,10 @@ onMounted(async () => {
           <RouterLink to="/my-shelf" class="hero-btn-secondary">My Shelf</RouterLink>
         </template>
       </div>
-    </div>
+    </section>
 
     <!-- Stats bar -->
-    <div class="stats-bar">
+    <section class="stats-bar" aria-label="Library statistics">
       <div class="stats-grid">
         <div>
           <div class="stat-value stat-value--navy">{{ totalBooks }}</div>
@@ -77,60 +78,66 @@ onMounted(async () => {
           <div class="stat-label">Genres</div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Features -->
-    <div class="features-section">
+    <section class="features-section" aria-label="Features">
       <h2>What you can do with BookVault</h2>
       <div class="features-grid">
         <div class="feature-card">
-          <div class="feature-icon">🔍</div>
+          <div class="feature-icon" aria-hidden="true">🔍</div>
           <h3>Discover Books</h3>
           <p>Browse the catalog with powerful filters — by genre, mood, pace, page count or publication year.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">📖</div>
+          <div class="feature-icon" aria-hidden="true">📖</div>
           <h3>Track Your Reading</h3>
           <p>Mark books as <em>To Read</em>, <em>Currently Reading</em>, <em>Finished</em> or <em>Did Not Finish</em>
             and log your page progress.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">📓</div>
+          <div class="feature-icon" aria-hidden="true">📓</div>
           <h3>Reading Journal</h3>
           <p>Your journal auto-fills with every status change and progress update — just like Storygraph.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">📊</div>
+          <div class="feature-icon" aria-hidden="true">📊</div>
           <h3>Reading Dashboard</h3>
           <p>See your yearly reading goal progress, total pages read, and recent activity at a glance.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">⭐</div>
+          <div class="feature-icon" aria-hidden="true">⭐</div>
           <h3>Reviews & Ratings</h3>
           <p>Leave half-star ratings and reviews for books you've read. See what other readers think.</p>
         </div>
         <div class="feature-card">
-          <div class="feature-icon">📚</div>
+          <div class="feature-icon" aria-hidden="true">📚</div>
           <h3>Series & Authors</h3>
           <p>Explore author pages and follow complete series from book one through to the final chapter.</p>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Recent books -->
-    <div v-if="recentBooks.length" class="recent-section">
+    <section v-if="recentBooks.length" class="recent-section" aria-label="Recently added books">
       <h2>Recently Added</h2>
       <div class="books-grid">
-        <RouterLink v-for="book in recentBooks" :key="book.id" :to="`/books/${book.id}`" class="book-card">
-          <div class="book-card-title">{{ book.title }}</div>
-          <div v-if="book.author" class="book-card-author">
+        <RouterLink
+          v-for="book in recentBooks"
+          :key="book.id"
+          :to="`/books/${book.id}`"
+          class="book-card"
+          :aria-label="`${book.title}${book.author ? ` by ${book.author.firstName} ${book.author.lastName}` : ''}`"
+        >
+          <div class="book-card-title" aria-hidden="true">{{ book.title }}</div>
+          <div v-if="book.author" class="book-card-author" aria-hidden="true">
             {{ book.author.firstName }} {{ book.author.lastName }}
           </div>
-          <div class="book-card-meta">
+          <div class="book-card-meta" aria-hidden="true">
             <span v-if="book.publicationYear">{{ book.publicationYear }}</span>
             <span v-if="book.pageCount"> · {{ book.pageCount }}p</span>
           </div>
-          <div v-if="book.genres?.length" class="book-card-genres">
+          <div v-if="book.genres?.length" class="book-card-genres" aria-hidden="true">
             <span v-for="g in book.genres.slice(0, 3)" :key="g.id" class="genre-tag">
               {{ g.name }}
             </span>
@@ -140,14 +147,14 @@ onMounted(async () => {
       <div class="view-all">
         <RouterLink to="/books">View all books →</RouterLink>
       </div>
-    </div>
+    </section>
 
     <!-- CTA for guests -->
-    <div v-if="!isLoggedIn" class="cta-section">
+    <section v-if="!isLoggedIn" class="cta-section" aria-label="Get started">
       <h2>Ready to start tracking?</h2>
       <p>Create a free account and start your reading journey today.</p>
       <RouterLink to="/register" class="btn-cta">Get Started Free</RouterLink>
-    </div>
+    </section>
   </div>
 </template>
 
