@@ -74,6 +74,40 @@
 }
 
 
+/* ── Skip navigation link (WCAG 2.4.1) ────────────────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  background: #fabd2f;
+  color: #1d2021;
+  padding: 0.5rem 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  z-index: 9999;
+  text-decoration: none;
+  border-radius: 0 0 6px 0;
+  transition: top 0.1s;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #1d2021;
+  outline-offset: 2px;
+}
+
+/* ── Global accessible focus ring (WCAG 2.4.7) ───────────────── */
+:focus-visible {
+  outline: 3px solid #83a598;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Remove default outline only when custom focus-visible is present */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 *,
 *::before,
 *::after {

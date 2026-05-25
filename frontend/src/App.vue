@@ -27,7 +27,15 @@ function handleGlobalClick(e: MouseEvent) {
   }
 }
 
+// Close dropdown on Escape key (WCAG 2.1.1)
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && dropdownOpen.value) {
+    dropdownOpen.value = false
+  }
+}
+
 document.addEventListener('click', handleGlobalClick)
+document.addEventListener('keydown', handleKeydown)
 
 function logout() {
   localStorage.removeItem('user')
@@ -42,38 +50,53 @@ window.addEventListener('storage', () => {
 </script>
 
 <template>
-  <nav class="app-nav">
-    <RouterLink to="/" class="nav-brand">📚 BookVault</RouterLink>
-    <span class="nav-sep">|</span>
+  <nav class="app-nav" aria-label="Main navigation">
+    <RouterLink to="/" class="nav-brand" aria-label="BookVault home">
+      <span aria-hidden="true">📚</span> BookVault
+    </RouterLink>
+    <span class="nav-sep" aria-hidden="true">|</span>
     <RouterLink to="/books" class="nav-link">Books</RouterLink>
-    <span class="nav-sep">|</span>
+    <span class="nav-sep" aria-hidden="true">|</span>
     <RouterLink to="/authors" class="nav-link">Authors</RouterLink>
-    <span class="nav-sep">|</span>
+    <span class="nav-sep" aria-hidden="true">|</span>
     <RouterLink to="/series" class="nav-link">Series</RouterLink>
 
     <template v-if="isModerator">
-      <span class="nav-sep">|</span>
-      <RouterLink to="/moderator" class="nav-link nav-link--mod">️ Moderator</RouterLink>
+      <span class="nav-sep" aria-hidden="true">|</span>
+      <RouterLink to="/moderator" class="nav-link nav-link--mod">
+        <span aria-hidden="true">️</span> Moderator
+      </RouterLink>
     </template>
 
-    <span class="nav-spacer"></span>
+    <span class="nav-spacer" aria-hidden="true"></span>
 
     <template v-if="isLoggedIn">
       <div id="user-menu" class="user-menu">
-        <button @click.stop="toggleDropdown" class="user-menu-btn">
+        <button
+          @click.stop="toggleDropdown"
+          class="user-menu-btn"
+          :aria-expanded="dropdownOpen"
+          aria-haspopup="menu"
+          :aria-label="`User menu for ${user.username}. ${dropdownOpen ? 'Menu open' : 'Menu closed'}`"
+        >
           {{ user.username }}
-          <span class="user-menu-caret">{{ dropdownOpen ? '▲' : '▼' }}</span>
+          <span class="user-menu-caret" aria-hidden="true">{{ dropdownOpen ? '▲' : '▼' }}</span>
         </button>
 
-        <div v-if="dropdownOpen" class="dropdown">
-          <RouterLink to="/my-shelf" @click="closeDropdown" class="dropdown-item">
-            📚 My Shelf
+        <div
+          v-if="dropdownOpen"
+          class="dropdown"
+          role="menu"
+          :aria-label="`${user.username} account menu`"
+        >
+          <RouterLink to="/my-shelf" @click="closeDropdown" class="dropdown-item" role="menuitem">
+            <span aria-hidden="true">📚</span> My Shelf
           </RouterLink>
-          <RouterLink to="/dashboard" @click="closeDropdown" class="dropdown-item">
-            📊 Dashboard
+          <RouterLink to="/dashboard" @click="closeDropdown" class="dropdown-item" role="menuitem">
+            <span aria-hidden="true">📊</span> Dashboard
           </RouterLink>
-          <button @click="logout" class="dropdown-item dropdown-item--logout">
-            🚪 Logout
+          <button @click="logout" class="dropdown-item dropdown-item--logout" role="menuitem">
+            <span aria-hidden="true">🚪</span> Logout
           </button>
         </div>
       </div>
@@ -84,7 +107,10 @@ window.addEventListener('storage', () => {
       <RouterLink to="/register" class="nav-btn nav-btn--register">Register</RouterLink>
     </template>
   </nav>
-  <RouterView/>
+
+  <main id="main-content" tabindex="-1">
+    <RouterView/>
+  </main>
 </template>
 
 <style scoped>
@@ -248,5 +274,25 @@ window.addEventListener('storage', () => {
 .nav-btn--register {
   background: #98971a;
   color: #ebdbb2;
+}
+
+.nav-link.router-link-active {
+  color: #fabd2f;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.nav-btn:focus-visible {
+  outline: 3px solid #fabd2f;
+  outline-offset: 2px;
+}
+
+main {
+  min-height: calc(100vh - 50px);
+}
+
+/* Ensure focus outline works on main for skip link */
+main:focus {
+  outline: none;
 }
 </style>
