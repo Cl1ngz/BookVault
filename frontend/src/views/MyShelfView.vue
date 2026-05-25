@@ -91,6 +91,7 @@ function progressPercent(entry: any) {
 }
 
 onMounted(() => {
+  document.title = 'My Shelf — BookVault'
   if (!user.value) {
     router.push('/login');
     return
@@ -101,83 +102,123 @@ onMounted(() => {
 
 <template>
   <div class="my-shelf">
-    <h1>📚 My Shelf</h1>
+    <h1><span aria-hidden="true">📚</span> My Shelf</h1>
 
     <!-- Tabs -->
-    <div class="shelf-tabs">
+    <div class="shelf-tabs" role="tablist" aria-label="Shelf categories">
       <button
           v-for="tab in tabs" :key="tab.key"
           @click="activeTab = tab.key as any"
           class="tab-btn"
-          :class="{ 'tab-btn--active': activeTab === tab.key }">
+          :class="{ 'tab-btn--active': activeTab === tab.key }"
+          role="tab"
+          :aria-selected="activeTab === tab.key"
+          :aria-controls="`shelf-panel-${tab.key}`"
+          :id="`shelf-tab-${tab.key}`"
+      >
         {{ tab.label }}
-        <span class="tab-count">({{ shelf.filter(e => e.status === tab.key).length }})</span>
+        <span class="tab-count" aria-label="count">({{ shelf.filter(e => e.status === tab.key).length }})</span>
       </button>
     </div>
 
-    <div v-if="loading" class="shelf-loading">Loading your shelf…</div>
+    <div
+      :id="`shelf-panel-${activeTab}`"
+      role="tabpanel"
+      :aria-labelledby="`shelf-tab-${activeTab}`"
+    >
+      <div v-if="loading" class="shelf-loading" aria-live="polite">Loading your shelf…</div>
 
-    <div v-else-if="filtered.length === 0" class="shelf-empty">
-      No books here yet.
-      <RouterLink to="/books"> Browse books →</RouterLink>
-    </div>
+      <div v-else-if="filtered.length === 0" class="shelf-empty">
+        No books here yet.
+        <RouterLink to="/books"> Browse books →</RouterLink>
+      </div>
 
-    <div v-else class="shelf-list">
-      <div v-for="entry in filtered" :key="entry.id" class="shelf-item">
-        <div class="shelf-item-body">
-          <div class="shelf-item-info">
-            <RouterLink :to="`/books/${entry.book?.id}`" class="book-title-link">
-              {{ entry.book?.title }}
-            </RouterLink>
-            <div class="book-meta">
-              <span v-if="entry.book?.author">
-                {{ entry.book.author.firstName }} {{ entry.book.author.lastName }}
-              </span>
-              <span v-if="entry.book?.pageCount" class="book-meta-pages">· {{ entry.book.pageCount }} pages</span>
-            </div>
-
-            <!-- Progress bar (reading) -->
-            <div v-if="entry.status === 'READING'" class="progress-section">
-              <div class="progress-row">
-                <input
-                    type="number" v-model.number="draftPages[entry.id]"
-                    :max="entry.book?.pageCount ?? 9999" min="0"
-                    @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
-                    @input="draftPages[entry.id] = draftPages[entry.id] < 0 ? 0 : draftPages[entry.id] > (entry.book?.pageCount ?? 9999) ? (entry.book?.pageCount ?? 9999) : draftPages[entry.id]"
-                    @vue:mounted="initDraft(entry)"
-                    class="progress-input"/>
-                <span class="progress-text">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
-                <span class="progress-pct">{{ progressPercent(entry) }}%</span>
-                <button @click="savePages(entry)" class="btn-save-pages">Save</button>
+      <div v-else class="shelf-list">
+        <div v-for="entry in filtered" :key="entry.id" class="shelf-item">
+          <div class="shelf-item-body">
+            <div class="shelf-item-info">
+              <RouterLink :to="`/books/${entry.book?.id}`" class="book-title-link">
+                {{ entry.book?.title }}
+              </RouterLink>
+              <div class="book-meta">
+                <span v-if="entry.book?.author">
+                  {{ entry.book.author.firstName }} {{ entry.book.author.lastName }}
+                </span>
+                <span v-if="entry.book?.pageCount" class="book-meta-pages">· {{ entry.book.pageCount }} pages</span>
               </div>
-              <div class="progress-bar-bg">
-                <div class="progress-bar-fill" :style="{ width: progressPercent(entry) + '%' }"></div>
+
+              <!-- Progress bar (reading) -->
+              <div v-if="entry.status === 'READING'" class="progress-section">
+                <div class="progress-row">
+                  <label :for="`pages-${entry.id}`" class="visually-hidden">
+                    Pages read (out of {{ entry.book?.pageCount ?? '?' }})
+                  </label>
+                  <input
+                      :id="`pages-${entry.id}`"
+                      type="number"
+                      v-model.number="draftPages[entry.id]"
+                      :max="entry.book?.pageCount ?? 9999" min="0"
+                      :aria-label="`Pages read for ${entry.book?.title}`"
+                      @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+                      @input="draftPages[entry.id] = draftPages[entry.id] < 0 ? 0 : draftPages[entry.id] > (entry.book?.pageCount ?? 9999) ? (entry.book?.pageCount ?? 9999) : draftPages[entry.id]"
+                      @vue:mounted="initDraft(entry)"
+                      class="progress-input"/>
+                  <span class="progress-text">/ {{ entry.book?.pageCount ?? '?' }} pages</span>
+                  <span class="progress-pct" aria-live="polite">{{ progressPercent(entry) }}%</span>
+                  <button
+                    @click="savePages(entry)"
+                    class="btn-save-pages"
+                    :aria-label="`Save reading progress for ${entry.book?.title}`"
+                  >Save</button>
+                </div>
+                <div
+                  class="progress-bar-bg"
+                  role="progressbar"
+                  :aria-valuenow="progressPercent(entry)"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  :aria-label="`Reading progress for ${entry.book?.title}: ${progressPercent(entry)}%`"
+                >
+                  <div class="progress-bar-fill" :style="{ width: progressPercent(entry) + '%' }"></div>
+                </div>
+              </div>
+
+              <div v-if="entry.startedAt" class="shelf-dates">
+                Started: {{ entry.startedAt }}
+                <span v-if="entry.finishedAt"> · Finished: {{ entry.finishedAt }}</span>
               </div>
             </div>
 
-            <div v-if="entry.startedAt" class="shelf-dates">
-              Started: {{ entry.startedAt }}
-              <span v-if="entry.finishedAt"> · Finished: {{ entry.finishedAt }}</span>
+            <!-- Actions -->
+            <div class="shelf-actions">
+              <label :for="`status-${entry.id}`" class="visually-hidden">
+                Reading status for {{ entry.book?.title }}
+              </label>
+              <select
+                  :id="`status-${entry.id}`"
+                  :value="entry.status"
+                  @change="updateStatus(entry, ($event.target as HTMLSelectElement).value)"
+                  class="status-select"
+                  :aria-label="`Reading status for ${entry.book?.title}`"
+              >
+                <option value="TO_READ">🔖 Want to Read</option>
+                <option value="READING">📖 Reading</option>
+                <option value="FINISHED">✅ Finished</option>
+                <option value="DNF">❌ Did Not Finish</option>
+              </select>
+
+              <RouterLink :to="`/journal?readingLogId=${entry.id}`" class="activity-link">
+                <span aria-hidden="true">📖</span> Activity
+              </RouterLink>
+
+              <button
+                @click="removeEntry(entry)"
+                class="btn-remove"
+                :aria-label="`Remove ${entry.book?.title} from shelf`"
+              >
+                <span aria-hidden="true">🗑️</span> Remove
+              </button>
             </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="shelf-actions">
-            <select
-                :value="entry.status"
-                @change="updateStatus(entry, ($event.target as HTMLSelectElement).value)"
-                class="status-select">
-              <option value="TO_READ">🔖 Want to Read</option>
-              <option value="READING">📖 Reading</option>
-              <option value="FINISHED">✅ Finished</option>
-              <option value="DNF">❌ Did Not Finish</option>
-            </select>
-
-            <RouterLink :to="`/journal?readingLogId=${entry.id}`" class="activity-link">
-              📖 Activity
-            </RouterLink>
-
-            <button @click="removeEntry(entry)" class="btn-remove">🗑️ Remove</button>
           </div>
         </div>
       </div>
@@ -196,6 +237,18 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .my-shelf {
   max-width: 900px;
   margin: 0 auto;
@@ -279,6 +332,7 @@ onMounted(() => {
   color: #ebdbb2;
   -moz-appearance: textfield;
 }
+.progress-input:focus-visible { outline: 3px solid #83a598; outline-offset: 1px; }
 .progress-input::-webkit-outer-spin-button,
 .progress-input::-webkit-inner-spin-button {
   -webkit-appearance: none;

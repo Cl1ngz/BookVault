@@ -97,6 +97,7 @@ async function deleteEntry(entry: any) {
 }
 
 onMounted(() => {
+  document.title = 'Reading Activity — BookVault'
   if (!user.value) {
     router.push('/login');
     return
@@ -109,26 +110,26 @@ onMounted(() => {
   <div class="journal-view">
     <div class="journal-header">
       <RouterLink to="/my-shelf">← My Shelf</RouterLink>
-      <h1>📖 Reading Activity</h1>
+      <h1><span aria-hidden="true">📖</span> Reading Activity</h1>
     </div>
 
-    <div v-if="loading" class="journal-loading">Loading activity…</div>
-    <div v-else-if="error" class="journal-error">{{ error }}</div>
+    <div v-if="loading" class="journal-loading" aria-live="polite">Loading activity…</div>
+    <div v-else-if="error" class="journal-error" role="alert">{{ error }}</div>
     <div v-else-if="!entries.length" class="journal-empty">
       No reading activity yet. Start reading a book to see your progress here!
     </div>
 
-    <div v-else>
+    <div v-else aria-label="Reading activity timeline">
       <div v-for="entry in entries" :key="entry.id" class="timeline-entry">
 
         <!-- Timeline line -->
-        <div class="timeline-dot-col">
+        <div class="timeline-dot-col" aria-hidden="true">
           <div class="timeline-dot"></div>
           <div class="timeline-line"></div>
         </div>
 
         <!-- Entry card -->
-        <div class="entry-card">
+        <article class="entry-card">
 
           <!-- Book title + author -->
           <RouterLink :to="`/books/${entry.readingLog?.book?.id}`" class="entry-book-link">
@@ -165,14 +166,19 @@ onMounted(() => {
 
                 <!-- PROGRESS_UPDATE -->
                 <template v-else>
-                  <div class="progress-pct">
+                  <div class="progress-pct" aria-label="Reading progress">
                     {{ getPercent(entry) != null ? getPercent(entry) + '%' : '—' }}
                   </div>
                   <div class="progress-pages">
                     {{ getSessionPages(entry) }} pages read
                     ({{ entry.cumulativePages }} pages out of {{ entry.readingLog?.book?.pageCount ?? '?' }})
                   </div>
-                  <div v-if="getPercent(entry) != null" class="mini-progress-bg">
+                  <div v-if="getPercent(entry) != null" class="mini-progress-bg"
+                       role="progressbar"
+                       :aria-valuenow="getPercent(entry)"
+                       aria-valuemin="0"
+                       aria-valuemax="100"
+                       :aria-label="`Reading progress: ${getPercent(entry)}%`">
                     <div class="mini-progress-fill" :style="{ width: getPercent(entry) + '%' }"></div>
                   </div>
                 </template>
@@ -180,8 +186,10 @@ onMounted(() => {
 
               <!-- Actions -->
               <div class="entry-actions">
-                <button @click="startEdit(entry)" class="btn-edit">Edit</button>
-                <button @click="deleteEntry(entry)" class="btn-delete">Delete</button>
+                <button @click="startEdit(entry)" class="btn-edit"
+                        :aria-label="`Edit entry for ${entry.readingLog?.book?.title} on ${entry.entryDate}`">Edit</button>
+                <button @click="deleteEntry(entry)" class="btn-delete"
+                        :aria-label="`Delete entry for ${entry.readingLog?.book?.title} on ${entry.entryDate}`">Delete</button>
               </div>
             </div>
           </div>
@@ -190,21 +198,21 @@ onMounted(() => {
           <div v-else>
             <div class="edit-row">
               <div>
-                <label class="edit-label">Date</label>
-                <input type="date" v-model="editDate" class="edit-input"/>
+                <label :for="`edit-date-${entry.id}`" class="edit-label">Date</label>
+                <input :id="`edit-date-${entry.id}`" type="date" v-model="editDate" class="edit-input"/>
               </div>
-              <div
-                  v-if="entry.entryType === 'PROGRESS_UPDATE' || entry.status === 'FINISHED' || entry.status === 'DNF'">
-                <label class="edit-label">Pages read (total)</label>
-                <input type="number" v-model.number="editPages" min="0"
+              <div v-if="entry.entryType === 'PROGRESS_UPDATE' || entry.status === 'FINISHED' || entry.status === 'DNF'">
+                <label :for="`edit-pages-${entry.id}`" class="edit-label">Pages read (total)</label>
+                <input :id="`edit-pages-${entry.id}`" type="number" v-model.number="editPages" min="0"
                        :max="entry.readingLog?.book?.pageCount ?? 9999"
-                       class="edit-input edit-input--pages"/>
+                       class="edit-input edit-input--pages"
+                       :aria-label="`Total pages read for ${entry.readingLog?.book?.title}`"/>
               </div>
               <button @click="saveEdit(entry)" class="btn-save">Save</button>
               <button @click="editingId = null" class="btn-cancel">Cancel</button>
             </div>
           </div>
-        </div>
+        </article>
       </div>
     </div>
   </div>
