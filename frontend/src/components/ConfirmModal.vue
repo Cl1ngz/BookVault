@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+
 defineProps<{
   title: string
   message: string
@@ -10,15 +12,64 @@ const emit = defineEmits<{
   (e: 'confirm'): void
   (e: 'cancel'): void
 }>()
+
+const dialogRef = ref<HTMLElement | null>(null)
+let previouslyFocused: HTMLElement | null = null
+
+// Focus trap: keep focus inside dialog (WCAG 2.1.2)
+function trapFocus(e: KeyboardEvent) {
+  if (!dialogRef.value) return
+  const focusable = Array.from(dialogRef.value.querySelectorAll<HTMLElement>(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  ))
+  if (focusable.length === 0) return
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (e.key === 'Tab') {
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus() }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus() }
+    }
+  }
+  if (e.key === 'Escape') {
+    emit('cancel')
+  }
+}
+
+onMounted(() => {
+  previouslyFocused = document.activeElement as HTMLElement
+  // Focus first button after mount
+  const btn = dialogRef.value?.querySelector<HTMLElement>('button')
+  btn?.focus()
+  document.addEventListener('keydown', trapFocus)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', trapFocus)
+  previouslyFocused?.focus()
+})
 </script>
 
 <template>
   <Teleport to="body">
-    <div class="modal-backdrop" @click.self="emit('cancel')">
-      <div class="modal-box">
-        <div class="modal-icon">🎉</div>
-        <h2 class="modal-title">{{ title }}</h2>
-        <p class="modal-message">{{ message }}</p>
+    <div
+      class="modal-backdrop"
+      role="presentation"
+      @click.self="emit('cancel')"
+      aria-hidden="false"
+    >
+      <div
+        ref="dialogRef"
+        class="modal-box"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-desc"
+      >
+        <div class="modal-icon" aria-hidden="true">🎉</div>
+        <h2 id="modal-title" class="modal-title">{{ title }}</h2>
+        <p id="modal-desc" class="modal-message">{{ message }}</p>
         <div class="modal-actions">
           <button class="modal-btn modal-btn--confirm" @click="emit('confirm')">
             {{ confirmLabel ?? 'Yes, mark as Finished' }}

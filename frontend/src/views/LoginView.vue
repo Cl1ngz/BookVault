@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref} from 'vue'
+import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/api'
 
@@ -8,6 +8,10 @@ const router = useRouter()
 const email = ref('')
 const password = ref('')
 const error = ref('')
+
+onMounted(() => {
+  document.title = 'Login — BookVault'
+})
 
 async function login() {
   try {
@@ -23,12 +27,43 @@ async function login() {
 
 <template>
   <div class="auth-page">
-    <div class="auth-card">
+    <div class="auth-card" role="region" aria-label="Login form">
       <h1>Login</h1>
-      <input v-model="email" type="email" placeholder="Email" class="auth-input"/><br/>
-      <input v-model="password" type="password" placeholder="Password" class="auth-input"/><br/>
-      <button @click="login" class="auth-btn">Login</button>
-      <p class="auth-error">{{ error }}</p>
+      <form @submit.prevent="login" novalidate>
+        <div class="form-group">
+          <label for="login-email" class="form-label">Email address</label>
+          <input
+            id="login-email"
+            v-model="email"
+            type="email"
+            autocomplete="email"
+            class="auth-input"
+            required
+            :aria-describedby="error ? 'login-error' : undefined"
+          />
+        </div>
+        <div class="form-group">
+          <label for="login-password" class="form-label">Password</label>
+          <input
+            id="login-password"
+            v-model="password"
+            type="password"
+            autocomplete="current-password"
+            class="auth-input"
+            required
+            :aria-describedby="error ? 'login-error' : undefined"
+          />
+        </div>
+        <button type="submit" class="auth-btn">Login</button>
+        <p
+          v-if="error"
+          id="login-error"
+          role="alert"
+          aria-live="assertive"
+          class="auth-error"
+        >{{ error }}</p>
+        <p v-else class="auth-error" aria-hidden="true"></p>
+      </form>
       <p class="auth-link">No account?
         <RouterLink to="/register">Register</RouterLink>
       </p>
@@ -59,10 +94,22 @@ async function login() {
   text-align: center;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.75rem;
+}
+
+.form-label {
+  font-size: 0.88rem;
+  color: #a89984;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
 .auth-input {
   width: 100%;
   padding: 10px 12px;
-  margin-bottom: 0.75rem;
   border: 1px solid #504945;
   border-radius: 8px;
   background: #32302f;
@@ -71,7 +118,7 @@ async function login() {
   box-sizing: border-box;
 }
 .auth-input::placeholder { color: #7c6f64; }
-.auth-input:focus { outline: none; border-color: #83a598; }
+.auth-input:focus-visible { outline: 3px solid #83a598; outline-offset: 1px; border-color: #83a598; }
 
 .auth-btn {
   width: 100%;
@@ -87,6 +134,7 @@ async function login() {
   transition: filter 0.12s;
 }
 .auth-btn:hover { filter: brightness(1.15); }
+.auth-btn:focus-visible { outline: 3px solid #fabd2f; outline-offset: 2px; }
 
 .auth-error { color: #fb4934; margin-top: 0.75rem; min-height: 1.2em; text-align: center; }
 .auth-link { color: #a89984; margin-top: 1rem; text-align: center; }

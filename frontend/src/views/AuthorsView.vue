@@ -5,6 +5,7 @@ import api from '@/api'
 const authors = ref<any[]>([])
 
 onMounted(async () => {
+  document.title = 'Authors — BookVault'
   const res = await api.get('/authors')
   authors.value = res.data
 })
@@ -22,18 +23,20 @@ function truncate(text: string | null | undefined, len = 140) {
 <template>
   <div class="authors-view">
     <div class="authors-header">
-      <h1>✍️ Authors</h1>
-      <span class="authors-count">{{ authors.length }} authors</span>
+      <h1><span aria-hidden="true">✍️</span> Authors</h1>
+      <span class="authors-count" aria-live="polite">{{ authors.length }} authors</span>
     </div>
 
-    <div class="authors-grid">
+    <div class="authors-grid" role="list" aria-label="Authors">
       <RouterLink
         v-for="a in authors" :key="a.id"
         :to="`/authors/${a.id}`"
         class="author-card"
+        role="listitem"
+        :aria-label="`${a.firstName} ${a.lastName}${a.nationality ? ', ' + a.nationality : ''}`"
       >
         <!-- Avatar -->
-        <div class="author-avatar">{{ initials(a) }}</div>
+        <div class="author-avatar" aria-hidden="true">{{ initials(a) }}</div>
 
         <!-- Info -->
         <div class="author-info">
@@ -41,10 +44,10 @@ function truncate(text: string | null | undefined, len = 140) {
 
           <div class="author-meta">
             <span v-if="a.nationality" class="author-nationality">
-              🌍 {{ a.nationality }}
+              <span aria-hidden="true">🌍</span> {{ a.nationality }}
             </span>
             <span v-if="a.birthDate" class="author-birth">
-              · 🎂 {{ new Date(a.birthDate).getFullYear() }}
+              · <span aria-hidden="true">🎂</span> {{ new Date(a.birthDate).getFullYear() }}
             </span>
           </div>
 
@@ -52,7 +55,7 @@ function truncate(text: string | null | undefined, len = 140) {
           <p v-else class="author-bio author-bio--empty">No biography available.</p>
         </div>
 
-        <div class="author-arrow">→</div>
+        <div class="author-arrow" aria-hidden="true">→</div>
       </RouterLink>
     </div>
   </div>

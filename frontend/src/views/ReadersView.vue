@@ -5,6 +5,7 @@ import api from '@/api'
 const readers = ref<any[]>([])
 
 onMounted(async () => {
+  document.title = 'Readers — BookVault'
   const res = await api.get('/readers')
   readers.value = res.data
 })

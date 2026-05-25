@@ -17,6 +17,7 @@ onMounted(async () => {
     ])
     author.value = aRes.data
     books.value = bRes.data
+    document.title = `${aRes.data.firstName} ${aRes.data.lastName} — BookVault`
   } catch {
     error.value = 'Author not found.'
   }
@@ -38,10 +39,10 @@ const booksBySeries = computed(() => {
   <div class="author-detail">
     <RouterLink to="/authors">← Back to Authors</RouterLink>
 
-    <div v-if="error" class="author-error">{{ error }}</div>
+    <div v-if="error" class="author-error" role="alert">{{ error }}</div>
 
     <div v-else-if="author" class="author-content">
-      <h1>✍️ {{ author.firstName }} {{ author.lastName }}</h1>
+      <h1><span aria-hidden="true">✍️</span> {{ author.firstName }} {{ author.lastName }}</h1>
       <p v-if="author.nationality"><strong>Nationality:</strong> {{ author.nationality }}</p>
       <p v-if="author.birthDate"><strong>Born:</strong> {{ author.birthDate }}</p>
       <div v-if="author.biography" class="author-biography">
@@ -56,19 +57,19 @@ const booksBySeries = computed(() => {
         <template v-for="[key, seriesBooks] in booksBySeries" :key="key">
           <div class="series-group">
             <h3 v-if="key !== 'standalone'" class="series-title">
-              📚
+              <span aria-hidden="true">📚</span>
               <RouterLink :to="`/series/${seriesBooks[0].series.id}`">
                 {{ seriesBooks[0].series.name }}
               </RouterLink>
             </h3>
-            <h3 v-else class="standalone-title">📖 Standalone books</h3>
+            <h3 v-else class="standalone-title"><span aria-hidden="true">📖</span> Standalone books</h3>
 
-            <ul class="books-list">
+            <ul class="books-list" :aria-label="key !== 'standalone' ? `Books in ${seriesBooks[0].series.name}` : 'Standalone books'">
               <li v-for="book in seriesBooks" :key="book.id" class="book-item">
                 <RouterLink :to="`/books/${book.id}`"><strong>{{ book.title }}</strong></RouterLink>
                 <span v-if="book.publicationYear"> · {{ book.publicationYear }}</span>
                 <span v-if="book.pageCount"> · {{ book.pageCount }} pages</span>
-                <span v-if="book.mood"> · 🎭 {{ book.mood }}</span>
+                <span v-if="book.mood"> · <span aria-hidden="true">🎭</span> {{ book.mood }}</span>
                 <br/>
                 <small class="book-genres">
                   {{ book.genres?.map((g: any) => g.name).join(', ') }}
