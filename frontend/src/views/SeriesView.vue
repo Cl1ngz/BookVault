@@ -6,6 +6,7 @@ const series = ref<any[]>([])
 const search = ref('')
 
 onMounted(async () => {
+  document.title = 'Series — BookVault'
   const res = await api.get('/series')
   series.value = res.data
 })
@@ -36,46 +37,54 @@ function initials(s: any) {
   <div class="series-view">
 
     <div class="series-header">
-      <h1>📚 Series</h1>
-      <span class="series-count">{{ series.length }} series</span>
+      <h1><span aria-hidden="true">📚</span> Series</h1>
+      <span class="series-count" aria-live="polite">{{ series.length }} series</span>
     </div>
 
-    <input
-      v-model="search"
-      placeholder="Search by name or author…"
-      class="series-search"
-    />
+    <div role="search">
+      <label for="series-search" class="visually-hidden">Search series by name or author</label>
+      <input
+        id="series-search"
+        v-model="search"
+        type="search"
+        placeholder="Search by name or author…"
+        class="series-search"
+        aria-label="Search series by name or author"
+      />
+    </div>
 
-    <p v-if="filtered.length === 0" class="series-empty">No series match your search.</p>
+    <p v-if="filtered.length === 0" class="series-empty" role="status">No series match your search.</p>
 
-    <div class="series-grid">
+    <div class="series-grid" role="list" aria-label="Series">
       <RouterLink
         v-for="s in filtered" :key="s.id"
         :to="`/series/${s.id}`"
         class="series-card"
+        role="listitem"
+        :aria-label="`${s.name}${s.author ? ' by ' + s.author.firstName + ' ' + s.author.lastName : ''}, ${s.volumeCount ?? '?'} volumes`"
       >
         <!-- Left accent stripe + volume count bubble -->
-        <div class="series-stripe">
+        <div class="series-stripe" aria-hidden="true">
           <div class="series-vol-bubble">{{ s.volumeCount ?? '?' }}</div>
           <div class="series-vol-label">vol.</div>
         </div>
 
         <!-- Main content -->
         <div class="series-body">
-          <div class="series-name">{{ s.name }}</div>
+          <div class="series-name" aria-hidden="true">{{ s.name }}</div>
 
-          <div v-if="s.author" class="series-author">
+          <div v-if="s.author" class="series-author" aria-hidden="true">
             <div class="series-author-avatar">{{ initials(s) }}</div>
             <span>{{ s.author.firstName }} {{ s.author.lastName }}</span>
           </div>
-          <div v-else class="series-author series-author--none">Unknown author</div>
+          <div v-else class="series-author series-author--none" aria-hidden="true">Unknown author</div>
 
-          <div class="series-dots" :title="`${s.volumeCount} volumes`">
+          <div class="series-dots" aria-hidden="true">
             {{ volumeDots(s.volumeCount) }}
           </div>
         </div>
 
-        <div class="series-arrow">→</div>
+        <div class="series-arrow" aria-hidden="true">→</div>
       </RouterLink>
     </div>
 
@@ -83,6 +92,18 @@ function initials(s: any) {
 </template>
 
 <style scoped>
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .series-view {
   max-width: 960px;
   margin: 0 auto;
@@ -113,7 +134,7 @@ function initials(s: any) {
   transition: border-color 0.15s;
 }
 .series-search::placeholder { color: #7c6f64; }
-.series-search:focus { outline: none; border-color: #83a598; }
+.series-search:focus-visible { outline: 3px solid #83a598; outline-offset: 1px; border-color: #83a598; }
 
 .series-empty { color: #a89984; font-style: italic; margin-top: 1rem; }
 

@@ -16,6 +16,7 @@ onMounted(async () => {
     ])
     publisher.value = pRes.data
     books.value = bRes.data
+    document.title = `${pRes.data.name} — BookVault`
   } catch {
     error.value = 'Publisher not found.'
   }
@@ -26,21 +27,21 @@ onMounted(async () => {
   <div class="publisher-detail">
     <RouterLink to="/books">← Back to Books</RouterLink>
 
-    <div v-if="error" class="publisher-error">{{ error }}</div>
+    <div v-if="error" class="publisher-error" role="alert">{{ error }}</div>
 
     <div v-else-if="publisher" class="publisher-content">
-      <h1>🏢 {{ publisher.name }}</h1>
+      <h1><span aria-hidden="true">🏢</span> {{ publisher.name }}</h1>
       <p v-if="publisher.foundationYear"><strong>Founded:</strong> {{ publisher.foundationYear }}</p>
       <p v-if="publisher.owner"><strong>Owner:</strong> {{ publisher.owner }}</p>
 
       <h2 class="publisher-books-heading">Books by this Publisher</h2>
       <p v-if="books.length === 0" class="no-books">No books found for this publisher.</p>
-      <ul v-else class="publisher-books-list">
+      <ul v-else class="publisher-books-list" aria-label="Books by this publisher">
         <li v-for="book in books" :key="book.id" class="publisher-book-item">
           <RouterLink :to="`/books/${book.id}`"><strong>{{ book.title }}</strong></RouterLink>
           <span v-if="book.publicationYear">  {{ book.publicationYear }}</span>
           <span v-if="book.pageCount">  {{ book.pageCount }} pages</span>
-          <span v-if="book.mood">  🎭 {{ book.mood }}</span>
+          <span v-if="book.mood">  <span aria-hidden="true">🎭</span> {{ book.mood }}</span>
           <br/>
           <small v-if="book.author" class="publisher-book-author">
             {{ book.author.firstName }} {{ book.author.lastName }}

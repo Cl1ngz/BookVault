@@ -17,6 +17,7 @@ onMounted(async () => {
     ])
     series.value = sRes.data
     books.value = bRes.data
+    document.title = `${sRes.data.name} — BookVault`
   } catch {
     error.value = 'Series not found.'
   }
@@ -27,10 +28,10 @@ onMounted(async () => {
   <div class="series-detail">
     <RouterLink to="/series">← Back to Series</RouterLink>
 
-    <div v-if="error" class="series-error">{{ error }}</div>
+    <div v-if="error" class="series-error" role="alert">{{ error }}</div>
 
     <div v-else-if="series" class="series-content">
-      <h1>📚 {{ series.name }}</h1>
+      <h1><span aria-hidden="true">📚</span> {{ series.name }}</h1>
       <p><strong>Volumes:</strong> {{ series.volumeCount }}</p>
       <p v-if="series.description" class="series-description">{{ series.description }}</p>
       <p v-if="series.author">
@@ -42,12 +43,12 @@ onMounted(async () => {
 
       <h2 class="series-books-heading">Books in this series</h2>
       <p v-if="books.length === 0" class="no-books">No books found for this series.</p>
-      <ul v-else class="series-books-list">
+      <ul v-else class="series-books-list" aria-label="Books in this series">
         <li v-for="book in books" :key="book.id" class="series-book-item">
           <RouterLink :to="`/books/${book.id}`"><strong>{{ book.title }}</strong></RouterLink>
           <span v-if="book.publicationYear"> · {{ book.publicationYear }}</span>
           <span v-if="book.pageCount"> · {{ book.pageCount }} pages</span>
-          <span v-if="book.mood"> · 🎭 {{ book.mood }}</span>
+          <span v-if="book.mood"> · <span aria-hidden="true">🎭</span> {{ book.mood }}</span>
           <br/>
           <small class="series-book-genres">
             {{ book.genres?.map((g: any) => g.name).join(', ') }}
