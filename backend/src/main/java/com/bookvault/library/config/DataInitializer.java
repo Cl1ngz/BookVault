@@ -29,7 +29,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        System.out.println(">>> ROZPOCZYNAM ANALIZĘ STANU BAZY DANYCH...");
+        System.out.println(">>> BEGINNING THE DATABASE AUDIT ...");
 
         seedGenres();
 
@@ -43,12 +43,12 @@ public class DataInitializer implements CommandLineRunner {
 
         seedModerator();
 
-        System.out.println(">>> SYNCHRONIZACJA DANYCH ZAKOŃCZONA!");
+        System.out.println(">>> DATA SYNCHRONIZATION COMPLETE!");
     }
 
     private List<Genre> seedGenres() {
         if (genreRepository.count() > 0) return genreRepository.findAll();
-        System.out.println("-> Generowanie gatunków...");
+        System.out.println("-> Generating generes...");
         String[] genreNames = {
                 // Fiction
                 "Fantasy", "Science Fiction", "Romance", "Horror", "Thriller",
@@ -80,7 +80,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Author> seedAuthors(int count) {
         if (authorRepository.count() > 0) return authorRepository.findAll();
-        System.out.println("-> Generowanie autorów...");
+        System.out.println("-> Generating authors...");
         List<Author> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Author a = new Author();
@@ -88,7 +88,6 @@ public class DataInitializer implements CommandLineRunner {
             a.setLastName(faker.name().lastName());
             a.setNationality(faker.nation().nationality());
             a.setBiography(faker.lorem().paragraph(3));
-            // Poprawka dla DataFaker 2.4.0
             a.setBirthDate(faker.timeAndDate().birthday(25, 90));
             a.setEmail("author" + i + "@bookvault.test");
             a.setPasswordHash(passwordEncoder.encode("author123"));
@@ -98,7 +97,6 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private List<Publisher> seedPublishers(int count) {
-        // Sprawdzamy, czy w bazie są już jakieś wydawnictwa
         if (publisherRepository.count() > 0) {
             return publisherRepository.findAll();
         }
@@ -109,16 +107,9 @@ public class DataInitializer implements CommandLineRunner {
         for (int i = 0; i < count; i++) {
             Publisher p = new Publisher();
 
-            // Ustawiamy nazwę (pamiętając o prefixie, żeby odróżnić dane od Fakera)
             p.setName("Wydawnictwo " + faker.book().publisher());
-
-            // Ustawiamy właściciela
             p.setOwner(faker.name().fullName());
-
-            // Ustawiamy rok założenia
             p.setFoundationYear(faker.number().numberBetween(1945, 2024));
-
-            // Zapisujemy i dodajemy do listy, którą przekażemy dalej do metody seedBooks
             list.add(publisherRepository.save(p));
         }
 
@@ -127,11 +118,10 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Series> seedSeries(int count, List<Author> authors) {
         if (seriesRepository.count() > 0) return seriesRepository.findAll();
-        System.out.println("-> Generowanie serii...");
+        System.out.println("-> Generating series...");
         List<Series> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Series s = new Series();
-            // Poprawka dla 2.4.0 (zamiast scienceFiction())
             String seriesTitle = faker.random().nextBoolean() ? faker.book().genre() : faker.space().constellation();
             s.setName("Kroniki " + seriesTitle);
             s.setVolumeCount((short) faker.number().numberBetween(3, 12));
@@ -143,7 +133,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private List<Book> seedBooks(int count, List<Author> authors, List<Publisher> publishers, List<Series> series, List<Genre> genres) {
         if (bookRepository.count() > 0) return bookRepository.findAll();
-        System.out.println("-> Generowanie książek...");
+        System.out.println("-> Generating books...");
         List<Book> list = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             Book b = new Book();
@@ -175,7 +165,7 @@ public class DataInitializer implements CommandLineRunner {
     private List<Reader> seedReaders(int count) {
         if (readerRepository.count() > 0) return readerRepository.findAll();
 
-        System.out.println("-> Generowanie czytelników...");
+        System.out.println("-> Generating readers...");
         List<Reader> list = new ArrayList<>();
 
         for (int i = 0; i < count; i++) {
@@ -186,7 +176,7 @@ public class DataInitializer implements CommandLineRunner {
             r.setBirthDate(faker.timeAndDate().birthday(18, 75));
             r.setEmail("reader" + i + "@bookvault.test");
 
-            // Wspólne hasło testowe dla użytkowników wygenerowanych Fakerem
+            // shared passwword for fakckergenerated users
             r.setPasswordHash(passwordEncoder.encode("user123"));
 
             r.setRole("USER");
@@ -194,7 +184,7 @@ public class DataInitializer implements CommandLineRunner {
             list.add(readerRepository.save(r));
         }
 
-        System.out.println("   Czytelnicy testowi mają hasło: user123");
+        System.out.println("Test Readers have password: user123");
         return list;
     }
 
@@ -206,7 +196,7 @@ public class DataInitializer implements CommandLineRunner {
 
         if (books.isEmpty() || readers.isEmpty()) return;
 
-        System.out.println("-> Generowanie recenzji...");
+        System.out.println("-> Generating reviews...");
 
         for (int i = 0; i < count; i++) {
             Review r = new Review();
@@ -223,7 +213,7 @@ public class DataInitializer implements CommandLineRunner {
 
         if (readerRepository.findByEmail(moderatorEmail).isPresent()) return;
 
-        System.out.println("-> Tworzenie konta moderatora...");
+        System.out.println("-> Creating Moderator Account...");
 
         Reader mod = new Reader();
         mod.setUsername("moderator");

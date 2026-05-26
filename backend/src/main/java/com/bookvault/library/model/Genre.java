@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
 @Entity
-@Table(name = "gatunki", schema = "biblioteka") // Dodany schema dla pewności
+@Table(name = "gatunki", schema = "biblioteka")
 @Data
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
@@ -20,6 +20,6 @@ public class Genre {
     @Column(name = "id_gatunku")
     private Integer id;
 
-    @Column(name = "nazwa", nullable = false, unique = true, length = 100) // Dodany length
+    @Column(name = "nazwa", nullable = false, unique = true, length = 100)
     private String name;
 }
