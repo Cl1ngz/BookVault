@@ -22,12 +22,11 @@ public class GenreController {
     public ResponseEntity<List<Genre>> getAllGenres(
             @RequestParam(required = false) String name
     ) {
-        // Jeśli podano nazwę, szukamy fragmentu (np. "fant" -> "Fantasy")
+        // search by name, search fragment (ex. "fant" -> "Fantasy")
         if (name != null && !name.isBlank()) {
             return ResponseEntity.ok(genreRepository.findByNameContainingIgnoreCase(name.trim()));
         }
 
-        // Domyślnie zwracamy wszystkie gatunki
         return ResponseEntity.ok(genreRepository.findAll());
     }
 }

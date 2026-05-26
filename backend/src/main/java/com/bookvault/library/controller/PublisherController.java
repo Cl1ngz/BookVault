@@ -24,22 +24,21 @@ public class PublisherController {
             @RequestParam(required = false) String owner,
             @RequestParam(required = false) Integer year
     ) {
-        // 1. Wyszukiwanie po nazwie wydawnictwa
+        // s by publisher
         if (name != null && !name.isBlank()) {
             return ResponseEntity.ok(publisherRepository.findByNameContainingIgnoreCase(name.trim()));
         }
 
-        // 2. Wyszukiwanie po właścicielu
+        // s by owner
         if (owner != null && !owner.isBlank()) {
             return ResponseEntity.ok(publisherRepository.findByOwnerContainingIgnoreCase(owner.trim()));
         }
 
-        // 3. Wyszukiwanie po roku założenia (dokładne dopasowanie)
+        // s by year
         if (year != null) {
             return ResponseEntity.ok(publisherRepository.findByFoundationYear(year));
         }
 
-        // 4. Domyślnie - zwrć wszystko
         return ResponseEntity.ok(publisherRepository.findAll());
     }
 

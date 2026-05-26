@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "ksiazki", schema = "biblioteka") // Dodany schema dla pewności
+@Table(name = "ksiazki", schema = "biblioteka")
 @Data
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @NoArgsConstructor
@@ -20,11 +20,11 @@ public class Book extends BaseEntity {
     @Column(name = "id_ksiazki")
     private Integer id;
 
-    @Column(name = "tytul", nullable = false, length = 255) // Dodany length z SQL
+    @Column(name = "tytul", nullable = false, length = 255)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_autora") // SQL nie ma NOT NULL, więc zostawiamy domyślne nullable
+    @JoinColumn(name = "id_autora")
     private Author author;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,7 +41,7 @@ public class Book extends BaseEntity {
     @Column(name = "ilosc_stron")
     private Integer pageCount;
 
-    @Column(name = "nastroj", length = 50) // Dodany length z SQL
+    @Column(name = "nastroj", length = 50)
     private String mood;
 
     @ManyToMany
@@ -51,5 +51,5 @@ public class Book extends BaseEntity {
             joinColumns = @JoinColumn(name = "id_ksiazki"),
             inverseJoinColumns = @JoinColumn(name = "id_gatunku")
     )
-    private Set<Genre> genres = new HashSet<>(); // Inicjalizacja HashSetem!
+    private Set<Genre> genres = new HashSet<>();
 }

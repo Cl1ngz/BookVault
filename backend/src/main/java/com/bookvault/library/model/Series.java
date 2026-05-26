@@ -18,7 +18,7 @@ public class Series extends BaseEntity {
     @Column(name = "id_serii")
     private Integer id;
 
-    @Column(name = "nazwa", nullable = false, length = 150) // Dodano length z SQL
+    @Column(name = "nazwa", nullable = false, length = 150)
     private String name;
 
     @Column(name = "liczba_tomow")

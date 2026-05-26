@@ -22,27 +22,27 @@ public class BookController {
             @RequestParam(required = false) String series,
             @RequestParam(required = false) String author
     ) {
-        // 1. Wyszukiwanie po tytule
+        // s by title
         if (title != null && !title.isBlank()) {
             return ResponseEntity.ok(bookRepository.findByTitleContainingIgnoreCase(title.trim()));
         }
 
-        // 2. Wyszukiwanie po gatunku
+        // s by genere
         if (genre != null && !genre.isBlank()) {
             return ResponseEntity.ok(bookRepository.findDistinctByGenres_NameContainingIgnoreCase(genre.trim()));
         }
 
-        // 3. Wyszukiwanie po serii
+        // s by series
         if (series != null && !series.isBlank()) {
             return ResponseEntity.ok(bookRepository.findBySeries_NameContainingIgnoreCase(series.trim()));
         }
 
-        // 4. Wyszukiwanie po nazwisku autora
+        // s by surname
         if (author != null && !author.isBlank()) {
             return ResponseEntity.ok(bookRepository.findByAuthor_LastNameContainingIgnoreCase(author.trim()));
         }
 
-        // 5. Jeśli brak parametrów, zwróć wszystkie książki
+        // return all
         return ResponseEntity.ok(bookRepository.findAll());
     }
 
