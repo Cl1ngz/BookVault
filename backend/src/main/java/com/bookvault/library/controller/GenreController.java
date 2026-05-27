@@ -22,11 +22,15 @@ public class GenreController {
     public ResponseEntity<List<Genre>> getAllGenres(
             @RequestParam(required = false) String name
     ) {
-        // search by name, search fragment (ex. "fant" -> "Fantasy")
         if (name != null && !name.isBlank()) {
             return ResponseEntity.ok(genreRepository.findByNameContainingIgnoreCase(name.trim()));
         }
-
         return ResponseEntity.ok(genreRepository.findAll());
+    }
+
+    /** Returns all genres sorted by number of books descending (most popular first). */
+    @GetMapping("/popular")
+    public ResponseEntity<List<Genre>> getGenresPopular() {
+        return ResponseEntity.ok(genreRepository.findAllOrderByBookCountDesc());
     }
 }
