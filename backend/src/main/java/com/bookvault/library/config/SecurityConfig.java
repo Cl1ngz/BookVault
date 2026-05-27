@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/v3/api-docs/**", "/webjars/**"
                         ).permitAll()
 
-                        .requestMatchers("/api/v1/moderator/**").hasRole("MODERATOR")
+                        .requestMatchers("/api/v1/moderator/**").hasAnyRole("MODERATOR", "ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
                         .requestMatchers(HttpMethod.GET, "/api/v1/books/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/genres/**").permitAll()

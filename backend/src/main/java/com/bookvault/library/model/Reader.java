@@ -37,4 +37,11 @@ public class Reader extends BaseEntity {
 
     @Column(name = "role", length = 20, nullable = false)
     private String role = "USER";
+
+    @Column(name = "banned_until")
+    private LocalDate bannedUntil;
+
+    public boolean isBanned() {
+        return bannedUntil != null && bannedUntil.isAfter(LocalDate.now().minusDays(1));
+    }
 }
