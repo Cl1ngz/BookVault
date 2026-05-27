@@ -76,6 +76,11 @@ public class AuthController {
                     .body("Invalid email or password");
         }
 
+        if (found.isBanned()) {
+            return ResponseEntity.status(403)
+                    .body("Account banned until " + found.getBannedUntil());
+        }
+
         String role = found.getRole() != null ? found.getRole() : "USER";
 
         String token = jwtUtils.generateToken(
