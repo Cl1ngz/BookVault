@@ -3,7 +3,7 @@
 ## Priorytetowa lista rzeczy do zrobienia
 
 1. [ ] **Bean Validation** – adnotacje `@NotBlank`, `@Size`, `@Min`, `@Max`, `@Email`, `@Past` na modelach + `@Valid` w kontrolerach
-2. [ ] **3. rola ADMIN** + endpoints zarządzania rolami + widok admina z listą userów
+2. [x] **3. rola ADMIN** + endpoints zarządzania rolami + widok admina z listą userów
 3. [ ] **Sesja + Cookies** – `HttpSession` do przechowywania roboczych danych + `Cookie` (np. remember-me lub preferencje)
 4. [ ] **Zapis przy wylogowaniu** – mechanizm sesyjny odkładający zapis do bazy na moment wylogowania/wygaśnięcia sesji
 5. [ ] **REST Client** – `RestTemplate`/`WebClient` wywołujący np. Open Library API po okładki/opisy
