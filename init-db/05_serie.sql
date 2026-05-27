@@ -1,6 +1,7 @@
 CREATE TABLE serie (
     id_serii SERIAL PRIMARY KEY,
     nazwa VARCHAR(150) NOT NULL,
+    opis TEXT,
     liczba_tomow SMALLINT,
     id_autora INT REFERENCES autorzy(id_autora) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
