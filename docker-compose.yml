@@ -27,8 +27,8 @@ services:
       - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/biblioteka_db?currentSchema=biblioteka
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_DATASOURCE_USERNAME: app_BookVault
+      SPRING_DATASOURCE_PASSWORD: App1dent1ty#Pass!
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
