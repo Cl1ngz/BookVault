@@ -14,6 +14,7 @@ import ModeratorView from '@/views/ModeratorView.vue'
 import MyShelfView from '@/views/MyShelfView.vue'
 import JournalView from '@/views/JournalView.vue'
 import ReadingDashboardView from '@/views/ReadingDashboardView.vue'
+import SharedShelfView from '@/views/SharedShelfView.vue'
 
 const requireAuth = () => {
     const user = JSON.parse(localStorage.getItem('user') || 'null')
@@ -45,5 +46,6 @@ export default createRouter({
         { path: '/admin', redirect: '/moderator' },        {path: '/my-shelf', component: MyShelfView, beforeEnter: requireAuth},
         {path: '/journal', component: JournalView, beforeEnter: requireAuth},
         {path: '/dashboard', component: ReadingDashboardView, beforeEnter: requireAuth},
+        {path: '/shared/:token', component: SharedShelfView},
     ]
 })
