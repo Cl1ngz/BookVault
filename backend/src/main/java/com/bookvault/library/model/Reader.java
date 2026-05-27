@@ -41,6 +41,9 @@ public class Reader extends BaseEntity {
     @Column(name = "banned_until")
     private LocalDate bannedUntil;
 
+    @Column(name = "share_token", unique = true, length = 36)
+    private String shareToken;
+
     public boolean isBanned() {
         return bannedUntil != null && bannedUntil.isAfter(LocalDate.now().minusDays(1));
     }
