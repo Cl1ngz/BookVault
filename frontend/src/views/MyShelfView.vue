@@ -12,6 +12,37 @@ const shelf = ref<any[]>([])
 const loading = ref(true)
 const activeTab = ref<'TO_READ' | 'READING' | 'FINISHED' | 'DNF'>('READING')
 
+// ── Share shelf ───────────────────────────────────────────────────────────────
+const shareUrl = ref<string | null>(null)
+const shareMsg = ref('')
+
+async function generateShareLink() {
+  try {
+    const res = await api.post('/reading-log/share')
+    shareUrl.value = window.location.origin + res.data.url
+    shareMsg.value = ''
+  } catch (e: any) {
+    shareMsg.value = e.response?.data ?? 'Failed to generate link'
+  }
+}
+
+async function revokeShareLink() {
+  try {
+    await api.delete('/reading-log/share')
+    shareUrl.value = null
+    shareMsg.value = 'Share link revoked.'
+  } catch (e: any) {
+    shareMsg.value = e.response?.data ?? 'Failed to revoke link'
+  }
+}
+
+function copyShareLink() {
+  if (!shareUrl.value) return
+  navigator.clipboard.writeText(shareUrl.value)
+  shareMsg.value = 'Link copied to clipboard!'
+  setTimeout(() => { shareMsg.value = '' }, 3000)
+}
+
 const tabs = [
   {key: 'READING', label: '📖 Currently Reading'},
   {key: 'TO_READ', label: '🔖 Want to Read'},
@@ -103,6 +134,23 @@ onMounted(() => {
 <template>
   <div class="my-shelf">
     <h1><span aria-hidden="true">📚</span> My Shelf</h1>
+
+    <!-- Share shelf -->
+    <div class="share-section" aria-label="Share your shelf">
+      <div v-if="!shareUrl" class="share-idle">
+        <button class="btn-share" @click="generateShareLink" aria-label="Generate a public share link for your shelf">
+          <span aria-hidden="true">🔗</span> Share my shelf
+        </button>
+        <span v-if="shareMsg" class="share-msg" role="alert">{{ shareMsg }}</span>
+      </div>
+      <div v-else class="share-active">
+        <span class="share-label"><span aria-hidden="true">🔗</span> Public link:</span>
+        <input class="share-input" :value="shareUrl" readonly aria-label="Your public shelf link" />
+        <button class="btn-copy" @click="copyShareLink" aria-label="Copy share link">📋 Copy</button>
+        <button class="btn-revoke" @click="revokeShareLink" aria-label="Revoke share link">✕ Revoke</button>
+        <span v-if="shareMsg" class="share-msg" role="alert">{{ shareMsg }}</span>
+      </div>
+    </div>
 
     <!-- Tabs -->
     <div class="shelf-tabs" role="tablist" aria-label="Shelf categories">
@@ -256,6 +304,60 @@ onMounted(() => {
 }
 
 .my-shelf h1 { margin-bottom: 1rem; color: #fabd2f; }
+
+/* ── Share shelf ─────────────────────────────────────────────── */
+.share-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  background: #3c3836;
+  border: 1px solid #504945;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+}
+.share-idle, .share-active { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; width: 100%; }
+.share-label { color: #a89984; font-size: 0.88rem; white-space: nowrap; }
+.share-input {
+  flex: 1; min-width: 220px;
+  padding: 4px 8px;
+  border: 1px solid #504945;
+  border-radius: 6px;
+  background: #32302f;
+  color: #ebdbb2;
+  font-size: 0.85rem;
+}
+.btn-share {
+  padding: 5px 14px;
+  background: #458588;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.88rem;
+}
+.btn-share:hover { filter: brightness(1.15); }
+.btn-copy {
+  padding: 4px 10px;
+  background: #504945;
+  color: #ebdbb2;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+.btn-copy:hover { background: #665c54; }
+.btn-revoke {
+  padding: 4px 10px;
+  background: rgba(204, 36, 29, 0.15);
+  color: #fb4934;
+  border: 1px solid #cc241d;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
+.share-msg { font-size: 0.82rem; color: #8ec07c; }
 
 .shelf-tabs {
   display: flex;
