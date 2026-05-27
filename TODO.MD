@@ -7,10 +7,10 @@
 3. [ ] **Sesja + Cookies** – `HttpSession` do przechowywania roboczych danych + `Cookie` (np. remember-me lub preferencje)
 4. [ ] **Zapis przy wylogowaniu** – mechanizm sesyjny odkładający zapis do bazy na moment wylogowania/wygaśnięcia sesji
 5. [ ] **REST Client** – `RestTemplate`/`WebClient` wywołujący np. Open Library API po okładki/opisy
-6. [ ] **Współdzielenie** – token sharingowy dla półki/listy + publiczny widok bez logowania
+6. [x] **Współdzielenie** – token sharingowy dla półki/listy + publiczny widok bez logowania
 7. [ ] **CRUD uzupełnienie** – DELETE dla książek, autorów, wydawnictw; POST dla autorów (moderator)
-8. [ ] **Filtrowanie datepicker** – filtr "od aktualnej daty" + lista pola domeny posortowana popularnie
+8. [x] **Filtrowanie datepicker** – filtr "od aktualnej daty" (BooksView ✅) + gatunki sortowane popularnie (`/genres/popular` ✅)
 9. [ ] **WCAG 2.1 w Vue.js** – atrybuty `aria-*`, `alt`, `role="alert"`, etykiety `<label>`, kontrast kolorów, nawigacja klawiaturą
-10. [ ] **SQL – konta użytkowników bazy**
+10. [x] **SQL – konta użytkowników bazy**
 11. [ ] **SQL – brakujące elementy**: CURSOR, poprawny blok EXCEPTION, AUDIT, "pakiet" (schema logiki)
 

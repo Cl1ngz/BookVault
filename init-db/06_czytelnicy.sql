@@ -7,6 +7,8 @@ CREATE TABLE czytelnicy
     data_urodzenia DATE,
     narodowosc     VARCHAR(50),
     role           VARCHAR(20) NOT NULL DEFAULT 'USER',
+    banned_until   DATE NULL,
+    share_token    VARCHAR(36) UNIQUE NULL,
     created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
