@@ -6,7 +6,7 @@ import api from '@/api'
 
 const router = useRouter()
 const user = JSON.parse(localStorage.getItem('user') || 'null')
-if (!user || user.role !== 'MODERATOR') router.push('/books')
+if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) router.push('/books')
 
 // ── Active tab ────────────────────────────────────────────────────────────────
 const activeTab = ref<'books' | 'editBook' | 'authors' | 'series' | 'reports' | 'readers'>('books')
@@ -18,7 +18,7 @@ const seriesList = ref<any[]>([])
 const genres = ref<any[]>([])
 
 onMounted(async () => {
-  document.title = 'Moderator Panel — BookVault'
+  document.title = (user?.role === 'ADMIN' ? 'Admin Panel' : 'Moderator Panel') + ' — BookVault'
   const [aRes, pRes, sRes, gRes] = await Promise.all([
     api.get('/authors'), api.get('/publishers'), api.get('/series'), api.get('/genres'),
   ])
@@ -183,12 +183,76 @@ const reportsFilter = ref('pending')
 // ── Readers ───────────────────────────────────────────────────────────────────
 const readers = ref<any[]>([])
 const readerSearch = ref('')
+const isAdmin = user?.role === 'ADMIN'
+
+// Ban modal
+const banTarget = ref<any>(null)
+const banDays = ref(7)
+const readerMsg = ref({ text: '', ok: true })
+
+function isBanned(r: any): boolean {
+  if (!r.bannedUntil) return false
+  return new Date(r.bannedUntil) >= new Date(new Date().toDateString())
+}
 
 async function loadReaders() {
   const params: any = {}
   if (readerSearch.value.trim()) params.username = readerSearch.value.trim()
-  const res = await api.get('/readers', {params})
-  readers.value = res.data
+  // Admin gets full list with bannedUntil; moderator uses restricted endpoint
+  const endpoint = isAdmin ? '/admin/readers' : '/readers'
+  const res = await api.get(endpoint, { params: isAdmin ? {} : params })
+  readers.value = isAdmin && readerSearch.value.trim()
+    ? res.data.filter((r: any) => r.username?.toLowerCase().includes(readerSearch.value.toLowerCase()))
+    : res.data
+}
+
+async function setRole(r: any, role: string) {
+  try {
+    const res = await api.put(`/admin/readers/${r.id}/role`, { role })
+    r.role = res.data.role
+    showReaderMsg(`${r.username}'s role set to ${role}`, true)
+  } catch (e: any) {
+    showReaderMsg(e.response?.data ?? 'Failed', false)
+  }
+}
+
+async function confirmBan() {
+  if (!banTarget.value) return
+  try {
+    const res = await api.put(`/admin/readers/${banTarget.value.id}/ban`, { days: banDays.value })
+    banTarget.value.bannedUntil = res.data.bannedUntil || null
+    showReaderMsg(res.data.message, true)
+  } catch (e: any) {
+    showReaderMsg(e.response?.data ?? 'Failed', false)
+  } finally {
+    banTarget.value = null
+  }
+}
+
+async function unbanReader(r: any) {
+  try {
+    const res = await api.put(`/admin/readers/${r.id}/ban`, { days: 0 })
+    r.bannedUntil = null
+    showReaderMsg(res.data.message, true)
+  } catch (e: any) {
+    showReaderMsg(e.response?.data ?? 'Failed', false)
+  }
+}
+
+async function deleteReader(r: any) {
+  if (!confirm(`Permanently delete "${r.username}"? This cannot be undone.`)) return
+  try {
+    await api.delete(`/admin/readers/${r.id}`)
+    readers.value = readers.value.filter(x => x.id !== r.id)
+    showReaderMsg(`Account "${r.username}" deleted`, true)
+  } catch (e: any) {
+    showReaderMsg(e.response?.data ?? 'Failed', false)
+  }
+}
+
+function showReaderMsg(text: string, ok: boolean) {
+  readerMsg.value = { text, ok }
+  setTimeout(() => { readerMsg.value.text = '' }, 4000)
 }
 
 async function loadReports() {
@@ -215,7 +279,10 @@ async function deleteReview(reviewId: number) {
 
 <template>
   <div class="mod-panel">
-    <h1><span aria-hidden="true">🛡️</span> Moderator Panel</h1>
+    <h1 :class="isAdmin ? 'title--admin' : ''">
+      <span aria-hidden="true">{{ isAdmin ? '🛡' : '🛡️' }}</span>
+      {{ isAdmin ? 'Admin Panel' : 'Moderator Panel' }}
+    </h1>
 
     <!-- Tabs -->
     <div class="tab-bar" role="tablist" aria-label="Moderator sections">
@@ -522,6 +589,11 @@ async function deleteReview(reviewId: number) {
     <!-- ── Readers tab ────────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'readers'" id="mod-panel-readers" role="tabpanel" aria-labelledby="mod-tab-readers">
       <h2><span aria-hidden="true">👥</span> Registered Readers</h2>
+
+      <p v-if="readerMsg.text" role="alert" :class="['inline-msg', readerMsg.ok ? 'inline-msg--ok' : 'inline-msg--err']">
+        {{ readerMsg.text }}
+      </p>
+
       <div class="readers-search" role="search">
         <label for="reader-search" class="visually-hidden">Search readers by username</label>
         <input id="reader-search" v-model="readerSearch" type="search"
@@ -530,6 +602,7 @@ async function deleteReview(reviewId: number) {
         <button @click="loadReaders" class="btn-search">Search</button>
         <button @click="readerSearch=''; loadReaders()" class="btn-clear">Clear</button>
       </div>
+
       <p v-if="readers.length === 0" class="no-data">No readers found.</p>
       <table v-else class="mod-table">
         <caption class="visually-hidden">Registered readers</caption>
@@ -540,20 +613,65 @@ async function deleteReview(reviewId: number) {
           <th class="table-th" scope="col">Email</th>
           <th class="table-th" scope="col">Nationality</th>
           <th class="table-th" scope="col">Role</th>
+          <th v-if="isAdmin" class="table-th" scope="col">Banned until</th>
+          <th v-if="isAdmin" class="table-th" scope="col">Actions</th>
         </tr>
         </thead>
         <tbody>
-        <tr v-for="r in readers" :key="r.id">
+        <tr v-for="r in readers" :key="r.id" :class="{ 'row-banned': isAdmin && isBanned(r) }">
           <td class="table-td">{{ r.id }}</td>
           <td class="table-td">{{ r.username }}</td>
           <td class="table-td">{{ r.email }}</td>
           <td class="table-td">{{ r.nationality }}</td>
           <td class="table-td">
-            <span :class="r.role === 'MODERATOR' ? 'role--mod' : 'role--reader'">{{ r.role }}</span>
+            <!-- Admin: role dropdown; Moderator: read-only badge -->
+            <select v-if="isAdmin && r.role !== 'ADMIN'"
+                    :value="r.role"
+                    @change="setRole(r, ($event.target as HTMLSelectElement).value)"
+                    :aria-label="`Change role for ${r.username}`"
+                    class="role-select">
+              <option value="USER">USER</option>
+              <option value="MODERATOR">MODERATOR</option>
+            </select>
+            <span v-else :class="r.role === 'MODERATOR' ? 'role--mod' : r.role === 'ADMIN' ? 'role--admin' : 'role--reader'">
+              {{ r.role }}
+            </span>
+          </td>
+          <td v-if="isAdmin" class="table-td">
+            <span v-if="isBanned(r)" class="role--banned">{{ r.bannedUntil }}</span>
+            <span v-else class="role--reader">—</span>
+          </td>
+          <td v-if="isAdmin" class="table-td actions-cell">
+            <template v-if="r.role !== 'ADMIN'">
+              <button v-if="!isBanned(r)" class="btn-action btn-ban"
+                      @click="banTarget = r; banDays = 7"
+                      :aria-label="`Ban ${r.username}`">🚫 Ban</button>
+              <button v-else class="btn-action btn-unban"
+                      @click="unbanReader(r)"
+                      :aria-label="`Unban ${r.username}`">✅ Unban</button>
+              <button class="btn-action btn-delete"
+                      @click="deleteReader(r)"
+                      :aria-label="`Delete ${r.username}`">🗑 Delete</button>
+            </template>
+            <span v-else class="role--reader">—</span>
           </td>
         </tr>
         </tbody>
       </table>
+
+      <!-- Ban duration modal -->
+      <div v-if="banTarget" class="modal-overlay" role="dialog" aria-modal="true" :aria-label="`Ban ${banTarget.username}`">
+        <div class="modal-box">
+          <h3>Ban "{{ banTarget.username }}"</h3>
+          <label for="ban-days-input">Number of days:</label>
+          <input id="ban-days-input" v-model.number="banDays" type="number" min="1" max="365"
+                 aria-required="true" class="ban-days-input"/>
+          <div class="modal-actions">
+            <button class="btn-action btn-ban" @click="confirmBan">Confirm Ban</button>
+            <button class="btn-clear" @click="banTarget = null">Cancel</button>
+          </div>
+        </div>
+      </div>
     </section>
 
   </div>
@@ -592,6 +710,7 @@ fieldset.genres-row legend {
 }
 
 .mod-panel h1 { color: #fe8019; }
+.mod-panel h1.title--admin { color: #a855f7; }
 
 .tab-bar {
   display: flex;
@@ -762,8 +881,72 @@ fieldset.genres-row legend {
   cursor: pointer;
 }
 
-.role--mod { color: #fe8019; font-weight: 600; }
+.role--mod    { color: #fe8019; font-weight: 600; }
 .role--reader { color: #d5c4a1; }
+.role--admin  { color: #a855f7; font-weight: 700; }
+.role--banned { color: #fb4934; font-weight: 600; }
+
+.row-banned { background: rgba(251, 73, 52, 0.07); }
+
+.role-select {
+  background: #3c3836;
+  color: #ebdbb2;
+  border: 1px solid #665c54;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+}
+
+.actions-cell { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+.btn-action {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-ban    { background: #f97316; color: #fff; }
+.btn-unban  { background: #22c55e; color: #1d2021; }
+.btn-delete { background: #ef4444; color: #fff; }
+
+.inline-msg {
+  padding: .5rem 1rem;
+  border-radius: 6px;
+  margin-bottom: .75rem;
+  font-size: .9rem;
+}
+.inline-msg--ok  { background: #1d3a26; color: #8ec07c; }
+.inline-msg--err { background: #3a1d1d; color: #fb4934; }
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 200;
+}
+.modal-box {
+  background: #32302f;
+  border: 1px solid #504945;
+  border-radius: 10px;
+  padding: 1.75rem;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.modal-box h3 { margin: 0; color: #fabd2f; }
+.ban-days-input {
+  padding: .4rem .6rem;
+  border: 1px solid #665c54;
+  border-radius: 6px;
+  background: #1d2021;
+  color: #ebdbb2;
+  width: 100%;
+}
+.modal-actions { display: flex; gap: .75rem; justify-content: flex-end; }
 
 .bio-textarea {
   width: 100%;

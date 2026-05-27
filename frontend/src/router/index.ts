@@ -39,10 +39,10 @@ export default createRouter({
             component: ModeratorView,
             beforeEnter: () => {
                 const user = JSON.parse(localStorage.getItem('user') || 'null')
-                if (!user || user.role !== 'MODERATOR') return '/books'
+                if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) return '/books'
             }
         },
-        {path: '/my-shelf', component: MyShelfView, beforeEnter: requireAuth},
+        { path: '/admin', redirect: '/moderator' },        {path: '/my-shelf', component: MyShelfView, beforeEnter: requireAuth},
         {path: '/journal', component: JournalView, beforeEnter: requireAuth},
         {path: '/dashboard', component: ReadingDashboardView, beforeEnter: requireAuth},
     ]

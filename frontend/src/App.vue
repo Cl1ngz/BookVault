@@ -6,7 +6,8 @@ const router = useRouter()
 
 const userRaw = ref(localStorage.getItem('user'))
 const user = computed(() => JSON.parse(userRaw.value || 'null'))
-const isModerator = computed(() => user.value?.role === 'MODERATOR')
+const isModerator = computed(() => user.value?.role === 'MODERATOR' || user.value?.role === 'ADMIN')
+const isAdmin = computed(() => user.value?.role === 'ADMIN')
 const isLoggedIn = computed(() => !!user.value?.token)
 
 const dropdownOpen = ref(false)
@@ -61,7 +62,13 @@ window.addEventListener('storage', () => {
     <span class="nav-sep" aria-hidden="true">|</span>
     <RouterLink to="/series" class="nav-link">Series</RouterLink>
 
-    <template v-if="isModerator">
+    <template v-if="isAdmin">
+      <span class="nav-sep" aria-hidden="true">|</span>
+      <RouterLink to="/moderator" class="nav-link nav-link--admin">
+        <span aria-hidden="true">🛡</span> Admin Panel
+      </RouterLink>
+    </template>
+    <template v-else-if="isModerator">
       <span class="nav-sep" aria-hidden="true">|</span>
       <RouterLink to="/moderator" class="nav-link nav-link--mod">
         <span aria-hidden="true">️</span> Moderator
@@ -166,6 +173,15 @@ window.addEventListener('storage', () => {
 
 .nav-link--mod:hover {
   color: #fabd2f;
+}
+
+.nav-link--admin {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+.nav-link--admin:hover {
+  color: #7c3aed;
 }
 
 .nav-spacer {
