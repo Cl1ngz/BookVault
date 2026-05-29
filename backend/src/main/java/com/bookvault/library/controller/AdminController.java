@@ -1,16 +1,15 @@
 package com.bookvault.library.controller;
 
 import com.bookvault.library.model.Reader;
-import com.bookvault.library.repository.ReaderRepository;
+import com.bookvault.library.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -18,9 +17,7 @@ import java.util.Set;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    private static final Set<String> ALLOWED_ROLES = Set.of("USER", "MODERATOR", "ADMIN");
-
-    private final ReaderRepository readerRepository;
+    private final AdminService adminService;
 
     /**
      * GET /api/v1/admin/readers
@@ -28,7 +25,7 @@ public class AdminController {
      */
     @GetMapping("/readers")
     public ResponseEntity<List<Reader>> getAllReaders() {
-        return ResponseEntity.ok(readerRepository.findAll());
+        return ResponseEntity.ok(adminService.getAllReaders());
     }
 
     /**
@@ -40,23 +37,9 @@ public class AdminController {
     public ResponseEntity<?> setRole(
             @PathVariable Integer id,
             @RequestBody Map<String, String> body,
-            org.springframework.security.core.Authentication authentication
+            Authentication authentication
     ) {
-        String newRole = body.get("role");
-        if (newRole == null || !ALLOWED_ROLES.contains(newRole.toUpperCase())) {
-            return ResponseEntity.badRequest().body("role must be one of: USER, MODERATOR, ADMIN");
-        }
-
-        Reader reader = readerRepository.findById(id).orElse(null);
-        if (reader == null) return ResponseEntity.notFound().build();
-
-        // Prevent changing another ADMIN's role (only the same admin can demote themselves)
-        if ("ADMIN".equals(reader.getRole()) && !reader.getEmail().equalsIgnoreCase(authentication.getName())) {
-            return ResponseEntity.status(403).body("Cannot change another admin's role");
-        }
-
-        reader.setRole(newRole.toUpperCase());
-        return ResponseEntity.ok(readerRepository.save(reader));
+        return adminService.setRole(id, body, authentication);
     }
 
     /**
@@ -69,31 +52,7 @@ public class AdminController {
             @PathVariable Integer id,
             @RequestBody Map<String, Object> body
     ) {
-        Reader reader = readerRepository.findById(id).orElse(null);
-        if (reader == null) return ResponseEntity.notFound().build();
-
-        if ("ADMIN".equals(reader.getRole())) {
-            return ResponseEntity.status(403).body("Cannot ban another admin");
-        }
-
-        Object daysObj = body.get("days");
-        int days = daysObj instanceof Number ? ((Number) daysObj).intValue() : -1;
-
-        if (days < 0) {
-            return ResponseEntity.badRequest().body("days must be >= 0 (0 = unban)");
-        }
-
-        reader.setBannedUntil(days == 0 ? null : LocalDate.now().plusDays(days));
-        Reader saved = readerRepository.save(reader);
-
-        String message = days == 0
-                ? "User " + saved.getUsername() + " has been unbanned"
-                : "User " + saved.getUsername() + " banned until " + saved.getBannedUntil();
-
-        return ResponseEntity.ok(Map.of(
-                "message", message,
-                "bannedUntil", saved.getBannedUntil() != null ? saved.getBannedUntil().toString() : ""
-        ));
+        return adminService.banReader(id, body);
     }
 
     /**
@@ -103,22 +62,8 @@ public class AdminController {
     @DeleteMapping("/readers/{id}")
     public ResponseEntity<?> deleteReader(
             @PathVariable Integer id,
-            org.springframework.security.core.Authentication authentication
+            Authentication authentication
     ) {
-        Reader reader = readerRepository.findById(id).orElse(null);
-        if (reader == null) return ResponseEntity.notFound().build();
-
-        if ("ADMIN".equals(reader.getRole())) {
-            return ResponseEntity.status(403).body("Cannot delete an admin account");
-        }
-
-        // Prevent self-deletion
-        if (reader.getEmail() != null && reader.getEmail().equalsIgnoreCase(authentication.getName())) {
-            return ResponseEntity.status(403).body("Cannot delete your own account here");
-        }
-
-        readerRepository.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "User " + reader.getUsername() + " deleted"));
+        return adminService.deleteReader(id, authentication);
     }
 }
-

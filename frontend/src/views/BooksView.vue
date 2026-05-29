@@ -207,7 +207,7 @@ function toggle(arr: string[], val: string) {
 
 onMounted(async () => {
   document.title = 'Books — BookVault'
-  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres/popular')]
+  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres')]
   if (isLoggedIn.value) requests.push(api.get('/reading-log'))
   const [booksRes, genresRes, shelfRes] = await Promise.all(requests)
   allBooks.value = booksRes.data
