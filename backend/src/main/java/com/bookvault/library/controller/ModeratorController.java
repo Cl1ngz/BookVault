@@ -1,7 +1,13 @@
 package com.bookvault.library.controller;
 
+import com.bookvault.library.dto.AuthorUpdateDto;
+import com.bookvault.library.dto.BookDto;
+import com.bookvault.library.dto.BookUpdateDto;
+import com.bookvault.library.dto.SeriesDto;
+import com.bookvault.library.dto.SeriesUpdateDto;
 import com.bookvault.library.model.*;
 import com.bookvault.library.repository.*;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,168 +34,112 @@ public class ModeratorController {
 
     // ── Books ────────────────────────────────────────────────────────────────
 
-    /**
-     * POST /api/v1/moderator/books
-     * Body: {
-     *   "title": "...",
-     *   "authorId": 1,
-     *   "publisherId": 1,
-     *   "seriesId": 1,
-     *   "publicationYear": 2024,
-     *   "pageCount": 300,
-     *   "mood": "dark",
-     *   "genreIds": [1, 2]
-     * }
-     */
     @PostMapping("/books")
-    public ResponseEntity<?> addBook(@RequestBody Map<String, Object> body) {
-        String title = body.get("title") instanceof String
-                ? ((String) body.get("title")).trim()
-                : null;
-
-        if (title == null || title.isBlank()) {
-            return ResponseEntity.badRequest().body("title is required");
-        }
-
+    public ResponseEntity<?> addBook(@Valid @RequestBody BookDto bookDto) {
         Book book = new Book();
-        book.setTitle(title);
 
-        Integer authorId = getInteger(body.get("authorId"));
-        if (authorId != null) {
-            Author author = authorRepository.findById(authorId).orElse(null);
+        book.setTitle(bookDto.getTitle());
+        book.setPublicationYear(bookDto.getPublicationYear());
+        book.setPageCount(bookDto.getPageCount());
+        book.setMood(bookDto.getMood());
+
+        if (bookDto.getAuthorId() != null) {
+            Author author = authorRepository.findById(bookDto.getAuthorId()).orElse(null);
+
             if (author == null) {
                 return ResponseEntity.badRequest().body("Author not found");
             }
+
             book.setAuthor(author);
         }
 
-        Integer publisherId = getInteger(body.get("publisherId"));
-        if (publisherId != null) {
-            Publisher publisher = publisherRepository.findById(publisherId).orElse(null);
+        if (bookDto.getPublisherId() != null) {
+            Publisher publisher = publisherRepository.findById(bookDto.getPublisherId()).orElse(null);
+
             if (publisher == null) {
                 return ResponseEntity.badRequest().body("Publisher not found");
             }
+
             book.setPublisher(publisher);
         }
 
-        Integer seriesId = getInteger(body.get("seriesId"));
-        if (seriesId != null) {
-            Series series = seriesRepository.findById(seriesId).orElse(null);
+        if (bookDto.getSeriesId() != null) {
+            Series series = seriesRepository.findById(bookDto.getSeriesId()).orElse(null);
+
             if (series == null) {
                 return ResponseEntity.badRequest().body("Series not found");
             }
+
             book.setSeries(series);
         }
 
-        Integer publicationYear = getInteger(body.get("publicationYear"));
-        if (publicationYear != null) {
-            book.setPublicationYear(publicationYear);
-        }
-
-        Integer pageCount = getInteger(body.get("pageCount"));
-        if (pageCount != null) {
-            book.setPageCount(pageCount);
-        }
-
-        if (body.get("mood") instanceof String mood) {
-            book.setMood(mood.trim());
-        }
-
-        Set<Genre> genres = getGenresFromBody(body.get("genreIds"));
-        if (genres != null) {
+        if (bookDto.getGenreIds() != null && !bookDto.getGenreIds().isEmpty()) {
+            Set<Genre> genres = new HashSet<>(genreRepository.findAllById(bookDto.getGenreIds()));
             book.setGenres(genres);
         }
 
         return ResponseEntity.ok(bookRepository.save(book));
     }
 
-    /**
-     * PUT /api/v1/moderator/books/{id}
-     * Edycja istniejącej książki.
-     */
     @PutMapping("/books/{id}")
-    public ResponseEntity<?> editBook(@PathVariable Integer id,
-                                      @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> editBook(
+            @PathVariable Integer id,
+            @Valid @RequestBody BookUpdateDto bookDto
+    ) {
         Book book = bookRepository.findById(id).orElse(null);
 
         if (book == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (body.get("title") instanceof String title) {
-            if (title.isBlank()) {
-                return ResponseEntity.badRequest().body("title cannot be blank");
-            }
-            book.setTitle(title.trim());
+        if (bookDto.getTitle() != null) {
+            book.setTitle(bookDto.getTitle().trim());
         }
 
-        if (body.containsKey("authorId")) {
-            Integer authorId = getInteger(body.get("authorId"));
-
-            if (authorId == null) {
-                book.setAuthor(null);
-            } else {
-                Author author = authorRepository.findById(authorId).orElse(null);
-                if (author == null) {
-                    return ResponseEntity.badRequest().body("Author not found");
-                }
-                book.setAuthor(author);
-            }
+        if (bookDto.getPublicationYear() != null) {
+            book.setPublicationYear(bookDto.getPublicationYear());
         }
 
-        if (body.containsKey("publisherId")) {
-            Integer publisherId = getInteger(body.get("publisherId"));
-
-            if (publisherId == null) {
-                book.setPublisher(null);
-            } else {
-                Publisher publisher = publisherRepository.findById(publisherId).orElse(null);
-                if (publisher == null) {
-                    return ResponseEntity.badRequest().body("Publisher not found");
-                }
-                book.setPublisher(publisher);
-            }
+        if (bookDto.getPageCount() != null) {
+            book.setPageCount(bookDto.getPageCount());
         }
 
-        if (body.containsKey("seriesId")) {
-            Integer seriesId = getInteger(body.get("seriesId"));
-
-            if (seriesId == null) {
-                book.setSeries(null);
-            } else {
-                Series series = seriesRepository.findById(seriesId).orElse(null);
-                if (series == null) {
-                    return ResponseEntity.badRequest().body("Series not found");
-                }
-                book.setSeries(series);
-            }
+        if (bookDto.getMood() != null) {
+            book.setMood(bookDto.getMood().trim());
         }
 
-        Integer publicationYear = getInteger(body.get("publicationYear"));
-        if (publicationYear != null) {
-            book.setPublicationYear(publicationYear);
-        }
+        if (bookDto.getAuthorId() != null) {
+            Author author = authorRepository.findById(bookDto.getAuthorId()).orElse(null);
 
-        Integer pageCount = getInteger(body.get("pageCount"));
-        if (pageCount != null) {
-            book.setPageCount(pageCount);
-        }
-
-        if (body.containsKey("mood")) {
-            if (body.get("mood") == null) {
-                book.setMood(null);
-            } else if (body.get("mood") instanceof String mood) {
-                book.setMood(mood.trim());
-            }
-        }
-
-        if (body.containsKey("genreIds")) {
-            Set<Genre> genres = getGenresFromBody(body.get("genreIds"));
-
-            if (genres == null) {
-                return ResponseEntity.badRequest().body("genreIds must be a list of numbers");
+            if (author == null) {
+                return ResponseEntity.badRequest().body("Author not found");
             }
 
+            book.setAuthor(author);
+        }
+
+        if (bookDto.getPublisherId() != null) {
+            Publisher publisher = publisherRepository.findById(bookDto.getPublisherId()).orElse(null);
+
+            if (publisher == null) {
+                return ResponseEntity.badRequest().body("Publisher not found");
+            }
+
+            book.setPublisher(publisher);
+        }
+
+        if (bookDto.getSeriesId() != null) {
+            Series series = seriesRepository.findById(bookDto.getSeriesId()).orElse(null);
+
+            if (series == null) {
+                return ResponseEntity.badRequest().body("Series not found");
+            }
+
+            book.setSeries(series);
+        }
+
+        if (bookDto.getGenreIds() != null) {
+            Set<Genre> genres = new HashSet<>(genreRepository.findAllById(bookDto.getGenreIds()));
             book.setGenres(genres);
         }
 
@@ -198,42 +148,44 @@ public class ModeratorController {
 
     // ── Authors ───────────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/v1/moderator/authors
-     * Lista autorów dla panelu moderatora.
-     */
     @GetMapping("/authors")
     public ResponseEntity<List<Author>> getAllAuthors() {
         return ResponseEntity.ok(authorRepository.findAll());
     }
 
-    /**
-     * PUT /api/v1/moderator/authors/{id}
-     * Edycja autora.
-     */
     @PutMapping("/authors/{id}")
-    public ResponseEntity<?> editAuthor(@PathVariable Integer id,
-                                        @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> editAuthor(
+            @PathVariable Integer id,
+            @Valid @RequestBody AuthorUpdateDto authorDto
+    ) {
         Author author = authorRepository.findById(id).orElse(null);
 
         if (author == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (body.get("firstName") instanceof String firstName) {
-            author.setFirstName(firstName.trim());
+        if (authorDto.getFirstName() != null) {
+            author.setFirstName(authorDto.getFirstName().trim());
         }
 
-        if (body.get("lastName") instanceof String lastName) {
-            author.setLastName(lastName.trim());
+        if (authorDto.getLastName() != null) {
+            author.setLastName(authorDto.getLastName().trim());
         }
 
-        if (body.containsKey("biography")) {
-            author.setBiography((String) body.get("biography"));
+        if (authorDto.getBirthDate() != null) {
+            author.setBirthDate(authorDto.getBirthDate());
         }
 
-        if (body.containsKey("nationality")) {
-            author.setNationality((String) body.get("nationality"));
+        if (authorDto.getBiography() != null) {
+            author.setBiography(authorDto.getBiography());
+        }
+
+        if (authorDto.getNationality() != null) {
+            author.setNationality(authorDto.getNationality().trim());
+        }
+
+        if (authorDto.getEmail() != null) {
+            author.setEmail(authorDto.getEmail().trim());
         }
 
         return ResponseEntity.ok(authorRepository.save(author));
@@ -241,77 +193,56 @@ public class ModeratorController {
 
     // ── Series ────────────────────────────────────────────────────────────────
 
-    /**
-     * POST /api/v1/moderator/series
-     * Dodanie nowej serii.
-     */
     @PostMapping("/series")
-    public ResponseEntity<?> addSeries(@RequestBody Map<String, Object> body) {
-        String name = body.get("name") instanceof String
-                ? ((String) body.get("name")).trim()
-                : null;
-
-        if (name == null || name.isBlank()) {
-            return ResponseEntity.badRequest().body("name is required");
-        }
-
+    public ResponseEntity<?> addSeries(@Valid @RequestBody SeriesDto seriesDto) {
         Series series = new Series();
-        series.setName(name);
 
-        Integer volumeCount = getInteger(body.get("volumeCount"));
-        if (volumeCount != null) {
-            series.setVolumeCount(volumeCount.shortValue());
+        series.setName(seriesDto.getName().trim());
+
+        if (seriesDto.getVolumeCount() != null) {
+            series.setVolumeCount(seriesDto.getVolumeCount().shortValue());
         }
 
-        Integer authorId = getInteger(body.get("authorId"));
-        if (authorId != null) {
-            Author author = authorRepository.findById(authorId).orElse(null);
+        if (seriesDto.getAuthorId() != null) {
+            Author author = authorRepository.findById(seriesDto.getAuthorId()).orElse(null);
+
             if (author == null) {
                 return ResponseEntity.badRequest().body("Author not found");
             }
+
             series.setAuthor(author);
         }
 
         return ResponseEntity.ok(seriesRepository.save(series));
     }
 
-    /**
-     * PUT /api/v1/moderator/series/{id}
-     * Edycja istniejącej serii.
-     */
     @PutMapping("/series/{id}")
-    public ResponseEntity<?> editSeries(@PathVariable Integer id,
-                                        @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> editSeries(
+            @PathVariable Integer id,
+            @Valid @RequestBody SeriesUpdateDto seriesDto
+    ) {
         Series series = seriesRepository.findById(id).orElse(null);
 
         if (series == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (body.get("name") instanceof String name) {
-            if (name.isBlank()) {
-                return ResponseEntity.badRequest().body("name cannot be blank");
-            }
-            series.setName(name.trim());
+        if (seriesDto.getName() != null) {
+            series.setName(seriesDto.getName().trim());
         }
 
-        Integer volumeCount = getInteger(body.get("volumeCount"));
-        if (volumeCount != null) {
-            series.setVolumeCount(volumeCount.shortValue());
+        if (seriesDto.getVolumeCount() != null) {
+            series.setVolumeCount(seriesDto.getVolumeCount().shortValue());
         }
 
-        if (body.containsKey("authorId")) {
-            Integer authorId = getInteger(body.get("authorId"));
+        if (seriesDto.getAuthorId() != null) {
+            Author author = authorRepository.findById(seriesDto.getAuthorId()).orElse(null);
 
-            if (authorId == null) {
-                series.setAuthor(null);
-            } else {
-                Author author = authorRepository.findById(authorId).orElse(null);
-                if (author == null) {
-                    return ResponseEntity.badRequest().body("Author not found");
-                }
-                series.setAuthor(author);
+            if (author == null) {
+                return ResponseEntity.badRequest().body("Author not found");
             }
+
+            series.setAuthor(author);
         }
 
         return ResponseEntity.ok(seriesRepository.save(series));
@@ -319,10 +250,6 @@ public class ModeratorController {
 
     // ── Reports ───────────────────────────────────────────────────────────────
 
-    /**
-     * GET /api/v1/moderator/reports?status=pending
-     * Lista zgłoszeń recenzji, opcjonalnie filtrowana po statusie.
-     */
     @GetMapping("/reports")
     public ResponseEntity<List<ReviewReport>> getReports(
             @RequestParam(required = false) String status
@@ -334,10 +261,6 @@ public class ModeratorController {
         return ResponseEntity.ok(reportRepository.findAll());
     }
 
-    /**
-     * PUT /api/v1/moderator/reports/{id}/resolve
-     * Oznacza zgłoszenie jako rozwiązane.
-     */
     @PutMapping("/reports/{id}/resolve")
     public ResponseEntity<?> resolveReport(@PathVariable Integer id) {
         ReviewReport report = reportRepository.findById(id).orElse(null);
@@ -351,10 +274,6 @@ public class ModeratorController {
         return ResponseEntity.ok(reportRepository.save(report));
     }
 
-    /**
-     * PUT /api/v1/moderator/reports/{id}/dismiss
-     * Oznacza zgłoszenie jako odrzucone.
-     */
     @PutMapping("/reports/{id}/dismiss")
     public ResponseEntity<?> dismissReport(@PathVariable Integer id) {
         ReviewReport report = reportRepository.findById(id).orElse(null);
@@ -368,10 +287,6 @@ public class ModeratorController {
         return ResponseEntity.ok(reportRepository.save(report));
     }
 
-    /**
-     * DELETE /api/v1/moderator/reviews/{id}
-     * Usuwa recenzję, np. po uznaniu zgłoszenia za zasadne.
-     */
     @DeleteMapping("/reviews/{id}")
     public ResponseEntity<?> deleteReview(@PathVariable Integer id) {
         if (!reviewRepository.existsById(id)) {
@@ -379,45 +294,12 @@ public class ModeratorController {
         }
 
         List<ReviewReport> reports = reportRepository.findByReview_Id(id);
-        reports.forEach(r -> r.setStatus("resolved"));
+
+        reports.forEach(report -> report.setStatus("resolved"));
         reportRepository.saveAll(reports);
 
         reviewRepository.deleteById(id);
 
         return ResponseEntity.ok(Map.of("message", "Review deleted"));
-    }
-
-    // ── Helper methods ───────────────────────────────────────────────────────
-
-    private Integer getInteger(Object value) {
-        if (value instanceof Number number) {
-            return number.intValue();
-        }
-
-        return null;
-    }
-
-    private Set<Genre> getGenresFromBody(Object value) {
-        if (value == null) {
-            return new HashSet<>();
-        }
-
-        if (!(value instanceof List<?> rawList)) {
-            return null;
-        }
-
-        Set<Integer> genreIds = new HashSet<>();
-
-        for (Object item : rawList) {
-            Integer genreId = getInteger(item);
-
-            if (genreId == null) {
-                return null;
-            }
-
-            genreIds.add(genreId);
-        }
-
-        return new HashSet<>(genreRepository.findAllById(genreIds));
     }
 }

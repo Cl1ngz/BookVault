@@ -1,0 +1,33 @@
+package com.bookvault.library.dto;
+
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+public class AuthorUpdateDto {
+
+    @Size(min = 2, max = 100, message = "Imię autora musi mieć od 2 do 100 znaków")
+    private String firstName;
+
+    @Size(min = 2, max = 100, message = "Nazwisko autora musi mieć od 2 do 100 znaków")
+    private String lastName;
+
+    @Past(message = "Data urodzenia musi być datą z przeszłości")
+    private LocalDate birthDate;
+
+    @Size(max = 50, message = "Narodowość może mieć maksymalnie 50 znaków")
+    private String nationality;
+
+    @Size(max = 5000, message = "Biografia może mieć maksymalnie 5000 znaków")
+    private String biography;
+
+    @Email(message = "Adres e-mail ma niepoprawny format")
+    @Size(max = 255, message = "Adres e-mail może mieć maksymalnie 255 znaków")
+    private String email;
+}
