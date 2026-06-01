@@ -18,6 +18,15 @@ DECLARE
     v_psychological_id INT;
     v_supernatural_id INT;
     v_tragedy_id INT;
+
+    v_ksiazka_id INT;
+
+    cur_ksiazki_berserk CURSOR FOR
+        SELECT id_ksiazki
+        FROM ksiazki
+        WHERE id_autora = v_autor_id
+          AND id_serii = v_seria_id
+        ORDER BY id_ksiazki;
 BEGIN
     -- Autor
     SELECT id_autora
@@ -159,29 +168,36 @@ BEGIN
           AND k.id_serii = v_seria_id
     );
 
-    -- Podstawowe przypisania gatunków dla całej serii
-    INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
-    SELECT k.id_ksiazki, g.id_gatunku
-    FROM ksiazki k
-    CROSS JOIN (
-        VALUES
-            (v_manga_id),
-            (v_fantasy_id),
-            (v_dark_fantasy_id),
-            (v_epic_fantasy_id),
-            (v_sword_and_sorcery_id),
-            (v_horror_id),
-            (v_adventure_id),
-            (v_action_id),
-            (v_seinen_id),
-            (v_psychological_id),
-            (v_supernatural_id),
-            (v_tragedy_id)
-    ) AS g(id_gatunku)
-    WHERE k.id_autora = v_autor_id
-      AND k.id_serii = v_seria_id
-      AND g.id_gatunku IS NOT NULL
-    ON CONFLICT DO NOTHING;
+      -- Podstawowe przypisania gatunków dla całej serii z użyciem kursora
+    OPEN cur_ksiazki_berserk;
+
+    LOOP
+        FETCH cur_ksiazki_berserk INTO v_ksiazka_id;
+
+        EXIT WHEN NOT FOUND;
+
+        INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
+        SELECT v_ksiazka_id, g.id_gatunku
+        FROM (
+            VALUES
+                (v_manga_id),
+                (v_fantasy_id),
+                (v_dark_fantasy_id),
+                (v_epic_fantasy_id),
+                (v_sword_and_sorcery_id),
+                (v_horror_id),
+                (v_adventure_id),
+                (v_action_id),
+                (v_seinen_id),
+                (v_psychological_id),
+                (v_supernatural_id),
+                (v_tragedy_id)
+        ) AS g(id_gatunku)
+        WHERE g.id_gatunku IS NOT NULL
+        ON CONFLICT DO NOTHING;
+    END LOOP;
+
+    CLOSE cur_ksiazki_berserk;
 
     -- Synchronizacja sekwencji po ręcznym/warunkowym seedowaniu
     PERFORM setval(pg_get_serial_sequence('autorzy', 'id_autora'), COALESCE((SELECT MAX(id_autora) FROM autorzy), 1), true);
