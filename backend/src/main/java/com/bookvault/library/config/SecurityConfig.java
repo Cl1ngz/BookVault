@@ -38,6 +38,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/", "/error").permitAll()
+                        .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/shared/**").permitAll()
 
                         .requestMatchers(
