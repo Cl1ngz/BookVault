@@ -1,4 +1,3 @@
--- 11_seeder.sql
 DO
 $$
 BEGIN
@@ -8,14 +7,14 @@ SELECT count(*)
 FROM ksiazki) = 0 THEN
 SET search_path TO biblioteka, public;
 
--- A. Naturalni Autorzy
+-- A. Natural Authors
 INSERT INTO autorzy (imie, nazwisko, narodowosc)
 SELECT (ARRAY['Andrzej', 'Olga', 'Jacek', 'Remigiusz', 'Katarzyna', 'Stanisław'])[floor(random() * 6 + 1)],
             (ARRAY['Sapkowski', 'Tokarczuk', 'Dukaj', 'Mróz', 'Bonda', 'Lem'])[floor(random() * 6 + 1)],
             'Polska'
 FROM generate_series(1, 10);
 
--- B. Naturalne Wydawnictwa (bez powiązania z adresami)
+-- B. Natural Publishers (without address relations)
 INSERT INTO wydawnictwa (nazwa, rok_zalozenia, wlasciciel)
 SELECT
     (ARRAY['Znak', 'Wydawnictwo Literackie', 'Rebis', 'Czarna Owca', 'Muza'])[floor(random() * 5 + 1)],
@@ -23,10 +22,10 @@ SELECT
     (ARRAY['Jan Kowalski', 'Anna Nowak', 'Marek Rebis', 'Helena Owca', 'Piotr Muzowski'])[floor(random() * 5 + 1)]
 FROM generate_series(1, 5);
 
--- C. Naturalne Tytuły Książek
--- nastroj = mood w stylu StoryGraph (klimat czytania):
+-- C. Natural Book Titles
+-- nastroj = mood in StoryGraph style (reading atmosphere):
 --   dark, adventurous, mysterious, emotional, funny, tense, hopeful, challenging, reflective, lighthearted
--- UWAGA: mood ≠ gatunek! Fantasy/Sci-Fi to gatunki, nie moody.
+-- NOTE: mood ≠ genre! Fantasy/Sci-Fi are genres, not moods.
 INSERT INTO ksiazki (tytul, id_autora, id_wydawnictwa, rok_wydania, ilosc_stron, nastroj)
 SELECT (ARRAY['Cień wiatru', 'Prawiek i inne czasy', 'Cyberiada', 'Lód', 'Chłopcy z Placu Broni', 'Solaris'])[floor(random() * 6 + 1)] || ' - Tom ' || i,
             (SELECT id_autora FROM autorzy ORDER BY random() LIMIT 1),
@@ -37,8 +36,8 @@ SELECT (ARRAY['Cień wiatru', 'Prawiek i inne czasy', 'Cyberiada', 'Lód', 'Chł
 FROM generate_series(1, 20) s(i);
 
 RAISE
-NOTICE 'Baza została nakarmiona naturalnymi danymi!';
--- SYNCHRONIZACJA SEKWENCJI
+NOTICE 'Database seeded with natural data!';
+-- SEQUENCE SYNCHRONISATION
 PERFORM setval(
     pg_get_serial_sequence('ksiazki', 'id_ksiazki'),
     COALESCE((SELECT MAX(id_ksiazki) FROM ksiazki), 1),
@@ -70,7 +69,7 @@ PERFORM setval(
 );
 END IF;
 
-        -- D. Gatunki literackie (StoryGraph/Goodreads style)
+        -- D. Literary genres (StoryGraph/Goodreads style)
     IF
 (
 SELECT count(*)
@@ -89,21 +88,21 @@ VALUES
 ON CONFLICT (nazwa) DO NOTHING;
 
 RAISE
-NOTICE 'Gatunki zostały dodane!';
+NOTICE 'Genres added!';
         PERFORM
 setval(pg_get_serial_sequence('gatunki', 'id_gatunku'), MAX(id_gatunku)) FROM gatunki;
 END IF;
 
 
-    -- E. Przypisanie gatunków do książek na podstawie TYTUŁU (nie moodu!)
-    --    Każda książka dostaje 1-2 gatunki odpowiadające rzeczywistej kategorii literackiej
-    --    Uruchamia się gdy ksiazka_gatunek jest pusta
+    -- E. Assign genres to books based on TITLE (not mood!)
+    --    Each book gets 1-2 genres matching its actual literary category
+    --    Runs when ksiazka_gatunek is empty
     IF
 (
 SELECT count(*)
 FROM ksiazka_gatunek) = 0 AND (SELECT count(*) FROM ksiazki) > 0 THEN
 
--- Główny gatunek per tytuł
+-- Primary genre per title
 INSERT
 INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
 SELECT k.id_ksiazki, g.id_gatunku
@@ -117,7 +116,7 @@ FROM ksiazki k
                                          WHEN k.tytul LIKE 'Chłopcy z Placu Broni%' THEN 'Adventure'
     END ON CONFLICT DO NOTHING;
 
--- Drugi gatunek per tytuł
+-- Secondary genre per title
 INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
 SELECT k.id_ksiazki, g.id_gatunku
 FROM ksiazki k
@@ -131,6 +130,6 @@ FROM ksiazki k
     END ON CONFLICT DO NOTHING;
 
 RAISE
-NOTICE 'Gatunki zostały przypisane do książek!';
+NOTICE 'Genres assigned to books!';
 END IF;
 END $$;

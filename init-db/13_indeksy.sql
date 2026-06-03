@@ -1,8 +1,8 @@
--- Indeks B-Tree na tytuły (szukanie książek)
+-- B-Tree index on book titles (book search)
 CREATE INDEX idx_ksiazki_tytul ON ksiazki USING btree (tytul);
 
--- Indeks na nazwisko autora (często używane przy filtrach)
+-- Index on author last name (frequently used in filters)
 CREATE INDEX idx_autorzy_nazwisko ON autorzy (nazwisko);
 
--- Indeks GIN na nastroje (jeśli będziesz chciał szukać po tagach)
+-- Index on mood (for filtering by reading atmosphere)
 CREATE INDEX idx_ksiazki_nastroj ON ksiazki (nastroj);

@@ -12,7 +12,6 @@ const shelf = ref<any[]>([])
 const loading = ref(true)
 const activeTab = ref<'TO_READ' | 'READING' | 'FINISHED' | 'DNF'>('READING')
 
-// ── Share shelf ───────────────────────────────────────────────────────────────
 const shareUrl = ref<string | null>(null)
 const shareMsg = ref('')
 
@@ -305,7 +304,6 @@ onMounted(() => {
 
 .my-shelf h1 { margin-bottom: 1rem; color: #fabd2f; }
 
-/* ── Share shelf ─────────────────────────────────────────────── */
 .share-section {
   display: flex;
   align-items: center;

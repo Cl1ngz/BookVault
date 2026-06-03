@@ -32,7 +32,6 @@ class AuthControllerTest {
                 .ifPresent(readerRepository::delete);
     }
 
-    // ── REGISTER ─────────────────────────────────────────────────
 
     @Test
     void register_success() throws Exception {
@@ -74,7 +73,6 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // ── LOGIN ─────────────────────────────────────────────────────
 
     @Test
     void login_success() throws Exception {

@@ -24,8 +24,6 @@ public class ModeratorController {
 
     private final ModeratorService moderatorService;
 
-    // ── Books ────────────────────────────────────────────────────────────────
-
     @PostMapping("/books")
     public ResponseEntity<?> addBook(@Valid @RequestBody BookDto bookDto) {
         return moderatorService.addBook(bookDto);
@@ -38,8 +36,6 @@ public class ModeratorController {
     ) {
         return moderatorService.editBook(id, bookDto);
     }
-
-    // ── Authors ───────────────────────────────────────────────────────────────
 
     @GetMapping("/authors")
     public ResponseEntity<List<Author>> getAllAuthors() {
@@ -54,8 +50,6 @@ public class ModeratorController {
         return moderatorService.editAuthor(id, authorDto);
     }
 
-    // ── Series ────────────────────────────────────────────────────────────────
-
     @PostMapping("/series")
     public ResponseEntity<?> addSeries(@Valid @RequestBody SeriesDto seriesDto) {
         return moderatorService.addSeries(seriesDto);
@@ -69,7 +63,6 @@ public class ModeratorController {
         return moderatorService.editSeries(id, seriesDto);
     }
 
-    // ── Reports ───────────────────────────────────────────────────────────────
 
     @GetMapping("/reports")
     public ResponseEntity<List<ReviewReport>> getReports(

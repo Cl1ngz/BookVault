@@ -1,5 +1,4 @@
 SET search_path TO biblioteka, public;
-
 DO
 $$
 DECLARE
@@ -17,48 +16,43 @@ DECLARE
     v_philosophical_id INT;
     v_biographical_id INT;
 BEGIN
-    -- Autor
+    -- Author
     SELECT id_autora
     INTO v_autor_id
     FROM autorzy
     WHERE imie = 'Takehiko' AND nazwisko = 'Inoue'
     ORDER BY id_autora
     LIMIT 1;
-
     IF v_autor_id IS NULL THEN
         INSERT INTO autorzy (imie, nazwisko, data_urodzenia, narodowosc, biografia)
         VALUES (
             'Takehiko',
             'Inoue',
             DATE '1967-01-12',
-            'Japonia',
-            'Japoński mangaka, autor serii Vagabond, Slam Dunk oraz Real. Vagabond jest jego interpretacją historii Miyamoto Musashiego.'
+            'Japan',
+            'Japanese manga artist, author of Vagabond, Slam Dunk and Real. Vagabond is his interpretation of the story of Miyamoto Musashi.'
         )
         RETURNING id_autora INTO v_autor_id;
     END IF;
-
-    -- Oryginalne japońskie wydawnictwo
+    -- Original Japanese publisher
     SELECT id_wydawnictwa
     INTO v_wydawnictwo_id
     FROM wydawnictwa
     WHERE nazwa = 'Kodansha'
     ORDER BY id_wydawnictwa
     LIMIT 1;
-
     IF v_wydawnictwo_id IS NULL THEN
         INSERT INTO wydawnictwa (nazwa, rok_zalozenia, wlasciciel)
         VALUES ('Kodansha', 1909, 'Kodansha Ltd.')
         RETURNING id_wydawnictwa INTO v_wydawnictwo_id;
     END IF;
-
-    -- Seria główna Vagabond
+    -- Main Vagabond series
     SELECT id_serii
     INTO v_seria_id
     FROM serie
     WHERE nazwa = 'Vagabond' AND id_autora = v_autor_id
     ORDER BY id_serii
     LIMIT 1;
-
     IF v_seria_id IS NULL THEN
         INSERT INTO serie (nazwa, liczba_tomow, id_autora)
         VALUES ('Vagabond', 37, v_autor_id)
@@ -69,8 +63,7 @@ BEGIN
         WHERE id_serii = v_seria_id
           AND (liczba_tomow IS NULL OR liczba_tomow < 37);
     END IF;
-
-    -- Gatunki potrzebne dla Vagabond
+    -- Genres needed for Vagabond
     INSERT INTO gatunki (nazwa)
     VALUES
         ('Manga'),
@@ -84,7 +77,6 @@ BEGIN
         ('Philosophical'),
         ('Biographical Fiction')
     ON CONFLICT (nazwa) DO NOTHING;
-
     SELECT id_gatunku INTO v_manga_id FROM gatunki WHERE nazwa = 'Manga';
     SELECT id_gatunku INTO v_historical_fiction_id FROM gatunki WHERE nazwa = 'Historical Fiction';
     SELECT id_gatunku INTO v_martial_arts_id FROM gatunki WHERE nazwa = 'Martial Arts';
@@ -95,8 +87,7 @@ BEGIN
     SELECT id_gatunku INTO v_psychological_id FROM gatunki WHERE nazwa = 'Psychological';
     SELECT id_gatunku INTO v_philosophical_id FROM gatunki WHERE nazwa = 'Philosophical';
     SELECT id_gatunku INTO v_biographical_id FROM gatunki WHERE nazwa = 'Biographical Fiction';
-
-    -- Tomy Vagabond w kolejności oryginalnego japońskiego wydania
+    -- Vagabond volumes in original Japanese publication order
     INSERT INTO ksiazki (tytul, id_autora, id_wydawnictwa, id_serii, rok_wydania, ilosc_stron, nastroj)
     SELECT d.tytul, v_autor_id, v_wydawnictwo_id, v_seria_id, d.rok_wydania, d.ilosc_stron, d.nastroj
     FROM (
@@ -146,8 +137,7 @@ BEGIN
           AND k.id_autora = v_autor_id
           AND k.id_serii = v_seria_id
     );
-
-    -- Podstawowe przypisania gatunków dla całej serii
+    -- Base genre assignments for the entire series
     INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
     SELECT k.id_ksiazki, g.id_gatunku
     FROM ksiazki k
@@ -168,14 +158,12 @@ BEGIN
       AND k.id_serii = v_seria_id
       AND g.id_gatunku IS NOT NULL
     ON CONFLICT DO NOTHING;
-
-    -- Synchronizacja sekwencji po ręcznym/warunkowym seedowaniu
+    -- Synchronise sequences after conditional/manual seeding
     PERFORM setval(pg_get_serial_sequence('autorzy', 'id_autora'), COALESCE((SELECT MAX(id_autora) FROM autorzy), 1), true);
     PERFORM setval(pg_get_serial_sequence('wydawnictwa', 'id_wydawnictwa'), COALESCE((SELECT MAX(id_wydawnictwa) FROM wydawnictwa), 1), true);
     PERFORM setval(pg_get_serial_sequence('serie', 'id_serii'), COALESCE((SELECT MAX(id_serii) FROM serie), 1), true);
     PERFORM setval(pg_get_serial_sequence('gatunki', 'id_gatunku'), COALESCE((SELECT MAX(id_gatunku) FROM gatunki), 1), true);
     PERFORM setval(pg_get_serial_sequence('ksiazki', 'id_ksiazki'), COALESCE((SELECT MAX(id_ksiazki) FROM ksiazki), 1), true);
-
-    RAISE NOTICE 'Seeder Vagabond zakończony. Dodano/uzupełniono tomy serii Vagabond.';
+    RAISE NOTICE 'Vagabond seeder completed. Volumes of the Vagabond series added/updated.';
 END
 $$;

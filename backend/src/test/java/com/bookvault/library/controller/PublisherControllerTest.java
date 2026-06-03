@@ -19,7 +19,6 @@ class PublisherControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired PublisherRepository publisherRepository;
 
-    // ── GET /publishers ───────────────────────────────────────────
 
     @Test
     void getAllPublishers_isPublic_returns200() throws Exception {
@@ -50,7 +49,6 @@ class PublisherControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── GET /publishers/{id} ──────────────────────────────────────
 
     @Test
     void getPublisherById_existingId_returns200WithFields() throws Exception {
@@ -71,7 +69,6 @@ class PublisherControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ── GET /publishers/{id}/books ────────────────────────────────
 
     @Test
     void getBooksByPublisher_existingId_returnsArray() throws Exception {

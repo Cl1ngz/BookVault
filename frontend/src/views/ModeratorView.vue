@@ -2,16 +2,12 @@
 import {ref, onMounted} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/api'
-
-
 const router = useRouter()
 const user = JSON.parse(localStorage.getItem('user') || 'null')
 if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) router.push('/books')
 
-// ── Active tab ────────────────────────────────────────────────────────────────
 const activeTab = ref<'books' | 'editBook' | 'authors' | 'series' | 'reports' | 'readers'>('books')
 
-// ── Shared data ───────────────────────────────────────────────────────────────
 const authors = ref<any[]>([])
 const publishers = ref<any[]>([])
 const seriesList = ref<any[]>([])
@@ -29,7 +25,6 @@ onMounted(async () => {
   await loadReports()
 })
 
-// ── Add Book ──────────────────────────────────────────────────────────────────
 const newBook = ref({
   title: '', authorId: null as number | null, publisherId: null as number | null,
   seriesId: null as number | null, publicationYear: null as number | null,
@@ -64,7 +59,6 @@ function toggleGenre(arr: number[], id: number) {
   if (i === -1) arr.push(id); else arr.splice(i, 1)
 }
 
-// ── Edit Book ─────────────────────────────────────────────────────────────────
 const allBooks = ref<any[]>([])
 const selectedBookId = ref<number | null>(null)
 const editBook = ref<any>(null)
@@ -101,7 +95,6 @@ async function saveEditBook() {
   }
 }
 
-// ── Edit Author ───────────────────────────────────────────────────────────────
 const selectedAuthorId = ref<number | null>(null)
 const editAuthor = ref<any>(null)
 const authorMsg = ref({text: '', ok: true})
@@ -127,7 +120,6 @@ async function saveEditAuthor() {
   }
 }
 
-// ── Series ────────────────────────────────────────────────────────────────────
 const newSeries = ref({name: '', volumeCount: null as number | null, authorId: null as number | null})
 const selectedSeriesId = ref<number | null>(null)
 const editSeries = ref<any>(null)
@@ -176,11 +168,9 @@ async function saveEditSeries() {
   }
 }
 
-// ── Reports ───────────────────────────────────────────────────────────────────
 const reports = ref<any[]>([])
 const reportsFilter = ref('pending')
 
-// ── Readers ───────────────────────────────────────────────────────────────────
 const readers = ref<any[]>([])
 const readerSearch = ref('')
 const isAdmin = user?.role === 'ADMIN'
@@ -305,8 +295,6 @@ async function deleteReview(reviewId: number) {
         <span aria-hidden="true">{{ tab.emoji }}</span> {{ tab.label }}
       </button>
     </div>
-
-    <!-- ── Add Book tab ──────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'books'" id="mod-panel-books" role="tabpanel" aria-labelledby="mod-tab-books">
       <h2><span aria-hidden="true">📚</span> Add New Book</h2>
       <div class="form-grid">
@@ -366,8 +354,6 @@ async function deleteReview(reviewId: number) {
       >{{ bookMsg.text }}</p>
       <button @click="addBook" class="btn-submit">Add Book</button>
     </section>
-
-    <!-- ── Edit Book tab ─────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'editBook'" id="mod-panel-editBook" role="tabpanel" aria-labelledby="mod-tab-editBook">
       <h2><span aria-hidden="true">✏️</span> Edit Book</h2>
       <div style="margin-bottom:1rem;">
@@ -434,8 +420,6 @@ async function deleteReview(reviewId: number) {
       >{{ editBookMsg.text }}</p>
       <button v-if="editBook" @click="saveEditBook" class="btn-submit">Save Changes</button>
     </section>
-
-    <!-- ── Edit Author tab ───────────────────────────────────────────────── -->
     <section v-if="activeTab === 'authors'" id="mod-panel-authors" role="tabpanel" aria-labelledby="mod-tab-authors">
       <h2><span aria-hidden="true">✍️</span> Edit Author</h2>
       <div style="margin-bottom:1rem;">
@@ -471,8 +455,6 @@ async function deleteReview(reviewId: number) {
       >{{ authorMsg.text }}</p>
       <button v-if="editAuthor" @click="saveEditAuthor" class="btn-submit">Save Author</button>
     </section>
-
-    <!-- ── Series tab ────────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'series'" id="mod-panel-series" role="tabpanel" aria-labelledby="mod-tab-series">
       <h2><span aria-hidden="true">📖</span> Manage Series</h2>
 
@@ -530,8 +512,6 @@ async function deleteReview(reviewId: number) {
       >{{ seriesMsg.text }}</p>
       <button v-if="editSeries" @click="saveEditSeries" class="btn-submit">Save Series</button>
     </section>
-
-    <!-- ── Reports tab ───────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'reports'" id="mod-panel-reports" role="tabpanel" aria-labelledby="mod-tab-reports">
       <h2><span aria-hidden="true">🚨</span> Flagged Reviews</h2>
       <div class="filter-row">
@@ -585,8 +565,6 @@ async function deleteReview(reviewId: number) {
         </tbody>
       </table>
     </section>
-
-    <!-- ── Readers tab ────────────────────────────────────────────────────── -->
     <section v-if="activeTab === 'readers'" id="mod-panel-readers" role="tabpanel" aria-labelledby="mod-tab-readers">
       <h2><span aria-hidden="true">👥</span> Registered Readers</h2>
 
@@ -690,7 +668,6 @@ async function deleteReview(reviewId: number) {
   border: 0;
 }
 
-/* ── fieldset used for genre groups ───────────────────────────── */
 fieldset.genres-row {
   border: 1px solid #504945;
   border-radius: 6px;

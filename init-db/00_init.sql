@@ -1,12 +1,12 @@
 -- 00_init.sql
 CREATE SCHEMA IF NOT EXISTS biblioteka;
 
--- Ustawienie, aby użytkownik 'user' zawsze domyślnie korzystał z tego schematu
+-- Set default search_path for the 'user' role
 ALTER ROLE "user" SET search_path TO biblioteka, public;
 
--- Ustawienie dla obecnej sesji (inicjalizacji)
+-- Set search_path for the current session (initialisation)
 SET search_path TO biblioteka, public;
--- Funkcja wyzwalacza dla kolumny updated_at
+-- Trigger function for the updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN

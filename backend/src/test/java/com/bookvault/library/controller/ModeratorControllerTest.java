@@ -59,7 +59,6 @@ class ModeratorControllerTest {
         moderatorToken = jwtUtils.generateToken(mod.getEmail(), mod.getId(), mod.getUsername(), mod.getRole());
     }
 
-    // ── Access control ────────────────────────────────────────────
 
     @Test
     void getAuthors_withoutToken_returns403() throws Exception {
@@ -103,7 +102,6 @@ class ModeratorControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── Book CRUD via moderator ───────────────────────────────────
 
     @Test
     void addBook_withUserToken_returns403() throws Exception {
@@ -137,7 +135,6 @@ class ModeratorControllerTest {
                 .andExpect(jsonPath("$.title").value("Moderator Test Book"));
     }
 
-    // ── Series CRUD via moderator ─────────────────────────────────
 
     @Test
     void addSeries_withModeratorToken_validName_returns200() throws Exception {
@@ -173,7 +170,6 @@ class ModeratorControllerTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── Report resolution ─────────────────────────────────────────
 
     @Test
     void resolveReport_withUserToken_returns403() throws Exception {

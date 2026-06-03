@@ -363,7 +363,6 @@ function renderStars(rating: number) {
 </template>
 
 <style scoped>
-/* ── BookDetailView ─────────────────────────────────────────── */
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -386,7 +385,6 @@ function renderStars(rating: number) {
   padding: 1rem;
 }
 
-/* ── Reading-status card ────────────────────────────────────── */
 .reading-status-section {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -439,7 +437,6 @@ function renderStars(rating: number) {
   border: none;
 }
 
-/* ── Shelf controls ─────────────────────────────────────────── */
 .shelf-controls {
   display: flex;
   align-items: center;
@@ -468,7 +465,6 @@ function renderStars(rating: number) {
   font-size: 0.9rem;
 }
 
-/* ── Progress tracking ──────────────────────────────────────── */
 .progress-section { margin-top: 0.5rem; }
 
 .progress-row {
@@ -523,14 +519,12 @@ function renderStars(rating: number) {
   transition: width 0.3s;
 }
 
-/* ── Shelf dates & messages ─────────────────────────────────── */
 .shelf-dates { font-size: 0.8rem; color: #7c6f64; margin-top: 6px; }
 
 .shelf-msg { margin: 8px 0 0; font-size: 0.9rem; }
 .shelf-msg--ok { color: #b8bb26; }
 .shelf-msg--error { color: #fb4934; }
 
-/* ── Reviews list ───────────────────────────────────────────── */
 .reviews-list { list-style: none; padding: 0; }
 
 .review-item {
@@ -556,7 +550,6 @@ function renderStars(rating: number) {
   color: #a89984;
 }
 
-/* ── Review form ────────────────────────────────────────────── */
 .review-form {
   margin-top: 1.5rem;
   padding: 1rem;
@@ -609,7 +602,6 @@ function renderStars(rating: number) {
 }
 .btn-post:hover { filter: brightness(1.15); }
 
-/* ── Misc ───────────────────────────────────────────────────── */
 .error-msg { color: #fb4934; }
 </style>
 

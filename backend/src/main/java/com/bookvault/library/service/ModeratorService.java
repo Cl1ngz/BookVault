@@ -28,7 +28,6 @@ public class ModeratorService {
     private final ReviewReportRepository reportRepository;
     private final ReviewRepository reviewRepository;
 
-    // ── Books ────────────────────────────────────────────────────────────────
 
     public ResponseEntity<?> addBook(BookDto bookDto) {
         Book book = new Book();
@@ -110,7 +109,6 @@ public class ModeratorService {
         return ResponseEntity.ok(bookRepository.save(book));
     }
 
-    // ── Authors ───────────────────────────────────────────────────────────────
 
     public List<Author> getAllAuthors() {
         return authorRepository.findAll();
@@ -147,7 +145,6 @@ public class ModeratorService {
         return ResponseEntity.ok(authorRepository.save(author));
     }
 
-    // ── Series ────────────────────────────────────────────────────────────────
 
     public ResponseEntity<?> addSeries(SeriesDto seriesDto) {
         Series series = new Series();
@@ -187,7 +184,6 @@ public class ModeratorService {
         return ResponseEntity.ok(seriesRepository.save(series));
     }
 
-    // ── Reports ───────────────────────────────────────────────────────────────
 
     public List<ReviewReport> getReports(String status) {
         if (status != null && !status.isBlank()) {

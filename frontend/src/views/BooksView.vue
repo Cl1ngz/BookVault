@@ -7,14 +7,12 @@ const allBooks = ref<any[]>([])
 const allGenres = ref<any[]>([])
 const filtersOpen = ref(true)
 
-// ── Current user & shelf ──────────────────────────────────────────────────────
 const user = computed(() => {
   try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
 })
 const isLoggedIn = computed(() => !!user.value?.token)
 const shelfBookIds = ref<Set<number>>(new Set())
 
-// ── Sorting ───────────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
   {value: 'title', label: 'Title'},
   {value: 'publicationYear', label: 'Publication Year'},
@@ -40,17 +38,14 @@ function toggleDir() {
   sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
 }
 
-// ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 
-// ── Mood ──────────────────────────────────────────────────────────────────────
 const MOODS = ['adventurous', 'challenging', 'dark', 'emotional', 'funny', 'hopeful',
   'informative', 'inspiring', 'lighthearted', 'mysterious', 'reflective',
   'relaxing', 'sad', 'tense']
 const selectedMoods = ref<string[]>([])
 const moodMode = ref<'any' | 'all'>('any')
 
-// ── Pace (derived from pageCount) ─────────────────────────────────────────────
 const selectedPaces = ref<string[]>([])
 
 function getPace(book: any) {
@@ -61,7 +56,6 @@ function getPace(book: any) {
   return 'Slow'
 }
 
-// ── Type (derived from genres) ────────────────────────────────────────────────
 const FICTION_GENRES = new Set(['Fantasy', 'Science Fiction', 'Romance', 'Horror', 'Thriller',
   'Mystery', 'Crime', 'Historical Fiction', 'Adventure', 'Literary Fiction', 'Contemporary Fiction',
   'Magical Realism', 'Dystopian', 'Speculative Fiction', 'Paranormal', 'Urban Fantasy', 'Epic Fantasy',
@@ -77,7 +71,6 @@ function getType(book: any): 'Fiction' | 'Nonfiction' | null {
   return names.filter(n => FICTION_GENRES.has(n)).length > names.length / 2 ? 'Fiction' : 'Nonfiction'
 }
 
-// ── Genres ────────────────────────────────────────────────────────────────────
 const includeGenres = ref<string[]>([])
 const excludeGenres = ref<string[]>([])
 const includeMode = ref<'any' | 'all'>('any')
@@ -97,21 +90,16 @@ function toggleExclude(name: string) {
 }
 
 
-// ── Year ──────────────────────────────────────────────────────────────────────
 const yearFrom = ref<number | null>(null)
 const yearTo = ref<number | null>(null)
 
-// ── Added date (createdAt) ────────────────────────────────────────────────────
 const addedFrom = ref<string>('')   // ISO date string  e.g. "2025-01-01"
 const addedTo = ref<string>('')   // ISO date string
 
-// ── Series ────────────────────────────────────────────────────────────────────
 const standaloneOnly = ref(false)
 
-// ── Unread only (logged-in users) ─────────────────────────────────────────────
 const unreadOnly = ref(true)
 
-// ── Active filter count ───────────────────────────────────────────────────────
 const activeFilterCount = computed(() =>
     [selectedMoods.value.length > 0, selectedPaces.value.length > 0,
       selectedTypes.value.length > 0, includeGenres.value.length > 0,
@@ -121,7 +109,6 @@ const activeFilterCount = computed(() =>
     ].filter(Boolean).length
 )
 
-// ── Filter logic ──────────────────────────────────────────────────────────────
 const filteredBooks = computed(() => {
   const filtered = allBooks.value.filter(book => {
     if (searchQuery.value.trim()) {
@@ -165,7 +152,6 @@ const filteredBooks = computed(() => {
     return true
   })
 
-  // ── Sort ──────────────────────────────────────────────────────────────────
   return [...filtered].sort((a, b) => {
     let va: any, vb: any
     if (sortBy.value === 'title') {
@@ -738,7 +724,6 @@ onMounted(async () => {
   user-select: none;
 }
 
-/* ── Custom Gruvbox checkbox ─────────────────────────────────── */
 .standalone-label input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;

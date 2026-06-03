@@ -49,7 +49,6 @@ class ReviewControllerTest {
                 .orElse(1);
     }
 
-    // ── GET /reviews ──────────────────────────────────────────────
 
     @Test
     void getAllReviews_isPublic_returns200() throws Exception {
@@ -73,7 +72,6 @@ class ReviewControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── POST /reviews ─────────────────────────────────────────────
 
     @Test
     void addReview_withoutToken_returns401() throws Exception {
