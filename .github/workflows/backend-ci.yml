@@ -1,0 +1,102 @@
+name: Backend CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "backend/**"
+      - "init-db/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "backend/**"
+      - "init-db/**"
+      - ".github/workflows/backend-ci.yml"
+
+jobs:
+  build-and-test:
+    name: Build & Test (Java 21 + PostgreSQL)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: biblioteka_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Passed through to the test application.properties via Spring placeholders
+      DB_URL: jdbc:postgresql://localhost:5432/biblioteka_db?currentSchema=biblioteka
+      DB_USER: app_BookVault
+      DB_PASS: App1dent1ty#Pass!
+      JWT_SECRET: bookvaultsupersecretkeyismustbenoway
+      JWT_EXPIRATION: 86400000
+
+    steps:
+      #  Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      #  Set up Java 21
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      #  Initialise the database schema & seed data
+      - name: Initialise database schema
+        env:
+          PGPASSWORD: postgres
+        run: |
+          # Run every SQL file in order
+          for f in $(ls init-db/*.sql | sort); do
+            echo "▶ Running $f"
+            psql -h localhost -U postgres -d biblioteka_db -f "$f" || true
+          done
+
+      #  Compile (fail fast on any compile error)
+      - name: Compile
+        working-directory: backend
+        run: ./mvnw -B compile --no-transfer-progress
+
+      #  Run tests
+      - name: Run tests
+        working-directory: backend
+        run: |
+          ./mvnw -B test --no-transfer-progress \
+            -Dspring.datasource.url="${DB_URL}" \
+            -Dspring.datasource.username="${DB_USER}" \
+            -Dspring.datasource.password="${DB_PASS}" \
+            -Djwt.secret="${JWT_SECRET}" \
+            -Djwt.expiration="${JWT_EXPIRATION}"
+
+      #  Publish test report
+      - name: Publish test results
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: "backend/target/surefire-reports/TEST-*.xml"
+          check_name: "Backend Test Report"
+          fail_on_failure: true
+
+      # ── 7. Upload surefire reports as artifact
+      - name: Upload surefire reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
+

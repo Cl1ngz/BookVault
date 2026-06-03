@@ -1,0 +1,56 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  pull_request:
+    branches: ["**"]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+
+jobs:
+  type-check-and-build:
+    name: Type-check & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Node.js (matches package.json engines field) ───────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      # ── 3. Install dependencies ──────────────────────────────────────────────
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # ── 4. TypeScript type-check (vue-tsc) ───────────────────────────────────
+      - name: Type-check
+        working-directory: frontend
+        run: npm run type-check ───────────────────────────────────
+
+      # ── 5. Production build (also catches Vite / rollup errors) ─────────────
+      - name: Build
+        working-directory: frontend
+        run: npm run build-only
+
+      # ── 6. Upload dist artifact ──────────────────────────────────────────────
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          retention-days: 7
+
