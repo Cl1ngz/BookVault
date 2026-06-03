@@ -28,7 +28,7 @@ DECLARE
           AND id_serii = v_seria_id
         ORDER BY id_ksiazki;
 BEGIN
-    -- Autor
+    -- Author
     SELECT id_autora
     INTO v_autor_id
     FROM autorzy
@@ -42,13 +42,13 @@ BEGIN
             'Kentaro',
             'Miura',
             DATE '1966-07-11',
-            'Japonia',
-            'Japoński mangaka, twórca mangi Berserk. Po jego śmierci seria jest kontynuowana przez Studio Gaga pod nadzorem Koujiego Moriego.'
+            'Japan',
+            'Japanese manga artist, creator of Berserk. After his death, the series is continued by Studio Gaga under the supervision of Kouji Mori.'
         )
         RETURNING id_autora INTO v_autor_id;
     END IF;
 
-    -- Oryginalne japońskie wydawnictwo
+    -- Original Japanese publisher
     SELECT id_wydawnictwa
     INTO v_wydawnictwo_id
     FROM wydawnictwa
@@ -62,7 +62,7 @@ BEGIN
         RETURNING id_wydawnictwa INTO v_wydawnictwo_id;
     END IF;
 
-    -- Seria główna Berserk
+    -- Main Berserk series
     SELECT id_serii
     INTO v_seria_id
     FROM serie
@@ -81,7 +81,7 @@ BEGIN
           AND (liczba_tomow IS NULL OR liczba_tomow < 43);
     END IF;
 
-    -- Gatunki potrzebne dla Berserka
+    -- Genres needed for Berserk
     INSERT INTO gatunki (nazwa)
     VALUES
         ('Manga'),
@@ -111,7 +111,7 @@ BEGIN
     SELECT id_gatunku INTO v_supernatural_id FROM gatunki WHERE nazwa = 'Supernatural';
     SELECT id_gatunku INTO v_tragedy_id FROM gatunki WHERE nazwa = 'Tragedy';
 
-    -- Tomy Berserk w kolejności oryginalnego japońskiego wydania
+    -- Berserk volumes in original Japanese publication order
     INSERT INTO ksiazki (tytul, id_autora, id_wydawnictwa, id_serii, rok_wydania, ilosc_stron, nastroj)
     SELECT d.tytul, v_autor_id, v_wydawnictwo_id, v_seria_id, d.rok_wydania, d.ilosc_stron, d.nastroj
     FROM (
@@ -168,7 +168,7 @@ BEGIN
           AND k.id_serii = v_seria_id
     );
 
-      -- Podstawowe przypisania gatunków dla całej serii z użyciem kursora
+      -- Base genre assignments for the entire series using a cursor
     OPEN cur_ksiazki_berserk;
 
     LOOP
@@ -199,13 +199,13 @@ BEGIN
 
     CLOSE cur_ksiazki_berserk;
 
-    -- Synchronizacja sekwencji po ręcznym/warunkowym seedowaniu
+    -- Synchronise sequences after conditional/manual seeding
     PERFORM setval(pg_get_serial_sequence('autorzy', 'id_autora'), COALESCE((SELECT MAX(id_autora) FROM autorzy), 1), true);
     PERFORM setval(pg_get_serial_sequence('wydawnictwa', 'id_wydawnictwa'), COALESCE((SELECT MAX(id_wydawnictwa) FROM wydawnictwa), 1), true);
     PERFORM setval(pg_get_serial_sequence('serie', 'id_serii'), COALESCE((SELECT MAX(id_serii) FROM serie), 1), true);
     PERFORM setval(pg_get_serial_sequence('gatunki', 'id_gatunku'), COALESCE((SELECT MAX(id_gatunku) FROM gatunki), 1), true);
     PERFORM setval(pg_get_serial_sequence('ksiazki', 'id_ksiazki'), COALESCE((SELECT MAX(id_ksiazki) FROM ksiazki), 1), true);
 
-    RAISE NOTICE 'Seeder Berserk zakończony. Dodano/uzupełniono tomy serii Berserk.';
+    RAISE NOTICE 'Berserk seeder completed. Volumes of the Berserk series added/updated.';
 END
 $$;

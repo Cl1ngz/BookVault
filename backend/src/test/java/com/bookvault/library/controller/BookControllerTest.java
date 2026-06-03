@@ -19,7 +19,6 @@ class BookControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired BookRepository bookRepository;
 
-    // ── GET /books ────────────────────────────────────────────────
 
     @Test
     void getAllBooks_isPublic_returns200() throws Exception {
@@ -69,7 +68,6 @@ class BookControllerTest {
                 .andExpect(status().isOk());
     }
 
-    // ── GET /books/{id} ───────────────────────────────────────────
 
     @Test
     void getBookById_existingId_returns200() throws Exception {

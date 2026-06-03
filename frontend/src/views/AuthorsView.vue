@@ -85,14 +85,12 @@ function truncate(text: string | null | undefined, len = 140) {
   color: #7c6f64;
 }
 
-/* ── Grid ────────────────────────────────────────────────────── */
 .authors-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-/* ── Card ────────────────────────────────────────────────────── */
 .author-card {
   display: flex;
   align-items: flex-start;
@@ -111,7 +109,6 @@ function truncate(text: string | null | undefined, len = 140) {
   background: #32302f;
 }
 
-/* ── Avatar ──────────────────────────────────────────────────── */
 .author-avatar {
   flex-shrink: 0;
   width: 48px;
@@ -127,7 +124,6 @@ function truncate(text: string | null | undefined, len = 140) {
   letter-spacing: 0.5px;
 }
 
-/* ── Info ────────────────────────────────────────────────────── */
 .author-info {
   flex: 1;
   min-width: 0;
@@ -169,7 +165,6 @@ function truncate(text: string | null | undefined, len = 140) {
   color: #665c54;
 }
 
-/* ── Arrow ───────────────────────────────────────────────────── */
 .author-arrow {
   flex-shrink: 0;
   color: #665c54;

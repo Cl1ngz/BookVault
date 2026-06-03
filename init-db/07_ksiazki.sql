@@ -1,8 +1,8 @@
 CREATE TABLE ksiazki (
     id_ksiazki SERIAL PRIMARY KEY,
     tytul VARCHAR(255) NOT NULL,
-    id_autora INT REFERENCES autorzy(id_autora) ON DELETE CASCADE, -- Kaskada
-    id_wydawnictwa INT REFERENCES wydawnictwa(id_wydawnictwa) ON DELETE SET NULL, -- Bezpieczne odpięcie
+    id_autora INT REFERENCES autorzy(id_autora) ON DELETE CASCADE, -- Cascade delete
+    id_wydawnictwa INT REFERENCES wydawnictwa(id_wydawnictwa) ON DELETE SET NULL, -- Safe detach
     id_serii INT REFERENCES serie(id_serii) ON DELETE SET NULL,
     rok_wydania INT,
     ilosc_stron INT,

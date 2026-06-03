@@ -65,7 +65,6 @@ class ReadingLogControllerTest {
         });
     }
 
-    // ── GET /reading-log ──────────────────────────────────────────
 
     @Test
     void getShelf_withoutToken_returns401() throws Exception {
@@ -96,7 +95,6 @@ class ReadingLogControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // ── POST /reading-log ─────────────────────────────────────────
 
     @Test
     void addToShelf_withoutToken_returns401() throws Exception {
@@ -161,7 +159,6 @@ class ReadingLogControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ── PUT /reading-log/{id} ─────────────────────────────────────
 
     @Test
     void updateShelfEntry_withValidToken_returns200() throws Exception {
@@ -188,7 +185,6 @@ class ReadingLogControllerTest {
                 .andExpect(jsonPath("$.status").value("READING"));
     }
 
-    // ── DELETE /reading-log/{id} ──────────────────────────────────
 
     @Test
     void removeFromShelf_withValidToken_returns200() throws Exception {
@@ -214,7 +210,6 @@ class ReadingLogControllerTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // ── GET /reading-log/stats ────────────────────────────────────
 
     @Test
     void getStats_withToken_returns200WithKeys() throws Exception {

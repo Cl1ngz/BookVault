@@ -20,7 +20,6 @@ class AuthorControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired AuthorRepository authorRepository;
 
-    // ── GET /authors ──────────────────────────────────────────────
 
     @Test
     void getAllAuthors_isPublic_returns200() throws Exception {
@@ -51,7 +50,6 @@ class AuthorControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── GET /authors/{id} ─────────────────────────────────────────
 
     @Test
     void getAuthorById_existingId_returns200WithFields() throws Exception {
@@ -72,7 +70,6 @@ class AuthorControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ── GET /authors/{id}/books ───────────────────────────────────
 
     @Test
     void getBooksByAuthor_existingId_returnsArray() throws Exception {

@@ -6,7 +6,6 @@
 -- Role created:
 --   db_procexecutor – EXECUTE on all functions/procedures; assigned to app_identity
 
--- ── 1. Role db_procexecutor ───────────────────────────────────────────────────
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'db_procexecutor') THEN
@@ -21,7 +20,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA biblioteka
     GRANT EXECUTE ON FUNCTIONS TO db_procexecutor;
 
 
--- ── 2. db_admin (database administrator – full ownership) ─────────────────────
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'db_admin') THEN
@@ -43,7 +41,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA biblioteka
     GRANT ALL PRIVILEGES ON SEQUENCES TO db_admin;
 
 
--- ── 3. app_BookVault (backend application account – READ + WRITE + EXECUTE) ───
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'app_BookVault') THEN
@@ -66,7 +63,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA biblioteka
 ALTER ROLE "app_BookVault" SET search_path TO biblioteka, public;
 
 
--- ── 4. Developer accounts (READ only) ────────────────────────────────────────
 DO $$
 DECLARE
     dev_names TEXT[] := ARRAY['Cl1ngz-dev', 'Gittokurestwo-dev', 'Bibonluz-dev', 'bakerinho-dev'];

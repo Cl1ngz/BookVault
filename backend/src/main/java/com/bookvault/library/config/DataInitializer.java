@@ -41,8 +41,6 @@ public class DataInitializer implements CommandLineRunner {
         seedReaders(15);
         seedReviews(100);
 
-        seedModerator();
-        seedAdmin();
 
         System.out.println(">>> DATA SYNCHRONIZATION COMPLETE!");
     }
@@ -207,42 +205,5 @@ public class DataInitializer implements CommandLineRunner {
             r.setReader(readers.get(faker.random().nextInt(readers.size())));
             reviewRepository.save(r);
         }
-    }
-
-    private void seedModerator() {        String moderatorEmail = "moderator@bookvault.com";
-
-        if (readerRepository.findByEmail(moderatorEmail).isPresent()) return;
-
-        System.out.println("-> Creating Moderator Account...");
-
-        Reader mod = new Reader();
-        mod.setUsername("moderator");
-        mod.setEmail(moderatorEmail);
-        mod.setPasswordHash(passwordEncoder.encode("moderator123"));
-        mod.setRole("MODERATOR");
-        mod.setNationality("Polska");
-
-        readerRepository.save(mod);
-
-        System.out.println("   Moderator: moderator@bookvault.com / moderator123");
-    }
-
-    private void seedAdmin() {
-        String adminEmail = "admin@bookvault.com";
-
-        if (readerRepository.findByEmail(adminEmail).isPresent()) return;
-
-        System.out.println("-> Creating Admin Account...");
-
-        Reader admin = new Reader();
-        admin.setUsername("admin");
-        admin.setEmail(adminEmail);
-        admin.setPasswordHash(passwordEncoder.encode("admin123"));
-        admin.setRole("ADMIN");
-        admin.setNationality("Polska");
-
-        readerRepository.save(admin);
-
-        System.out.println("   Admin: admin@bookvault.com / admin123");
     }
 }

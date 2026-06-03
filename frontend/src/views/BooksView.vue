@@ -5,16 +5,19 @@ import api from '@/api'
 
 const allBooks = ref<any[]>([])
 const allGenres = ref<any[]>([])
-const filtersOpen = ref(true)
+const filtersOpen = ref(false)
+const activeSection = ref<string | null>(null)
 
-// ── Current user & shelf ──────────────────────────────────────────────────────
+function toggleSection(name: string) {
+  activeSection.value = activeSection.value === name ? null : name
+}
+
 const user = computed(() => {
   try { return JSON.parse(localStorage.getItem('user') || 'null') } catch { return null }
 })
 const isLoggedIn = computed(() => !!user.value?.token)
 const shelfBookIds = ref<Set<number>>(new Set())
 
-// ── Sorting ───────────────────────────────────────────────────────────────────
 const SORT_OPTIONS = [
   {value: 'title', label: 'Title'},
   {value: 'publicationYear', label: 'Publication Year'},
@@ -40,17 +43,14 @@ function toggleDir() {
   sortDir.value = sortDir.value === 'asc' ? 'desc' : 'asc'
 }
 
-// ── Search ────────────────────────────────────────────────────────────────────
 const searchQuery = ref('')
 
-// ── Mood ──────────────────────────────────────────────────────────────────────
 const MOODS = ['adventurous', 'challenging', 'dark', 'emotional', 'funny', 'hopeful',
   'informative', 'inspiring', 'lighthearted', 'mysterious', 'reflective',
   'relaxing', 'sad', 'tense']
 const selectedMoods = ref<string[]>([])
 const moodMode = ref<'any' | 'all'>('any')
 
-// ── Pace (derived from pageCount) ─────────────────────────────────────────────
 const selectedPaces = ref<string[]>([])
 
 function getPace(book: any) {
@@ -61,7 +61,6 @@ function getPace(book: any) {
   return 'Slow'
 }
 
-// ── Type (derived from genres) ────────────────────────────────────────────────
 const FICTION_GENRES = new Set(['Fantasy', 'Science Fiction', 'Romance', 'Horror', 'Thriller',
   'Mystery', 'Crime', 'Historical Fiction', 'Adventure', 'Literary Fiction', 'Contemporary Fiction',
   'Magical Realism', 'Dystopian', 'Speculative Fiction', 'Paranormal', 'Urban Fantasy', 'Epic Fantasy',
@@ -77,7 +76,6 @@ function getType(book: any): 'Fiction' | 'Nonfiction' | null {
   return names.filter(n => FICTION_GENRES.has(n)).length > names.length / 2 ? 'Fiction' : 'Nonfiction'
 }
 
-// ── Genres ────────────────────────────────────────────────────────────────────
 const includeGenres = ref<string[]>([])
 const excludeGenres = ref<string[]>([])
 const includeMode = ref<'any' | 'all'>('any')
@@ -97,21 +95,17 @@ function toggleExclude(name: string) {
 }
 
 
-// ── Year ──────────────────────────────────────────────────────────────────────
 const yearFrom = ref<number | null>(null)
 const yearTo = ref<number | null>(null)
 
-// ── Added date (createdAt) ────────────────────────────────────────────────────
 const addedFrom = ref<string>('')   // ISO date string  e.g. "2025-01-01"
 const addedTo = ref<string>('')   // ISO date string
 
-// ── Series ────────────────────────────────────────────────────────────────────
 const standaloneOnly = ref(false)
 
-// ── Unread only (logged-in users) ─────────────────────────────────────────────
-const unreadOnly = ref(true)
+const unreadOnly = ref(loadPref('bv_unreadOnly', false))
+watch(unreadOnly, v => localStorage.setItem('bv_unreadOnly', JSON.stringify(v)))
 
-// ── Active filter count ───────────────────────────────────────────────────────
 const activeFilterCount = computed(() =>
     [selectedMoods.value.length > 0, selectedPaces.value.length > 0,
       selectedTypes.value.length > 0, includeGenres.value.length > 0,
@@ -121,7 +115,6 @@ const activeFilterCount = computed(() =>
     ].filter(Boolean).length
 )
 
-// ── Filter logic ──────────────────────────────────────────────────────────────
 const filteredBooks = computed(() => {
   const filtered = allBooks.value.filter(book => {
     if (searchQuery.value.trim()) {
@@ -165,7 +158,6 @@ const filteredBooks = computed(() => {
     return true
   })
 
-  // ── Sort ──────────────────────────────────────────────────────────────────
   return [...filtered].sort((a, b) => {
     let va: any, vb: any
     if (sortBy.value === 'title') {
@@ -182,6 +174,22 @@ const filteredBooks = computed(() => {
     if (va > vb) return sortDir.value === 'asc' ? 1 : -1
     return 0
   })
+})
+
+const pageSize = ref<number>(loadPref('bv_pageSize', 50))
+const currentPage = ref(1)
+
+watch(pageSize, v => { localStorage.setItem('bv_pageSize', JSON.stringify(v)); currentPage.value = 1 })
+watch(filteredBooks, () => { currentPage.value = 1 })
+
+const totalPages = computed(() =>
+  pageSize.value === 0 ? 1 : Math.max(1, Math.ceil(filteredBooks.value.length / pageSize.value))
+)
+
+const displayedBooks = computed(() => {
+  if (pageSize.value === 0) return filteredBooks.value
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredBooks.value.slice(start, start + pageSize.value)
 })
 
 function clearAll() {
@@ -207,13 +215,18 @@ function toggle(arr: string[], val: string) {
 
 onMounted(async () => {
   document.title = 'Books — BookVault'
-  const requests: Promise<any>[] = [api.get('/books'), api.get('/genres')]
-  if (isLoggedIn.value) requests.push(api.get('/reading-log'))
-  const [booksRes, genresRes, shelfRes] = await Promise.all(requests)
+  const [booksRes, genresRes] = await Promise.all([api.get('/books'), api.get('/genres')])
   allBooks.value = booksRes.data
   allGenres.value = genresRes.data
-  if (shelfRes) {
-    shelfBookIds.value = new Set(shelfRes.data.map((e: any) => e.book?.id))
+
+  if (isLoggedIn.value) {
+    try {
+      const shelfRes = await api.get('/reading-log')
+      shelfBookIds.value = new Set(shelfRes.data.map((e: any) => e.book?.id))
+    } catch {
+      // shelf fetch failed (e.g. expired token) — books still show, unread filter skipped
+      shelfBookIds.value = new Set()
+    }
   }
 })
 </script>
@@ -233,26 +246,31 @@ onMounted(async () => {
         aria-label="Search by title, author or series"
       />
       <button
-        @click="filtersOpen = !filtersOpen"
+        @click="filtersOpen = !filtersOpen; activeSection = filtersOpen ? (activeSection ?? 'mood') : null"
         class="btn-filters"
         :class="{ 'btn-filters--active': filtersOpen }"
         :aria-expanded="filtersOpen"
         aria-controls="filter-panel"
       >
         <span aria-hidden="true">🔍</span>
-        Filters{{ activeFilterCount ? ` (${activeFilterCount})` : '' }}
+        Filters{{ activeFilterCount > (unreadOnly ? 1 : 0) ? ` (${activeFilterCount - (unreadOnly ? 1 : 0)})` : '' }}
       </button>
+      <!-- Persistent unread toggle — always visible, saved as preference -->
+      <label v-if="isLoggedIn" class="quick-toggle" :class="{ 'quick-toggle--active': unreadOnly }" :title="unreadOnly ? 'Showing only unread books — click to show all' : 'Showing all books — click to hide books already on shelf'">
+        <input type="checkbox" v-model="unreadOnly" aria-label="Show only books not on my shelf"/>
+        <span aria-hidden="true">📖</span> Unread only
+      </label>
       <button
-        v-if="activeFilterCount"
+        v-if="activeFilterCount - (unreadOnly ? 1 : 0) > 0"
         @click="clearAll"
         class="btn-clear-all"
         aria-label="Clear all active filters"
       >
-        <span aria-hidden="true">✕</span> Clear all
+        <span aria-hidden="true">✕</span> Clear filters
       </button>
     </div>
 
-    <!-- Filter panel -->
+    <!-- Filter panel — accordion: one section open at a time -->
     <div
       v-show="filtersOpen"
       id="filter-panel"
@@ -260,212 +278,169 @@ onMounted(async () => {
       role="region"
       aria-label="Filter options"
     >
+      <!-- Section tab bar -->
+      <div class="accordion-tabs" role="tablist">
+        <button
+          v-for="tab in [
+            { key:'mood',   label:'🎭 Mood',    active: selectedMoods.length > 0 },
+            { key:'pace',   label:'⚡ Pace / Type', active: selectedPaces.length > 0 || selectedTypes.length > 0 },
+            { key:'genres', label:'🏷️ Genres',  active: includeGenres.length > 0 || excludeGenres.length > 0 },
+            { key:'other',  label:'📌 Other',   active: !!(yearFrom || yearTo || addedFrom || addedTo || standaloneOnly) },
+          ]"
+          :key="tab.key"
+          @click="toggleSection(tab.key)"
+          class="acc-tab"
+          :class="{ 'acc-tab--open': activeSection === tab.key, 'acc-tab--dirty': tab.active }"
+          :aria-selected="activeSection === tab.key"
+          role="tab"
+        >
+          {{ tab.label }}
+          <span v-if="tab.active" class="acc-dot" aria-hidden="true"/>
+        </button>
+      </div>
 
-      <!-- Mood — full width -->
-      <div class="filter-section filter-section--full">
+      <!-- Mood body -->
+      <div v-show="activeSection === 'mood'" class="acc-body" role="tabpanel">
         <div class="filter-header">
-          <strong id="mood-label"><span aria-hidden="true">🎭</span> Mood</strong>
-          <span class="filter-mode-label" role="group" aria-labelledby="mood-mode-label">
-            <span id="mood-mode-label" class="visually-hidden">Mood match mode</span>
+          <span class="filter-mode-label" role="group">
+            Match:
             <label><input type="radio" v-model="moodMode" value="any" aria-label="Match any mood"/> any</label>
             <label><input type="radio" v-model="moodMode" value="all" aria-label="Match all moods"/> all</label>
           </span>
         </div>
-        <div class="chips" role="group" aria-labelledby="mood-label">
+        <div class="chips" role="group" aria-label="Mood filters">
           <button
-            v-for="m in MOODS"
-            :key="m"
+            v-for="m in MOODS" :key="m"
             @click="toggle(selectedMoods, m)"
             class="chip"
             :class="{ 'chip--active-blue': selectedMoods.includes(m) }"
             :aria-pressed="selectedMoods.includes(m)"
-            :aria-label="`Filter by mood: ${m}`"
-          >
-            {{ m }}
-          </button>
+          >{{ m }}</button>
         </div>
       </div>
 
-      <!-- Pace + Type -->
-      <div class="filter-section">
-        <div class="pace-section">
-          <strong id="pace-label"><span aria-hidden="true">⚡</span> Pace</strong>
-          <div class="pace-buttons" role="group" aria-labelledby="pace-label">
-            <button
-              v-for="p in ['Slow','Medium','Fast']"
-              :key="p"
-              @click="toggle(selectedPaces, p)"
-              class="chip chip--md"
-              :class="{ 'chip--active-purple': selectedPaces.includes(p) }"
-              :aria-pressed="selectedPaces.includes(p)"
-              :aria-label="`Filter by pace: ${p}`"
-            >
-              {{ p }}
-            </button>
+      <!-- Pace + Type body -->
+      <div v-show="activeSection === 'pace'" class="acc-body" role="tabpanel">
+        <div class="pace-type-row">
+          <div>
+            <strong>⚡ Pace</strong>
+            <div class="pace-buttons" role="group" aria-label="Pace filters">
+              <button
+                v-for="p in ['Slow','Medium','Fast']" :key="p"
+                @click="toggle(selectedPaces, p)"
+                class="chip chip--md"
+                :class="{ 'chip--active-purple': selectedPaces.includes(p) }"
+                :aria-pressed="selectedPaces.includes(p)"
+              >{{ p }}</button>
+            </div>
+            <p class="pace-hint">Slow ≥500p · Medium 300–499p · Fast &lt;300p</p>
           </div>
-          <p class="pace-hint" aria-label="Pace categories: Slow 500 or more pages, Medium 300 to 499 pages, Fast under 300 pages">
-            Slow ≥500p · Medium 300–499p · Fast &lt;300p
-          </p>
-        </div>
-        <div>
-          <strong id="type-label"><span aria-hidden="true">📂</span> Type</strong>
-          <div class="type-buttons" role="group" aria-labelledby="type-label">
-            <button
-              v-for="t in ['Fiction','Nonfiction']"
-              :key="t"
-              @click="toggle(selectedTypes, t)"
-              class="chip chip--md"
-              :class="{ 'chip--active-green': selectedTypes.includes(t) }"
-              :aria-pressed="selectedTypes.includes(t)"
-              :aria-label="`Filter by type: ${t}`"
-            >
-              {{ t }}
-            </button>
+          <div>
+            <strong>📂 Type</strong>
+            <div class="type-buttons" role="group" aria-label="Type filters">
+              <button
+                v-for="t in ['Fiction','Nonfiction']" :key="t"
+                @click="toggle(selectedTypes, t)"
+                class="chip chip--md"
+                :class="{ 'chip--active-green': selectedTypes.includes(t) }"
+                :aria-pressed="selectedTypes.includes(t)"
+              >{{ t }}</button>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Genres -->
-      <div class="filter-section">
+      <!-- Genres body -->
+      <div v-show="activeSection === 'genres'" class="acc-body" role="tabpanel">
         <div class="filter-header">
-          <strong id="genres-label"><span aria-hidden="true">🏷️</span> Genres</strong>
-          <span class="filter-mode-label" role="group" aria-labelledby="include-mode-label">
-            <span id="include-mode-label">Include:</span>
-            <label><input type="radio" v-model="includeMode" value="any" aria-label="Include any of the selected genres"/> any</label>
-            <label><input type="radio" v-model="includeMode" value="all" aria-label="Include all of the selected genres"/> all</label>
+          <span class="filter-mode-label" role="group">
+            Include:
+            <label><input type="radio" v-model="includeMode" value="any" aria-label="Include any genre"/> any</label>
+            <label><input type="radio" v-model="includeMode" value="all" aria-label="Include all genres"/> all</label>
           </span>
         </div>
-        <div class="genre-list" role="group" aria-labelledby="genres-label">
+        <div class="genre-list" role="group" aria-label="Genre filters">
           <div v-for="g in allGenres" :key="g.id" class="genre-row">
-            <button
-              @click="toggleInclude(g.name)"
-              class="btn-genre"
-              :class="{ 'btn-genre--include': includeGenres.includes(g.name) }"
-              :aria-pressed="includeGenres.includes(g.name)"
-              :aria-label="`Include genre: ${g.name}`"
-            >+</button>
-            <button
-              @click="toggleExclude(g.name)"
-              class="btn-genre"
-              :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }"
-              :aria-pressed="excludeGenres.includes(g.name)"
-              :aria-label="`Exclude genre: ${g.name}`"
-            >−</button>
-            <span
-              class="genre-name"
-              :class="{
-                'genre-name--include': includeGenres.includes(g.name),
-                'genre-name--exclude': excludeGenres.includes(g.name)
-              }"
-              aria-hidden="true"
-            >
-              {{ g.name }}
-            </span>
+            <button @click="toggleInclude(g.name)" class="btn-genre" :class="{ 'btn-genre--include': includeGenres.includes(g.name) }" :aria-pressed="includeGenres.includes(g.name)" :aria-label="`Include ${g.name}`">+</button>
+            <button @click="toggleExclude(g.name)" class="btn-genre" :class="{ 'btn-genre--exclude': excludeGenres.includes(g.name) }" :aria-pressed="excludeGenres.includes(g.name)" :aria-label="`Exclude ${g.name}`">−</button>
+            <span class="genre-name" :class="{ 'genre-name--include': includeGenres.includes(g.name), 'genre-name--exclude': excludeGenres.includes(g.name) }">{{ g.name }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Year + Date + Standalone -->
-      <div class="filter-section">
-        <div class="subsection">
-          <strong id="year-label"><span aria-hidden="true">📅</span> Publication Year</strong>
-          <div class="year-range" role="group" aria-labelledby="year-label">
-            <label for="year-from" class="visually-hidden">From year</label>
-            <input
-              id="year-from"
-              v-model.number="yearFrom"
-              type="number"
-              placeholder="From"
-              min="1000"
-              max="2100"
-              class="year-input"
-              aria-label="Publication year from"
-            />
-            <span class="year-sep" aria-hidden="true">—</span>
-            <label for="year-to" class="visually-hidden">To year</label>
-            <input
-              id="year-to"
-              v-model.number="yearTo"
-              type="number"
-              placeholder="To"
-              min="1000"
-              max="2100"
-              class="year-input"
-              aria-label="Publication year to"
-            />
+      <!-- Other body -->
+      <div v-show="activeSection === 'other'" class="acc-body" role="tabpanel">
+        <div class="other-grid">
+          <div class="subsection">
+            <strong>📅 Publication Year</strong>
+            <div class="year-range" role="group" aria-label="Year range">
+              <input v-model.number="yearFrom" type="number" placeholder="From" min="1000" max="2100" class="year-input" aria-label="From year"/>
+              <span class="year-sep" aria-hidden="true">—</span>
+              <input v-model.number="yearTo" type="number" placeholder="To" min="1000" max="2100" class="year-input" aria-label="To year"/>
+            </div>
           </div>
-        </div>
-
-        <div class="subsection">
-          <strong id="date-added-label"><span aria-hidden="true">🗓️</span> Date Added</strong>
-          <div class="date-filter" role="group" aria-labelledby="date-added-label">
-            <label class="date-label" for="added-from">From
-              <input id="added-from" v-model="addedFrom" type="date" class="date-input"/>
-            </label>
-            <label class="date-label" for="added-to">To
-              <input id="added-to" v-model="addedTo" type="date" class="date-input"/>
-            </label>
-            <button
-              @click="addedFrom = new Date().toISOString().slice(0,10); addedTo = ''"
-              class="btn-today"
-              aria-label="Set date added filter from today onwards"
-            >
-              <span aria-hidden="true">📅</span> From today onwards
-            </button>
+          <div class="subsection">
+            <strong>🗓️ Date Added</strong>
+            <div class="date-filter" role="group" aria-label="Date added range">
+              <label class="date-label">From <input v-model="addedFrom" type="date" class="date-input"/></label>
+              <label class="date-label">To <input v-model="addedTo" type="date" class="date-input"/></label>
+              <button @click="addedFrom = new Date().toISOString().slice(0,10); addedTo = ''" class="btn-today">📅 From today</button>
+            </div>
           </div>
-        </div>
-
-        <div>
-          <strong id="other-label"><span aria-hidden="true">📌</span> Other</strong>
-          <div class="other-options" role="group" aria-labelledby="other-label">
-            <label class="standalone-label">
-              <input type="checkbox" v-model="standaloneOnly" aria-label="Show only books not part of a series"/>
-              Not part of a series
-            </label>
-            <label v-if="isLoggedIn" class="standalone-label">
-              <input type="checkbox" v-model="unreadOnly" aria-label="Show only books not on my shelf"/>
-              <span aria-hidden="true">📖</span> Not on my shelf (unread)
-            </label>
+          <div>
+            <strong>📌 Other</strong>
+            <div class="other-options">
+              <label class="standalone-label">
+                <input type="checkbox" v-model="standaloneOnly" aria-label="Not part of a series"/>
+                Not part of a series
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
     </div>
 
-    <!-- Sort bar -->
-    <div class="sort-bar" role="group" aria-label="Sort books">
-      <span class="sort-label" id="sort-label">Sort by:</span>
-      <button
-        v-for="opt in SORT_OPTIONS"
-        :key="opt.value"
-        @click="sortBy = opt.value"
-        class="sort-btn"
-        :class="{ 'sort-btn--active': sortBy === opt.value }"
-        :aria-pressed="sortBy === opt.value"
-        :aria-label="`Sort by ${opt.label}`"
-      >
-        {{ opt.label }}
-      </button>
+    <!-- Sort / display bar -->
+    <div class="sort-bar" role="group" aria-label="Sort and display options">
+      <!-- Left: per-page selector -->
+      <label class="bar-label" for="page-size-select">Show</label>
+      <select id="page-size-select" v-model.number="pageSize" class="bar-select" aria-label="Books per page">
+        <option :value="25">25</option>
+        <option :value="50">50</option>
+        <option :value="100">100</option>
+        <option :value="0">All</option>
+      </select>
+
+      <!-- Spacer -->
+      <span class="bar-spacer" aria-hidden="true"/>
+
+      <!-- Middle: sort-by dropdown -->
+      <label class="bar-label" for="sort-by-select">Sort by</label>
+      <select id="sort-by-select" v-model="sortBy" class="bar-select" aria-label="Sort by">
+        <option v-for="opt in SORT_OPTIONS" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+
+      <!-- Right: direction toggle -->
       <button
         @click="toggleDir"
-        :title="sortDir === 'asc' ? 'Currently ascending — click for descending' : 'Currently descending — click for ascending'"
-        :aria-label="sortDir === 'asc' ? 'Sort direction: ascending. Click for descending' : 'Sort direction: descending. Click for ascending'"
+        :title="sortDir === 'asc' ? 'Ascending — click for descending' : 'Descending — click for ascending'"
+        :aria-label="sortDir === 'asc' ? 'Sort ascending. Click for descending' : 'Sort descending. Click for ascending'"
         class="sort-dir-btn"
       >
         {{ sortDir === 'asc' ? '↑ ASC' : '↓ DESC' }}
       </button>
     </div>
 
-    <!-- Results -->
+    <!-- Results count -->
     <p class="results-count" role="status" aria-live="polite" aria-atomic="true">
       <strong>{{ filteredBooks.length }}</strong> book{{ filteredBooks.length !== 1 ? 's' : '' }} found
-      <span v-if="activeFilterCount"> with {{ activeFilterCount }} active filter{{
-          activeFilterCount !== 1 ? 's' : ''
-        }}</span>
+      <span v-if="activeFilterCount"> with {{ activeFilterCount }} active filter{{ activeFilterCount !== 1 ? 's' : '' }}</span>
+      <span v-if="pageSize > 0 && totalPages > 1"> · page {{ currentPage }} / {{ totalPages }}</span>
     </p>
 
     <ul class="book-list" aria-label="Books list">
-      <li v-for="book in filteredBooks" :key="book.id" class="book-list-item">
+      <li v-for="book in displayedBooks" :key="book.id" class="book-list-item">
         <div class="book-info">
           <RouterLink :to="`/books/${book.id}`" class="book-title-link"><strong>{{ book.title }}</strong></RouterLink>
           <span v-if="book.author" class="book-meta">
@@ -492,6 +467,27 @@ onMounted(async () => {
       No books match your filters.
       <button @click="clearAll" class="btn-clear-inline">Clear all filters</button>
     </p>
+
+    <!-- Pagination -->
+    <nav v-if="pageSize > 0 && totalPages > 1" class="pagination" aria-label="Page navigation">
+      <button @click="currentPage = 1" :disabled="currentPage === 1" class="pg-btn" aria-label="First page">«</button>
+      <button @click="currentPage--" :disabled="currentPage === 1" class="pg-btn" aria-label="Previous page">‹</button>
+
+      <template v-for="p in totalPages" :key="p">
+        <button
+          v-if="p === 1 || p === totalPages || Math.abs(p - currentPage) <= 2"
+          @click="currentPage = p"
+          class="pg-btn"
+          :class="{ 'pg-btn--active': p === currentPage }"
+          :aria-label="`Page ${p}`"
+          :aria-current="p === currentPage ? 'page' : undefined"
+        >{{ p }}</button>
+        <span v-else-if="p === currentPage - 3 || p === currentPage + 3" class="pg-ellipsis" aria-hidden="true">…</span>
+      </template>
+
+      <button @click="currentPage++" :disabled="currentPage === totalPages" class="pg-btn" aria-label="Next page">›</button>
+      <button @click="currentPage = totalPages" :disabled="currentPage === totalPages" class="pg-btn" aria-label="Last page">»</button>
+    </nav>
   </div>
 </template>
 
@@ -563,35 +559,90 @@ onMounted(async () => {
 .filter-panel {
   border: 1px solid #504945;
   border-radius: 10px;
-  padding: 1.25rem;
+  overflow: hidden;
   margin-bottom: 1.5rem;
   background: #32302f;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: auto auto;
-  gap: 1rem 1.5rem;
 }
 
-.filter-section--full {
-  grid-column: 1 / -1;
-  padding-bottom: 1rem;
+/* Accordion tab row */
+.accordion-tabs {
+  display: flex;
   border-bottom: 1px solid #504945;
+  overflow-x: auto;
 }
 
-.filter-section {
-  padding-left: 1rem;
-  border-left: 1px solid #504945;
+.acc-tab {
+  flex: 1;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  border-right: 1px solid #504945;
+  background: #3c3836;
+  color: #a89984;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+  transition: background 0.12s, color 0.12s;
+  position: relative;
+  white-space: nowrap;
+}
+.acc-tab:last-child { border-right: none; }
+.acc-tab:hover { background: #504945; color: #d5c4a1; }
+.acc-tab--open { background: #32302f; color: #ebdbb2; border-bottom: 2px solid #458588; }
+.acc-tab--dirty { color: #83a598; }
+.acc-tab--dirty.acc-tab--open { color: #8ec07c; }
+
+.acc-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #83a598;
+  display: inline-block;
 }
 
-.filter-section:first-of-type {
-  padding-left: 0;
-  border-left: none;
+/* Accordion body */
+.acc-body {
+  padding: 1rem 1.25rem;
 }
 
-@media (max-width: 700px) {
-  .filter-panel { grid-template-columns: 1fr; }
-  .filter-section { padding-left: 0; border-left: none; border-top: 1px solid #504945; padding-top: 1rem; }
+.pace-type-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
+
+.other-grid {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+/* Persistent unread-only quick toggle in search bar */
+.quick-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid #504945;
+  border-radius: 8px;
+  background: #3c3836;
+  color: #a89984;
+  font-size: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+.quick-toggle:hover { border-color: #665c54; color: #d5c4a1; }
+.quick-toggle--active {
+  background: rgba(69, 133, 136, 0.2);
+  border-color: #458588;
+  color: #83a598;
+}
+.quick-toggle input[type="checkbox"] { display: none; }
 
 .filter-header {
   display: flex;
@@ -650,19 +701,31 @@ onMounted(async () => {
 .type-buttons { display: flex; gap: 6px; margin-top: 6px; }
 
 .genre-list {
-  max-height: 180px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 4px 12px;
+  max-height: 260px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  padding-right: 4px;
 }
 
 .genre-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   font-size: 0.85rem;
+  min-width: 0;
 }
+
+.genre-name {
+  color: #d5c4a1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.genre-name--include { color: #83a598; }
+.genre-name--exclude { color: #fb4934; }
 
 .btn-genre {
   padding: 1px 8px;
@@ -672,14 +735,11 @@ onMounted(async () => {
   font-size: 0.78rem;
   background: #3c3836;
   color: #d5c4a1;
+  flex-shrink: 0;
 }
-
 .btn-genre--include { background: #458588; color: #ebdbb2; border-color: #458588; }
 .btn-genre--exclude { background: #cc241d; color: #ebdbb2; border-color: #cc241d; }
 
-.genre-name { color: #d5c4a1; }
-.genre-name--include { color: #83a598; }
-.genre-name--exclude { color: #fb4934; }
 
 .year-range { display: flex; gap: 8px; margin-top: 6px; align-items: center; }
 
@@ -738,7 +798,6 @@ onMounted(async () => {
   user-select: none;
 }
 
-/* ── Custom Gruvbox checkbox ─────────────────────────────────── */
 .standalone-label input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -820,27 +879,24 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.sort-label { font-size: 0.85rem; color: #a89984; font-weight: 500; }
-
-.sort-btn {
-  padding: 4px 14px;
-  border-radius: 6px;
+.bar-label {
   font-size: 0.85rem;
-  cursor: pointer;
+  color: #a89984;
+  white-space: nowrap;
+}
+
+.bar-select {
+  padding: 4px 8px;
   border: 1px solid #504945;
+  border-radius: 6px;
   background: #3c3836;
   color: #d5c4a1;
-  font-weight: 400;
-  transition: background 0.1s;
+  font-size: 0.85rem;
+  cursor: pointer;
 }
-.sort-btn:hover { background: #504945; }
+.bar-select:focus { outline: none; border-color: #83a598; }
 
-.sort-btn--active {
-  background: #458588;
-  color: #ebdbb2;
-  border-color: #458588;
-  font-weight: 600;
-}
+.bar-spacer { flex: 1; }
 
 .sort-dir-btn {
   padding: 4px 12px;
@@ -850,9 +906,45 @@ onMounted(async () => {
   border: 1px solid #504945;
   background: #32302f;
   color: #d5c4a1;
+  white-space: nowrap;
+}
+.sort-dir-btn:hover { border-color: #665c54; }
+
+/* Pagination */
+.pagination {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  padding: 1rem 0 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pg-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid #504945;
+  background: #3c3836;
+  color: #d5c4a1;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.pg-btn:hover:not(:disabled) { background: #504945; }
+.pg-btn:disabled { opacity: 0.35; cursor: default; }
+.pg-btn--active {
+  background: #458588;
+  border-color: #458588;
+  color: #ebdbb2;
+  font-weight: 600;
+}
+
+.pg-ellipsis {
+  color: #7c6f64;
+  padding: 0 4px;
+  user-select: none;
 }
 
 .results-count { color: #a89984; margin-bottom: 0.75rem; }

@@ -1,12 +1,3 @@
--- 18_seeder_discworld.sql
--- Seeder z rzeczywistymi danymi książek z cyklu Discworld / Świat Dysku Terry'ego Pratchetta.
--- Założenia:
--- 1. Jeden autor: Terry Pratchett.
--- 2. Jedna seria: Discworld, bez rozbijania na podserie.
--- 3. Jedno wydawnictwo techniczne dla tych rekordów: Corgi Books / Transworld.
--- 4. Liczba stron jest przyjęta według popularnych anglojęzycznych wydań papierowych.
---    W praktyce liczba stron może różnić się między wydaniami UK/US, hardcover/paperback/ebook.
-
 SET search_path TO biblioteka, public;
 
 DO
@@ -22,7 +13,7 @@ DECLARE
     v_adventure_id INT;
     v_young_adult_id INT;
 BEGIN
-    -- Autor
+    -- Author
     SELECT id_autora
     INTO v_autor_id
     FROM autorzy
@@ -37,12 +28,12 @@ BEGIN
             'Pratchett',
             DATE '1948-04-28',
             'Wielka Brytania',
-            'Brytyjski pisarz fantasy, autor cyklu Discworld.'
+            'British fantasy writer, author of the Discworld series.'
         )
         RETURNING id_autora INTO v_autor_id;
     END IF;
 
-    -- Wydawnictwo. Używamy jednego wspólnego wpisu, żeby nie komplikować modelu wydaniami.
+    -- Publisher
     SELECT id_wydawnictwa
     INTO v_wydawnictwo_id
     FROM wydawnictwa
@@ -56,7 +47,7 @@ BEGIN
         RETURNING id_wydawnictwa INTO v_wydawnictwo_id;
     END IF;
 
-    -- Seria główna Discworld
+    -- Main Discworld series
     SELECT id_serii
     INTO v_seria_id
     FROM serie
@@ -70,7 +61,7 @@ BEGIN
         RETURNING id_serii INTO v_seria_id;
     END IF;
 
-    -- Gatunki potrzebne dla książek Discworld
+    -- Genres needed for Discworld books
     INSERT INTO gatunki (nazwa)
     VALUES
         ('Fantasy'),
@@ -88,7 +79,7 @@ BEGIN
     SELECT id_gatunku INTO v_adventure_id FROM gatunki WHERE nazwa = 'Adventure';
     SELECT id_gatunku INTO v_young_adult_id FROM gatunki WHERE nazwa = 'Young Adult';
 
-    -- Książki Discworld w kolejności publikacji
+    -- Books in publication order
     INSERT INTO ksiazki (tytul, id_autora, id_wydawnictwa, id_serii, rok_wydania, ilosc_stron, nastroj)
     SELECT d.tytul, v_autor_id, v_wydawnictwo_id, v_seria_id, d.rok_wydania, d.ilosc_stron, d.nastroj
     FROM (
@@ -143,7 +134,7 @@ BEGIN
           AND k.id_serii = v_seria_id
     );
 
-    -- Podstawowe przypisania gatunków dla całego cyklu
+    -- Base genre assignments for the entire series
     INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
     SELECT k.id_ksiazki, g.id_gatunku
     FROM ksiazki k
@@ -160,7 +151,7 @@ BEGIN
       AND g.id_gatunku IS NOT NULL
     ON CONFLICT DO NOTHING;
 
-    -- Dodatkowy gatunek dla książek młodzieżowych / Tiffany Aching / Maurice
+    -- Additional genre for Young Adult / Tiffany Aching / Maurice books
     INSERT INTO ksiazka_gatunek (id_ksiazki, id_gatunku)
     SELECT k.id_ksiazki, v_young_adult_id
     FROM ksiazki k
@@ -177,13 +168,13 @@ BEGIN
       AND v_young_adult_id IS NOT NULL
     ON CONFLICT DO NOTHING;
 
-    -- Synchronizacja sekwencji po ręcznym/warunkowym seedowaniu
+    -- Synchronise sequences after conditional/manual seeding
     PERFORM setval(pg_get_serial_sequence('autorzy', 'id_autora'), COALESCE((SELECT MAX(id_autora) FROM autorzy), 1), true);
     PERFORM setval(pg_get_serial_sequence('wydawnictwa', 'id_wydawnictwa'), COALESCE((SELECT MAX(id_wydawnictwa) FROM wydawnictwa), 1), true);
     PERFORM setval(pg_get_serial_sequence('serie', 'id_serii'), COALESCE((SELECT MAX(id_serii) FROM serie), 1), true);
     PERFORM setval(pg_get_serial_sequence('gatunki', 'id_gatunku'), COALESCE((SELECT MAX(id_gatunku) FROM gatunki), 1), true);
     PERFORM setval(pg_get_serial_sequence('ksiazki', 'id_ksiazki'), COALESCE((SELECT MAX(id_ksiazki) FROM ksiazki), 1), true);
 
-    RAISE NOTICE 'Seeder Discworld zakończony. Dodano/uzupełniono książki z cyklu Discworld.';
+    RAISE NOTICE 'Discworld seeder completed. Books from the Discworld series added/updated.';
 END
 $$;

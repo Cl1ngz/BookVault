@@ -1,4 +1,4 @@
--- 17_reading_goals.sql - Yearly reading goals per reader
+--  Yearly reading goals per reader
 CREATE TABLE cele_czytania (
     id_celu        SERIAL PRIMARY KEY,
     id_czytelnika  INT REFERENCES czytelnicy(id_czytelnika) ON DELETE CASCADE,

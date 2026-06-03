@@ -120,7 +120,6 @@ function initials(s: any) {
 .series-header h1 { margin: 0; color: #fabd2f; }
 .series-count { font-size: 0.9rem; color: #7c6f64; }
 
-/* ── Search ──────────────────────────────────────────────────── */
 .series-search {
   width: 100%;
   padding: 10px 14px;
@@ -138,14 +137,12 @@ function initials(s: any) {
 
 .series-empty { color: #a89984; font-style: italic; margin-top: 1rem; }
 
-/* ── Grid ────────────────────────────────────────────────────── */
 .series-grid {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
 
-/* ── Card ────────────────────────────────────────────────────── */
 .series-card {
   display: flex;
   align-items: stretch;
@@ -164,7 +161,6 @@ function initials(s: any) {
   background: #32302f;
 }
 
-/* ── Left colour stripe ──────────────────────────────────────── */
 .series-stripe {
   flex-shrink: 0;
   width: 64px;
@@ -192,7 +188,6 @@ function initials(s: any) {
   letter-spacing: 0.05em;
 }
 
-/* ── Body ────────────────────────────────────────────────────── */
 .series-body {
   flex: 1;
   padding: 0.9rem 1.1rem;
@@ -211,7 +206,6 @@ function initials(s: any) {
 
 .series-card:hover .series-name { color: #fabd2f; }
 
-/* ── Author row ──────────────────────────────────────────────── */
 .series-author {
   display: flex;
   align-items: center;
@@ -236,7 +230,6 @@ function initials(s: any) {
   flex-shrink: 0;
 }
 
-/* ── Volume dots ─────────────────────────────────────────────── */
 .series-dots {
   font-size: 0.9rem;
   letter-spacing: 1px;
@@ -244,7 +237,6 @@ function initials(s: any) {
   color: #7c6f64;
 }
 
-/* ── Arrow ───────────────────────────────────────────────────── */
 .series-arrow {
   flex-shrink: 0;
   color: #665c54;

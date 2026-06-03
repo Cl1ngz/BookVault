@@ -51,7 +51,6 @@ class ReadingGoalControllerTest {
                 .ifPresent(readingGoalRepository::delete);
     }
 
-    // ── GET /reading-goals ────────────────────────────────────────
 
     @Test
     void getGoals_withoutToken_returns401() throws Exception {
@@ -67,7 +66,6 @@ class ReadingGoalControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── POST /reading-goals ───────────────────────────────────────
 
     @Test
     void upsertGoal_withoutToken_returns401() throws Exception {
@@ -140,7 +138,6 @@ class ReadingGoalControllerTest {
                 .andExpect(jsonPath("$.targetBooks").value(30));
     }
 
-    // ── DELETE /reading-goals/{id} ────────────────────────────────
 
     @Test
     void deleteGoal_withValidToken_returns200() throws Exception {

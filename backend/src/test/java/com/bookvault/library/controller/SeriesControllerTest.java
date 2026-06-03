@@ -20,7 +20,6 @@ class SeriesControllerTest {
     @Autowired MockMvc mockMvc;
     @Autowired SeriesRepository seriesRepository;
 
-    // ── GET /series ───────────────────────────────────────────────
 
     @Test
     void getAllSeries_isPublic_returns200() throws Exception {
@@ -44,7 +43,6 @@ class SeriesControllerTest {
                 .andExpect(jsonPath("$").isArray());
     }
 
-    // ── GET /series/{id} ──────────────────────────────────────────
 
     @Test
     void getSeriesById_existingId_returns200WithFields() throws Exception {
@@ -95,7 +93,6 @@ class SeriesControllerTest {
                 });
     }
 
-    // ── GET /series/{id}/books ────────────────────────────────────
 
     @Test
     void getBooksBySeries_existingId_returnsArray() throws Exception {

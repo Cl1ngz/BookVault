@@ -1,4 +1,4 @@
--- 16_journal_entries.sql - Automatic reading activity log entries
+-- Automatic reading activity log entries
 CREATE TABLE wpisy_dziennika (
     id_wpisu       SERIAL PRIMARY KEY,
     id_reading_log INT REFERENCES reading_log(id_reading_log) ON DELETE CASCADE,

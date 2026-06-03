@@ -188,7 +188,6 @@ window.addEventListener('storage', () => {
   flex: 1;
 }
 
-/* ── User menu ───────────────────────────────────────────────── */
 .user-menu {
   position: relative;
 }
@@ -267,7 +266,6 @@ window.addEventListener('storage', () => {
   color: #fb4934;
 }
 
-/* ── Auth buttons ────────────────────────────────────────────── */
 .nav-btn {
   padding: 4px 14px;
   color: #1d2021;
