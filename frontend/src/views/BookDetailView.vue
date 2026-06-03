@@ -141,13 +141,33 @@ async function submitReview() {
 
 async function reportReview(reviewId: number) {
   if (!user.value) {
-    alert('You must be logged in to report');
+    alert('You must be logged in to report a review.')
     return
   }
-  const reason = prompt('Reason for report?')
-  if (!reason) return
-  await api.post('/reports', {reviewId, reason})
-  alert('Report submitted!')
+
+  const reason = prompt('Reason for report? Minimum 5 characters.')
+
+  if (reason === null) {
+    return
+  }
+
+  const trimmedReason = reason.trim()
+
+  if (trimmedReason.length < 5) {
+    alert('Reason must have at least 5 characters.')
+    return
+  }
+
+  try {
+    await api.post('/reports', {
+      reviewId,
+      reason: trimmedReason
+    })
+
+    alert('Report submitted!')
+  } catch (e: any) {
+    alert(e.response?.data?.message ?? e.response?.data ?? 'Failed to submit report.')
+  }
 }
 
 function renderStars(rating: number) {
