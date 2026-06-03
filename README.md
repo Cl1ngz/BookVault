@@ -25,6 +25,7 @@ docker-compose up --build
 | Frontend | http://localhost |
 | Backend API | http://localhost:8080/api/v1 |
 | Swagger UI | http://localhost:8080/swagger-ui/index.html |
+| PGadmin | http://localhost:5050/ |
 
 #### Stop and remove everything
 ```bash
@@ -37,11 +38,12 @@ docker-compose down -v
 
 > Requires Docker, Java 21, Maven, and Node.js installed.
 
-### 1. Clone and start the database
+### 1. Clone and start the database + pgadmin
 ```bash
 git clone https://github.com/Cl1ngz/BookVault.git
 cd BookVault
 docker-compose up -d db
+docker-compose up -d pgadmin
 ```
 
 ### 2. Run backend (IntelliJ IDEA or terminal)
@@ -58,7 +60,7 @@ npm install
 npm run dev
 ```
 Frontend available at: http://localhost:5173
-#### Database editing changing disabling
+#### destroing docker and all this shit like pgadmin database
 ```Bash
 docker-compose down -v
 ```
