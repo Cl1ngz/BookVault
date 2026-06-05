@@ -116,9 +116,9 @@ const activeFilterCount = computed(() =>
 )
 
 const filteredBooks = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
   const filtered = allBooks.value.filter(book => {
-    if (searchQuery.value.trim()) {
-      const q = searchQuery.value.trim().toLowerCase()
+    if (q) {
       if (!book.title?.toLowerCase().includes(q) &&
           !book.author?.firstName?.toLowerCase().includes(q) &&
           !book.author?.lastName?.toLowerCase().includes(q) &&
@@ -159,6 +159,27 @@ const filteredBooks = computed(() => {
   })
 
   return [...filtered].sort((a, b) => {
+    // Search relevance boost
+    if (q) {
+      const aTitle = a.title?.toLowerCase() ?? ''
+      const bTitle = b.title?.toLowerCase() ?? ''
+      const aAuthor = `${a.author?.firstName?.toLowerCase()} ${a.author?.lastName?.toLowerCase()}`
+      const bAuthor = `${b.author?.firstName?.toLowerCase()} ${b.author?.lastName?.toLowerCase()}`
+      const aSeries = a.series?.name?.toLowerCase() ?? ''
+      const bSeries = b.series?.name?.toLowerCase() ?? ''
+
+      const aScore = (aTitle.startsWith(q) ? 3 : aTitle.includes(q) ? 1 : 0) +
+                     (aAuthor.startsWith(q) ? 2 : aAuthor.includes(q) ? 1 : 0) +
+                     (aSeries.startsWith(q) ? 2 : aSeries.includes(q) ? 1 : 0)
+
+      const bScore = (bTitle.startsWith(q) ? 3 : bTitle.includes(q) ? 1 : 0) +
+                     (bAuthor.startsWith(q) ? 2 : bAuthor.includes(q) ? 1 : 0) +
+                     (bSeries.startsWith(q) ? 2 : bSeries.includes(q) ? 1 : 0)
+
+      if (aScore !== bScore) return bScore - aScore
+    }
+
+    // Secondary sort
     let va: any, vb: any
     if (sortBy.value === 'title') {
       va = (a.title ?? '').toLowerCase();
@@ -983,4 +1004,3 @@ onMounted(async () => {
   text-decoration: underline;
 }
 </style>
-

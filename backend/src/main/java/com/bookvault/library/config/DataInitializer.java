@@ -1,15 +1,16 @@
 package com.bookvault.library.config;
 
-import net.datafaker.Faker;
 import com.bookvault.library.model.*;
 import com.bookvault.library.repository.*;
 import lombok.RequiredArgsConstructor;
+import net.datafaker.Faker;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -31,22 +32,21 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         System.out.println(">>> BEGINNING THE DATABASE AUDIT ...");
 
-        seedGenres();
+        List<Genre> genres = seedGenres();
+        List<Author> authors = seedAuthors(24);
+        List<Publisher> publishers = seedPublishers(11);
+        List<Series> seriesList = seedSeries(15, authors);
+        seedBooks(1234, authors, publishers, seriesList, genres);
 
-        List<Author> authors = seedAuthors(20);
-        List<Publisher> publishers = seedPublishers(8);
-        List<Series> seriesList = seedSeries(10, authors);
-        seedBooks(50, authors, publishers, seriesList, genreRepository.findAll());
-
-        seedReaders(15);
-        seedReviews(100);
+        seedReaders(60);
+        seedReviews(5000);
 
 
         System.out.println(">>> DATA SYNCHRONIZATION COMPLETE!");
     }
 
     private List<Genre> seedGenres() {
-        if (genreRepository.count() > 0) return genreRepository.findAll();
+        // if (genreRepository.count() > 0) return genreRepository.findAll();
         System.out.println("-> Generating generes...");
         String[] genreNames = {
                 // Fiction
@@ -68,127 +68,145 @@ public class DataInitializer implements CommandLineRunner {
                 // Other
                 "Graphic Novel", "Manga", "Poetry", "Play / Drama"
         };
-        List<Genre> list = new ArrayList<>();
+        List<Genre> allGenres = genreRepository.findAll();
+        Set<String> existingNames = allGenres.stream().map(Genre::getName).collect(Collectors.toSet());
+
         for (String name : genreNames) {
-            Genre g = new Genre();
-            g.setName(name);
-            list.add(genreRepository.save(g));
+            if (!existingNames.contains(name)) {
+                Genre g = new Genre();
+                g.setName(name);
+                allGenres.add(genreRepository.save(g));
+            }
         }
-        return list;
+        return allGenres;
     }
 
     private List<Author> seedAuthors(int count) {
-        if (authorRepository.count() > 0) return authorRepository.findAll();
+        // if (authorRepository.count() > 0) return authorRepository.findAll();
         System.out.println("-> Generating authors...");
-        List<Author> list = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Author a = new Author();
-            a.setFirstName(faker.name().firstName());
-            a.setLastName(faker.name().lastName());
-            a.setNationality(faker.nation().nationality());
-            a.setBiography(faker.lorem().paragraph(3));
-            a.setBirthDate(faker.timeAndDate().birthday(25, 90));
-            a.setEmail("author" + i + "@bookvault.test");
-            a.setPasswordHash(passwordEncoder.encode("author123"));
-            list.add(authorRepository.save(a));
+        List<Author> allAuthors = authorRepository.findAll();
+        Set<String> existingEmails = allAuthors.stream().map(Author::getEmail).filter(Objects::nonNull).collect(Collectors.toSet());
+        int authorsToCreate = count - (int) allAuthors.stream().filter(a -> a.getEmail() != null && a.getEmail().startsWith("author")).count();
+
+
+        if (authorsToCreate > 0) {
+            for (int i = 0; i < count; i++) {
+                String email = "author" + i + "@bookvault.test";
+                if (!existingEmails.contains(email)) {
+                    Author a = new Author();
+                    a.setFirstName(faker.name().firstName());
+                    a.setLastName(faker.name().lastName());
+                    a.setNationality(faker.nation().nationality());
+                    a.setBiography(faker.lorem().paragraph(3));
+                    a.setBirthDate(faker.timeAndDate().birthday(25, 90));
+                    a.setEmail(email);
+                    a.setPasswordHash(passwordEncoder.encode("author123"));
+                    allAuthors.add(authorRepository.save(a));
+                }
+            }
         }
-        return list;
+        return allAuthors;
     }
 
     private List<Publisher> seedPublishers(int count) {
-        if (publisherRepository.count() > 0) {
-            return publisherRepository.findAll();
-        }
-
+        // if (publisherRepository.count() > 0) {
+        //     return publisherRepository.findAll();
+        // }
         System.out.println("-> Generowanie wydawnictw (uproszczone, bez adresów)...");
-        List<Publisher> list = new ArrayList<>();
+        List<Publisher> allPublishers = publisherRepository.findAll();
+        int publishersToCreate = count - allPublishers.size();
 
-        for (int i = 0; i < count; i++) {
-            Publisher p = new Publisher();
-
-            p.setName("Wydawnictwo " + faker.book().publisher());
-            p.setOwner(faker.name().fullName());
-            p.setFoundationYear(faker.number().numberBetween(1945, 2024));
-            list.add(publisherRepository.save(p));
+        if (publishersToCreate > 0) {
+            for (int i = 0; i < publishersToCreate; i++) {
+                Publisher p = new Publisher();
+                p.setName("Wydawnictwo " + faker.book().publisher());
+                p.setOwner(faker.name().fullName());
+                p.setFoundationYear(faker.number().numberBetween(1945, 2024));
+                allPublishers.add(publisherRepository.save(p));
+            }
         }
-
-        return list;
+        return allPublishers;
     }
 
     private List<Series> seedSeries(int count, List<Author> authors) {
-        if (seriesRepository.count() > 0) return seriesRepository.findAll();
+        // if (seriesRepository.count() > 0) return seriesRepository.findAll();
         System.out.println("-> Generating series...");
-        List<Series> list = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Series s = new Series();
-            String seriesTitle = faker.random().nextBoolean() ? faker.book().genre() : faker.space().constellation();
-            s.setName("Kroniki " + seriesTitle);
-            s.setVolumeCount((short) faker.number().numberBetween(3, 12));
-            s.setAuthor(authors.get(faker.random().nextInt(authors.size())));
-            list.add(seriesRepository.save(s));
+        List<Series> allSeries = seriesRepository.findAll();
+        int seriesToCreate = count - allSeries.size();
+
+        if (seriesToCreate > 0 && !authors.isEmpty()) {
+            for (int i = 0; i < seriesToCreate; i++) {
+                Series s = new Series();
+                String seriesTitle = faker.random().nextBoolean() ? faker.book().genre() : faker.space().constellation();
+                s.setName("Kroniki " + seriesTitle);
+                s.setVolumeCount((short) faker.number().numberBetween(3, 12));
+                s.setAuthor(authors.get(faker.random().nextInt(authors.size())));
+                allSeries.add(seriesRepository.save(s));
+            }
         }
-        return list;
+        return allSeries;
     }
 
     private List<Book> seedBooks(int count, List<Author> authors, List<Publisher> publishers, List<Series> series, List<Genre> genres) {
-        if (bookRepository.count() > 0) return bookRepository.findAll();
+        // if (bookRepository.count() > 0) return bookRepository.findAll();
         System.out.println("-> Generating books...");
-        List<Book> list = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            Book b = new Book();
-            b.setTitle(faker.book().title());
-            b.setPublicationYear(faker.number().numberBetween(1990, 2024));
-            b.setPageCount(faker.number().numberBetween(120, 1100));
-            b.setMood(faker.mood().emotion());
-            b.setPublisher(publishers.get(faker.random().nextInt(publishers.size())));
+        List<Book> allBooks = bookRepository.findAll();
+        int booksToCreate = count - allBooks.size();
 
-            if (!series.isEmpty() && faker.random().nextInt(100) < 40) {
-                Series randomSeries = series.get(faker.random().nextInt(series.size()));
-                b.setSeries(randomSeries);
-                b.setAuthor(randomSeries.getAuthor());
-            } else {
-                b.setAuthor(authors.get(faker.random().nextInt(authors.size())));
-            }
+        if (booksToCreate > 0 && !authors.isEmpty() && !publishers.isEmpty() && !genres.isEmpty()) {
+            for (int i = 0; i < booksToCreate; i++) {
+                Book b = new Book();
+                b.setTitle(faker.book().title());
+                b.setPublicationYear(faker.number().numberBetween(1990, 2024));
+                b.setPageCount(faker.number().numberBetween(120, 1100));
+                b.setMood(faker.mood().emotion());
+                b.setPublisher(publishers.get(faker.random().nextInt(publishers.size())));
 
-            Set<Genre> bookGenres = new HashSet<>();
-            int numGenres = faker.number().numberBetween(1, 4);
-            while (bookGenres.size() < numGenres) {
-                bookGenres.add(genres.get(faker.random().nextInt(genres.size())));
+                if (!series.isEmpty() && faker.random().nextInt(100) < 40) {
+                    Series randomSeries = series.get(faker.random().nextInt(series.size()));
+                    b.setSeries(randomSeries);
+                    b.setAuthor(randomSeries.getAuthor());
+                } else {
+                    b.setAuthor(authors.get(faker.random().nextInt(authors.size())));
+                }
+
+                Set<Genre> bookGenres = new HashSet<>();
+                int numGenres = faker.number().numberBetween(1, 4);
+                while (bookGenres.size() < numGenres) {
+                    bookGenres.add(genres.get(faker.random().nextInt(genres.size())));
+                }
+                b.setGenres(bookGenres);
+                allBooks.add(bookRepository.save(b));
             }
-            b.setGenres(bookGenres);
-            list.add(bookRepository.save(b));
         }
-        return list;
+        return allBooks;
     }
 
     private List<Reader> seedReaders(int count) {
-        if (readerRepository.count() > 0) return readerRepository.findAll();
-
         System.out.println("-> Generating readers...");
-        List<Reader> list = new ArrayList<>();
+        List<Reader> allReaders = readerRepository.findAll();
+        Set<String> existingEmails = allReaders.stream().map(Reader::getEmail).filter(Objects::nonNull).collect(Collectors.toSet());
 
         for (int i = 0; i < count; i++) {
-            Reader r = new Reader();
-
-            r.setUsername(faker.internet().username() + faker.number().numberBetween(10, 999));
-            r.setNationality("Polska");
-            r.setBirthDate(faker.timeAndDate().birthday(18, 75));
-            r.setEmail("reader" + i + "@bookvault.test");
-
-            // shared passwword for fakckergenerated users
-            r.setPasswordHash(passwordEncoder.encode("user123"));
-
-            r.setRole("USER");
-
-            list.add(readerRepository.save(r));
+            String email = "reader" + i + "@bookvault.test";
+            if (!existingEmails.contains(email)) {
+                Reader r = new Reader();
+                r.setUsername(faker.internet().username() + faker.number().numberBetween(10, 999));
+                r.setNationality("Polska");
+                r.setBirthDate(faker.timeAndDate().birthday(18, 75));
+                r.setEmail(email);
+                r.setPasswordHash(passwordEncoder.encode("user123"));
+                r.setRole("USER");
+                allReaders.add(readerRepository.save(r));
+            }
         }
 
         System.out.println("Test Readers have password: user123");
-        return list;
+        return allReaders;
     }
 
     private void seedReviews(int count) {
-        if (reviewRepository.count() > 0) return;
+        // if (reviewRepository.count() > 0) return;
 
         List<Book> books = bookRepository.findAll();
         List<Reader> readers = readerRepository.findAll();
@@ -196,14 +214,22 @@ public class DataInitializer implements CommandLineRunner {
         if (books.isEmpty() || readers.isEmpty()) return;
 
         System.out.println("-> Generating reviews...");
+        long reviewsToCreate = count - reviewRepository.count();
 
-        for (int i = 0; i < count; i++) {
-            Review r = new Review();
-            r.setRating(Math.round(faker.number().randomDouble(2, 25, 500)) / 100.0);
-            r.setContent(faker.lorem().paragraph(2));
-            r.setBook(books.get(faker.random().nextInt(books.size())));
-            r.setReader(readers.get(faker.random().nextInt(readers.size())));
-            reviewRepository.save(r);
+        if (reviewsToCreate > 0) {
+            Double[] ratingOptions = new Double[20];
+            for (int i = 0; i < 20; i++) {
+                ratingOptions[i] = (i + 1) * 0.25;
+            }
+
+            for (int i = 0; i < reviewsToCreate; i++) {
+                Review r = new Review();
+                r.setRating(faker.options().option(ratingOptions));
+                r.setContent(faker.lorem().paragraph(2));
+                r.setBook(books.get(faker.random().nextInt(books.size())));
+                r.setReader(readers.get(faker.random().nextInt(readers.size())));
+                reviewRepository.save(r);
+            }
         }
     }
 }
