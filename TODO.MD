@@ -6,8 +6,8 @@
 **Zapis przy wylogowaniu** – mechanizm sesyjny odkładający zapis do bazy na moment wylogowania/wygaśnięcia sesji
 **CRUD uzupełnienie** – DELETE dla książek, autorów, wydawnictw; POST dla autorów (moderator)
 
-- [ ] veryfikacja co mamy cursor, pakeit(plik w którym są nasze funkcie cursory procedury), exeption, procedury, trigery, kij wie co tam jeszcze było
-- [ ] wecej ksiązek aututorów seri przez data inicializera mówił co o 1000-5000 zakres
+- [ ] veryfikacja co mamy cursor,  exeption, procedury, trigery, kij wie co tam jeszcze było
+- [ ] pakiet to niby mamy te schema z postgresa wiec trzeba go zapytać
 - [ ] sprawdzenie czy andmin może się sam usunąc(przez ukradnięcie ciaskek) jak tak to trzeba naprawić
 - [ ] tak samo czy role może sobie moderator bądz admin przez ciastak zmieniać
 
