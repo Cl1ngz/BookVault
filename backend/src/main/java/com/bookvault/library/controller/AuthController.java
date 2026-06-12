@@ -1,6 +1,8 @@
 package com.bookvault.library.controller;
 
+import com.bookvault.library.dto.RegisterRequestDto;
 import com.bookvault.library.service.AuthService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,8 +17,8 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> body) {
-        return authService.register(body);
+    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequestDto request) {
+        return authService.register(request);
     }
 
     @PostMapping("/login")
