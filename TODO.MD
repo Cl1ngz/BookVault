@@ -10,6 +10,6 @@
 - [ ] pakiet to niby mamy te schema z postgresa wiec trzeba go zapytać
 - [ ] sprawdzenie czy andmin może się sam usunąc(przez ukradnięcie ciaskek) jak tak to trzeba naprawić
 - [ ] tak samo czy role może sobie moderator bądz admin przez ciastak zmieniać
-
-
+- [ ] walidacja rejestracji uzytkownika (bez znakow specjalnych, email)
+- [ ] weryfikacja dodawania ksiazek, serii itp
 
