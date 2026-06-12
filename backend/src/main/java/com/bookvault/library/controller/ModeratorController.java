@@ -19,7 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/moderator")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('MODERATOR')")
+@PreAuthorize("hasRole('MODERATOR') || hasRole('ADMIN')")
 public class ModeratorController {
 
     private final ModeratorService moderatorService;

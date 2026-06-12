@@ -11,6 +11,5 @@
 - [ ] sprawdzenie czy andmin może się sam usunąc(przez ukradnięcie ciaskek) jak tak to trzeba naprawić
 - [ ] tak samo czy role może sobie moderator bądz admin przez ciastak zmieniać
 - [ ] walidacja rejestracji uzytkownika (bez znakow specjalnych, email)
-- [ ] niedzialajace zarzadzanie reportami w moderacji
 - [ ] weryfikacja dodawania ksiazek, serii itp
 
