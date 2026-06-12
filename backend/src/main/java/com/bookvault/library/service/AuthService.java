@@ -1,6 +1,7 @@
 package com.bookvault.library.service;
 
 import com.bookvault.library.config.JwtUtils;
+import com.bookvault.library.dto.RegisterRequestDto;
 import com.bookvault.library.model.Reader;
 import com.bookvault.library.repository.ReaderRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,23 +19,16 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    public ResponseEntity<?> register(Map<String, String> body) {
-        String username = body.get("username");
-        String email = body.get("email");
-        String password = body.get("password");
-
-        if (isBlank(username) || isBlank(email) || isBlank(password)) {
-            return ResponseEntity.badRequest().body("username, email and password are required");
-        }
-
-        if (readerRepository.findByEmailIgnoreCase(email).isPresent()) {
+    public ResponseEntity<?> register(RegisterRequestDto request) {
+        
+        if (readerRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already in use");
         }
 
         Reader reader = new Reader();
-        reader.setUsername(username.trim());
-        reader.setEmail(email.trim().toLowerCase());
-        reader.setPasswordHash(passwordEncoder.encode(password));
+        reader.setUsername(request.getUsername().trim());
+        reader.setEmail(request.getEmail().trim().toLowerCase());
+        reader.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         reader.setRole("USER");
 
         Reader saved = readerRepository.save(reader);
@@ -85,4 +79,3 @@ public class AuthService {
         return value == null || value.trim().isEmpty();
     }
 }
-
