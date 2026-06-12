@@ -18,6 +18,7 @@ public class AuthService {
     private final ReaderRepository readerRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
+
     public ResponseEntity<?> register(RegisterRequestDto request) {
         
         if (readerRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
@@ -26,7 +27,7 @@ public class AuthService {
 
         Reader reader = new Reader();
         reader.setUsername(request.getUsername().trim());
-        reader.setEmail(request.getEmail().trim().toLowerCase()); 
+        reader.setEmail(request.getEmail().trim().toLowerCase());
         reader.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         reader.setRole("USER");
 
@@ -41,7 +42,9 @@ public class AuthService {
                 "email", saved.getEmail(),
                 "role", saved.getRole()
         ));
-    }    public ResponseEntity<?> login(Map<String, String> body) {
+    }
+
+    public ResponseEntity<?> login(Map<String, String> body) {
         String email = body.get("email");
         String password = body.get("password");
 
@@ -71,8 +74,8 @@ public class AuthService {
                 "role", role
         ));
     }
-      private boolean isBlank(String value) {
+
+    private boolean isBlank(String value) {
         return value == null || value.trim().isEmpty();
     }
 }
-
