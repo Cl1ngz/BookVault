@@ -21,7 +21,7 @@ public class BookUpdateDto {
 
     private Integer seriesId;
 
-    @Min(value = 0, message = "Rok wydania nie może być mniejszy niż 0")
+    @Min(value = 1000, message = "Rok wydania nie może być mniejszy niż 1000")
     @Max(value = 2100, message = "Rok wydania nie może być większy niż 2100")
     private Integer publicationYear;
 
@@ -29,7 +29,7 @@ public class BookUpdateDto {
     @Max(value = 10000, message = "Liczba stron jest zbyt duża")
     private Integer pageCount;
 
-    @Size(max = 50, message = "Nastrój może mieć maksymalnie 50 znaków")
+    @Size(min = 2, max = 50, message = "Nastrój musi mieć od 2 do 50 znaków")
     private String mood;
 
     private Set<Integer> genreIds;

@@ -2,6 +2,7 @@ package com.bookvault.library.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -24,10 +25,10 @@ public class AuthorDto {
     @Past(message = "Data urodzenia musi być datą z przeszłości")
     private LocalDate birthDate;
 
-    @Size(max = 50, message = "Narodowość może mieć maksymalnie 50 znaków")
+    @Size(min = 2, max = 50, message = "Narodowość musi mieć od 2 do 50 znaków")
     private String nationality;
 
-    @Size(max = 5000, message = "Biografia może mieć maksymalnie 5000 znaków")
+    @Size(min = 10, max = 5000, message = "Biografia musi mieć od 10 do 5000 znaków")
     private String biography;
 
     @Email(message = "Adres e-mail ma niepoprawny format")

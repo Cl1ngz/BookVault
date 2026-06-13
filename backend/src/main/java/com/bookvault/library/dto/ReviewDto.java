@@ -19,6 +19,6 @@ public class ReviewDto {
     @DecimalMax(value = "5.0", message = "Ocena może wynosić maksymalnie 5.0")
     private Double rating;
 
-    @Size(max = 5000, message = "Treść recenzji może mieć maksymalnie 5000 znaków")
+    @Size(min = 10, max = 5000, message = "Treść recenzji musi mieć od 10 do 5000 znaków")
     private String content;
 }
