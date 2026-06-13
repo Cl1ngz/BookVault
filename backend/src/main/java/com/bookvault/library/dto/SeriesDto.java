@@ -4,7 +4,11 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 public class SeriesDto {
 
     @NotBlank(message = "Nazwa serii nie może być pusta")
@@ -16,28 +20,4 @@ public class SeriesDto {
     private Integer volumeCount;
 
     private Integer authorId;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Integer getVolumeCount() {
-        return volumeCount;
-    }
-
-    public void setVolumeCount(Integer volumeCount) {
-        this.volumeCount = volumeCount;
-    }
-
-    public Integer getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(Integer authorId) {
-        this.authorId = authorId;
-    }
 }

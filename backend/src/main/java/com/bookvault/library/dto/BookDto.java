@@ -4,10 +4,14 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@Getter
+@Setter
 public class BookDto {
 
     @NotBlank(message = "Tytuł książki nie może być pusty")
@@ -32,68 +36,4 @@ public class BookDto {
     private String mood;
 
     private Set<Integer> genreIds = new HashSet<>();
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public Integer getAuthorId() {
-        return authorId;
-    }
-
-    public void setAuthorId(Integer authorId) {
-        this.authorId = authorId;
-    }
-
-    public Integer getPublisherId() {
-        return publisherId;
-    }
-
-    public void setPublisherId(Integer publisherId) {
-        this.publisherId = publisherId;
-    }
-
-    public Integer getSeriesId() {
-        return seriesId;
-    }
-
-    public void setSeriesId(Integer seriesId) {
-        this.seriesId = seriesId;
-    }
-
-    public Integer getPublicationYear() {
-        return publicationYear;
-    }
-
-    public void setPublicationYear(Integer publicationYear) {
-        this.publicationYear = publicationYear;
-    }
-
-    public Integer getPageCount() {
-        return pageCount;
-    }
-
-    public void setPageCount(Integer pageCount) {
-        this.pageCount = pageCount;
-    }
-
-    public String getMood() {
-        return mood;
-    }
-
-    public void setMood(String mood) {
-        this.mood = mood;
-    }
-
-    public Set<Integer> getGenreIds() {
-        return genreIds;
-    }
-
-    public void setGenreIds(Set<Integer> genreIds) {
-        this.genreIds = genreIds;
-    }
 }
