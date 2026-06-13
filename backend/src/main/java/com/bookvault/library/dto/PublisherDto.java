@@ -11,11 +11,11 @@ public class PublisherDto {
     @Size(min = 2, max = 150, message = "Nazwa wydawnictwa musi mieć od 2 do 150 znaków")
     private String name;
 
-    @Min(value = 1400, message = "Rok założenia jest zbyt mały")
-    @Max(value = 2100, message = "Rok założenia jest zbyt duży")
+    @Min(value = 1400, message = "Rok założenia jest zbyt mały (minimum 1400)")
+    @Max(value = 2100, message = "Rok założenia jest zbyt duży (maksimum 2100)")
     private Integer foundationYear;
 
-    @Size(max = 150, message = "Właściciel może mieć maksymalnie 150 znaków")
+    @Size(min = 2, max = 150, message = "Właściciel musi mieć od 2 do 150 znaków")
     private String owner;
 
     public String getName() {
