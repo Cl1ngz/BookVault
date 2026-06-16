@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import {ref, onMounted, computed, watch} from 'vue'
-import {useRoute} from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '@/api'
 import ConfirmModal from '@/components/ConfirmModal.vue'
-
 
 const route = useRoute()
 const book = ref<any>(null)
@@ -15,7 +14,7 @@ const user = computed(() => JSON.parse(localStorage.getItem('user') || 'null'))
 // Reading status tracking
 const shelfEntry = ref<any>(null)
 const shelfLoading = ref(false)
-const shelfMsg = ref({text: '', ok: true})
+const shelfMsg = ref({ text: '', ok: true })
 
 // Local draft for pages input — only saved when user clicks Save
 const draftPages = ref(0)
@@ -29,7 +28,7 @@ function onFinishCancel() { showFinishModal.value = false }
 async function loadShelfEntry() {
   if (!user.value) return
   try {
-    const res = await api.get('/reading-log', {params: {bookId: route.params.id}})
+    const res = await api.get('/reading-log', { params: { bookId: route.params.id } })
     shelfEntry.value = res.data
   } catch {
     shelfEntry.value = null
@@ -38,13 +37,13 @@ async function loadShelfEntry() {
 
 async function addToShelf(status: string) {
   shelfLoading.value = true
-  shelfMsg.value = {text: '', ok: true}
+  shelfMsg.value = { text: '', ok: true }
   try {
-    const res = await api.post('/reading-log', {bookId: Number(route.params.id), status})
+    const res = await api.post('/reading-log', { bookId: Number(route.params.id), status })
     shelfEntry.value = res.data
-    shelfMsg.value = {text: 'Added to shelf!', ok: true}
+    shelfMsg.value = { text: 'Added to shelf!', ok: true }
   } catch (e: any) {
-    shelfMsg.value = {text: e.response?.data ?? 'Failed', ok: false}
+    shelfMsg.value = { text: e.response?.data ?? 'Failed', ok: false }
   } finally {
     shelfLoading.value = false
   }
@@ -54,11 +53,11 @@ async function updateShelfStatus(newStatus: string) {
   if (!shelfEntry.value) return
   shelfLoading.value = true
   try {
-    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {status: newStatus})
+    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, { status: newStatus })
     shelfEntry.value = res.data
-    shelfMsg.value = {text: 'Status updated!', ok: true}
+    shelfMsg.value = { text: 'Status updated!', ok: true }
   } catch (e: any) {
-    shelfMsg.value = {text: e.response?.data ?? 'Failed', ok: false}
+    shelfMsg.value = { text: e.response?.data ?? 'Failed', ok: false }
   } finally {
     shelfLoading.value = false
   }
@@ -71,17 +70,17 @@ async function updatePages() {
   draftPages.value = clamped
   shelfEntry.value.pagesRead = clamped
   try {
-    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, {pagesRead: clamped})
+    const res = await api.put(`/reading-log/${shelfEntry.value.id}`, { pagesRead: clamped })
     shelfEntry.value = res.data
     draftPages.value = res.data.pagesRead ?? clamped
-    shelfMsg.value = {text: 'Progress saved!', ok: true}
+    shelfMsg.value = { text: 'Progress saved!', ok: true }
 
     // Offer to mark as finished when max pages reached
     if (book.value?.pageCount && clamped >= book.value.pageCount) {
       showFinishModal.value = true
     }
   } catch {
-    shelfMsg.value = {text: 'Failed to save progress.', ok: false}
+    shelfMsg.value = { text: 'Failed to save progress.', ok: false }
   }
 }
 
@@ -92,15 +91,15 @@ function progressPercent() {
 }
 
 // Star rating options: 0.25, 0.50, … 5.00
-const ratingOptions = Array.from({length: 20}, (_, i) => +((i + 1) * 0.25).toFixed(2))
+const ratingOptions = Array.from({ length: 20 }, (_, i) => +((i + 1) * 0.25).toFixed(2))
 
 // Review form state
 const newRating = ref<number>(3)
 const newContent = ref('')
-const reviewMsg = ref({text: '', ok: true})
+const reviewMsg = ref({ text: '', ok: true })
 
 async function loadReviews() {
-  const res = await api.get('/reviews', {params: {bookId: route.params.id}})
+  const res = await api.get('/reviews', { params: { bookId: route.params.id } })
   reviews.value = res.data
 }
 
@@ -119,9 +118,9 @@ onMounted(async () => {
 })
 
 async function submitReview() {
-  reviewMsg.value = {text: '', ok: true}
+  reviewMsg.value = { text: '', ok: true }
   if (!user.value) {
-    reviewMsg.value = {text: 'You must be logged in to post a review.', ok: false};
+    reviewMsg.value = { text: 'You must be logged in to post a review.', ok: false };
     return
   }
   try {
@@ -130,12 +129,12 @@ async function submitReview() {
       rating: newRating.value,
       content: newContent.value.trim() || null
     })
-    reviewMsg.value = {text: 'Review posted!', ok: true}
+    reviewMsg.value = { text: 'Review posted!', ok: true }
     newRating.value = 3
     newContent.value = ''
     await loadReviews()
   } catch (e: any) {
-    reviewMsg.value = {text: e.response?.data ?? 'Failed to post review.', ok: false}
+    reviewMsg.value = { text: e.response?.data ?? 'Failed to post review.', ok: false }
   }
 }
 
@@ -189,7 +188,7 @@ function renderStars(rating: number) {
       <h1>{{ book.title }}</h1>
       <p v-if="book.author"><strong>Author:</strong>
         <RouterLink :to="`/authors/${book.author.id}`">{{ book.author.firstName }} {{
-            book.author.lastName
+          book.author.lastName
           }}
         </RouterLink>
       </p>
@@ -202,7 +201,15 @@ function renderStars(rating: number) {
       <p><strong>Year:</strong> {{ book.publicationYear }}</p>
       <p><strong>Pages:</strong> {{ book.pageCount }}</p>
       <p v-if="book.mood"><strong>Mood:</strong> {{ book.mood }}</p>
-      <p v-if="book.genres?.length"><strong>Genres:</strong> {{ book.genres.map((g: any) => g.name).join(', ') }}</p>
+      <p v-if="book.genres?.length"><strong>Genres:</strong> {{book.genres.map((g: any) => g.name).join(', ')}}</p>
+      <p v-if="book.averageRating !== null && book.averageRating !== undefined">
+        <strong>Average Rating:</strong>
+        <span aria-hidden="true" style="color: #fabd2f;">★</span>
+        {{ book.averageRating }} / 5
+      </p>
+      <p v-else>
+        <strong>Average Rating:</strong> <span style="color: gray;">No ratings yet.</span>
+      </p>
 
       <!-- Reading Status Section -->
       <section v-if="user" class="reading-status-section" aria-label="My reading status">
@@ -228,13 +235,9 @@ function renderStars(rating: number) {
         <div v-else>
           <div class="shelf-controls">
             <label for="shelf-status" class="visually-hidden">Reading status</label>
-            <select
-              id="shelf-status"
-              :value="shelfEntry.status"
-              @change="updateShelfStatus(($event.target as HTMLSelectElement).value)"
-              class="status-select"
-              aria-label="Update reading status"
-            >
+            <select id="shelf-status" :value="shelfEntry.status"
+              @change="updateShelfStatus(($event.target as HTMLSelectElement).value)" class="status-select"
+              aria-label="Update reading status">
               <option value="TO_READ">🔖 Want to Read</option>
               <option value="READING">📖 Reading</option>
               <option value="FINISHED">✅ Finished</option>
@@ -251,35 +254,19 @@ function renderStars(rating: number) {
               <label :for="`pages-input-${shelfEntry.id}`" class="visually-hidden">
                 Pages read (out of {{ book.pageCount }})
               </label>
-              <input
-                :id="`pages-input-${shelfEntry.id}`"
-                type="number"
-                v-model.number="draftPages"
-                :max="book.pageCount"
-                min="0"
-                :aria-label="`Pages read, enter a value between 0 and ${book.pageCount}`"
-                @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace','Delete','Tab','ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key) && e.preventDefault()"
+              <input :id="`pages-input-${shelfEntry.id}`" type="number" v-model.number="draftPages"
+                :max="book.pageCount" min="0" :aria-label="`Pages read, enter a value between 0 and ${book.pageCount}`"
+                @keydown="(e) => !/^\d$/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key) && e.preventDefault()"
                 @input="draftPages = draftPages < 0 ? 0 : draftPages > book.pageCount ? book.pageCount : draftPages"
-                class="progress-pages-input"
-              />
+                class="progress-pages-input" />
               <span class="progress-info" aria-live="polite">
                 / {{ book.pageCount }} pages · <strong>{{ progressPercent() }}%</strong>
               </span>
-              <button
-                @click="updatePages()"
-                class="btn-save-pages"
-                :disabled="shelfLoading"
-                aria-label="Save reading progress"
-              >Save</button>
+              <button @click="updatePages()" class="btn-save-pages" :disabled="shelfLoading"
+                aria-label="Save reading progress">Save</button>
             </div>
-            <div
-              class="progress-bar-bg"
-              role="progressbar"
-              :aria-valuenow="progressPercent()"
-              aria-valuemin="0"
-              aria-valuemax="100"
-              :aria-label="`Reading progress: ${progressPercent()}%`"
-            >
+            <div class="progress-bar-bg" role="progressbar" :aria-valuenow="progressPercent()" aria-valuemin="0"
+              aria-valuemax="100" :aria-label="`Reading progress: ${progressPercent()}%`">
               <div class="progress-bar-fill" :style="{ width: progressPercent() + '%' }"></div>
             </div>
           </div>
@@ -290,13 +277,8 @@ function renderStars(rating: number) {
           </div>
         </div>
 
-        <p
-          v-if="shelfMsg.text"
-          class="shelf-msg"
-          :class="shelfMsg.ok ? 'shelf-msg--ok' : 'shelf-msg--error'"
-          role="status"
-          aria-live="polite"
-        >
+        <p v-if="shelfMsg.text" class="shelf-msg" :class="shelfMsg.ok ? 'shelf-msg--ok' : 'shelf-msg--error'"
+          role="status" aria-live="polite">
           {{ shelfMsg.text }}
         </p>
       </section>
@@ -310,11 +292,8 @@ function renderStars(rating: number) {
             <strong class="review-rating">{{ r.rating.toFixed(2) }} / 5</strong>
             <em class="review-author">({{ r.reader?.username }})</em>
             <p v-if="r.content" class="review-content">{{ r.content }}</p>
-            <button
-              @click="reportReview(r.id)"
-              class="btn-report"
-              :aria-label="`Report review by ${r.reader?.username}`"
-            >
+            <button @click="reportReview(r.id)" class="btn-report"
+              :aria-label="`Report review by ${r.reader?.username}`">
               <span aria-hidden="true">🚩</span> Report
             </button>
           </li>
@@ -347,22 +326,12 @@ function renderStars(rating: number) {
 
           <div class="form-group">
             <label for="review-content"><strong>Comment (optional):</strong></label>
-            <textarea
-              id="review-content"
-              v-model="newContent"
-              rows="3"
-              placeholder="Share your thoughts…"
-              class="review-textarea"
-              aria-label="Write your review comment"
-            ></textarea>
+            <textarea id="review-content" v-model="newContent" rows="3" placeholder="Share your thoughts…"
+              class="review-textarea" aria-label="Write your review comment"></textarea>
           </div>
 
-          <p
-            class="review-msg"
-            :class="reviewMsg.ok ? 'review-msg--ok' : 'review-msg--error'"
-            role="status"
-            aria-live="polite"
-          >{{ reviewMsg.text }}</p>
+          <p class="review-msg" :class="reviewMsg.ok ? 'review-msg--ok' : 'review-msg--error'" role="status"
+            aria-live="polite">{{ reviewMsg.text }}</p>
           <button @click="submitReview" class="btn-post">Post Review</button>
         </div>
       </section>
@@ -371,15 +340,10 @@ function renderStars(rating: number) {
     <p v-else>Loading...</p>
   </div>
 
-  <ConfirmModal
-    v-if="showFinishModal"
-    title="Last page reached!"
+  <ConfirmModal v-if="showFinishModal" title="Last page reached!"
     :message="`You've read all ${book?.pageCount} pages of &quot;${book?.title}&quot;. Mark it as Finished?`"
-    confirm-label="✅ Yes, mark as Finished"
-    cancel-label="📖 Keep Reading"
-    @confirm="onFinishConfirm"
-    @cancel="onFinishCancel"
-  />
+    confirm-label="✅ Yes, mark as Finished" cancel-label="📖 Keep Reading" @confirm="onFinishConfirm"
+    @cancel="onFinishCancel" />
 </template>
 
 <style scoped>
@@ -437,7 +401,10 @@ function renderStars(rating: number) {
   font-size: 0.9rem;
   transition: filter 0.12s;
 }
-.btn:hover { filter: brightness(1.15); }
+
+.btn:hover {
+  filter: brightness(1.15);
+}
 
 .btn-want-to-read {
   background: rgba(215, 153, 33, 0.2);
@@ -485,7 +452,9 @@ function renderStars(rating: number) {
   font-size: 0.9rem;
 }
 
-.progress-section { margin-top: 0.5rem; }
+.progress-section {
+  margin-top: 0.5rem;
+}
 
 .progress-row {
   display: flex;
@@ -503,15 +472,26 @@ function renderStars(rating: number) {
   color: #ebdbb2;
   -moz-appearance: textfield;
 }
-.progress-pages-input:focus-visible { outline: 3px solid #83a598; outline-offset: 1px; }
+
+.progress-pages-input:focus-visible {
+  outline: 3px solid #83a598;
+  outline-offset: 1px;
+}
+
 .progress-pages-input::-webkit-outer-spin-button,
 .progress-pages-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
 
-.progress-info { font-size: 0.9rem; color: #a89984; }
-.progress-info strong { color: #83a598; }
+.progress-info {
+  font-size: 0.9rem;
+  color: #a89984;
+}
+
+.progress-info strong {
+  color: #83a598;
+}
 
 .btn-save-pages {
   padding: 5px 12px;
@@ -523,8 +503,15 @@ function renderStars(rating: number) {
   cursor: pointer;
   transition: filter 0.12s;
 }
-.btn-save-pages:hover:not(:disabled) { filter: brightness(1.15); }
-.btn-save-pages:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-save-pages:hover:not(:disabled) {
+  filter: brightness(1.15);
+}
+
+.btn-save-pages:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .progress-bar-bg {
   height: 6px;
@@ -539,13 +526,29 @@ function renderStars(rating: number) {
   transition: width 0.3s;
 }
 
-.shelf-dates { font-size: 0.8rem; color: #7c6f64; margin-top: 6px; }
+.shelf-dates {
+  font-size: 0.8rem;
+  color: #7c6f64;
+  margin-top: 6px;
+}
 
-.shelf-msg { margin: 8px 0 0; font-size: 0.9rem; }
-.shelf-msg--ok { color: #b8bb26; }
-.shelf-msg--error { color: #fb4934; }
+.shelf-msg {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+}
 
-.reviews-list { list-style: none; padding: 0; }
+.shelf-msg--ok {
+  color: #b8bb26;
+}
+
+.shelf-msg--error {
+  color: #fb4934;
+}
+
+.reviews-list {
+  list-style: none;
+  padding: 0;
+}
 
 .review-item {
   padding: 10px;
@@ -555,10 +558,25 @@ function renderStars(rating: number) {
   background: #32302f;
 }
 
-.review-stars { font-size: 1.1rem; color: #fabd2f; }
-.review-rating { margin-left: 6px; color: #ebdbb2; }
-.review-author { color: #a89984; margin-left: 8px; }
-.review-content { margin: 4px 0; color: #d5c4a1; }
+.review-stars {
+  font-size: 1.1rem;
+  color: #fabd2f;
+}
+
+.review-rating {
+  margin-left: 6px;
+  color: #ebdbb2;
+}
+
+.review-author {
+  color: #a89984;
+  margin-left: 8px;
+}
+
+.review-content {
+  margin: 4px 0;
+  color: #d5c4a1;
+}
 
 .btn-report {
   font-size: 0.8rem;
@@ -578,8 +596,14 @@ function renderStars(rating: number) {
   background: #32302f;
 }
 
-.review-form h3 { margin-top: 0; color: #d5c4a1; }
-.login-prompt { color: #a89984; }
+.review-form h3 {
+  margin-top: 0;
+  color: #d5c4a1;
+}
+
+.login-prompt {
+  color: #a89984;
+}
 
 .review-rating-select {
   padding: 6px 12px;
@@ -592,7 +616,11 @@ function renderStars(rating: number) {
   color: #ebdbb2;
 }
 
-.review-stars-preview { margin: 4px 0 10px; font-size: 1.2rem; color: #fabd2f; }
+.review-stars-preview {
+  margin: 4px 0 10px;
+  font-size: 1.2rem;
+  color: #fabd2f;
+}
 
 .review-textarea {
   width: 100%;
@@ -607,9 +635,17 @@ function renderStars(rating: number) {
   border-radius: 4px;
 }
 
-.review-msg { margin: 6px 0; }
-.review-msg--ok { color: #b8bb26; }
-.review-msg--error { color: #fb4934; }
+.review-msg {
+  margin: 6px 0;
+}
+
+.review-msg--ok {
+  color: #b8bb26;
+}
+
+.review-msg--error {
+  color: #fb4934;
+}
 
 .btn-post {
   padding: 8px 20px;
@@ -620,8 +656,12 @@ function renderStars(rating: number) {
   cursor: pointer;
   transition: filter 0.12s;
 }
-.btn-post:hover { filter: brightness(1.15); }
 
-.error-msg { color: #fb4934; }
+.btn-post:hover {
+  filter: brightness(1.15);
+}
+
+.error-msg {
+  color: #fb4934;
+}
 </style>
-
