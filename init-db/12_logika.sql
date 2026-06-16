@@ -9,19 +9,13 @@ END;
 $$ LANGUAGE plpgsql;
 
 COMMIT;
--- Procedure to register a reader with an assigned favourite genre
 CREATE OR REPLACE PROCEDURE zarejestruj_czytelnika(
-    p_username VARCHAR, p_gatunek_id INT
+    p_username VARCHAR,
+    p_email VARCHAR,
+    p_password_hash VARCHAR
 ) AS $$
-DECLARE
-v_id_czytelnika INT;
 BEGIN
-INSERT INTO czytelnicy (username) VALUES (p_username)
-    RETURNING id_czytelnika INTO v_id_czytelnika;
-
-INSERT INTO czytelnik_gatunek (id_czytelnika, id_gatunku)
-VALUES (v_id_czytelnika, p_gatunek_id);
-
-RAISE NOTICE 'Reader registered with ID: %', v_id_czytelnika;
+    INSERT INTO czytelnicy (username, email, password_hash, role)
+    VALUES (p_username, p_email, p_password_hash, 'USER');
 END;
 $$ LANGUAGE plpgsql;
