@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 
@@ -19,19 +20,21 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
+    @Transactional
     public ResponseEntity<?> register(RegisterRequestDto request) {
         
         if (readerRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Email already in use");
         }
 
-        Reader reader = new Reader();
-        reader.setUsername(request.getUsername().trim());
-        reader.setEmail(request.getEmail().trim().toLowerCase());
-        reader.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        reader.setRole("USER");
+        String username = request.getUsername().trim();
+        String email = request.getEmail().trim().toLowerCase();
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
 
-        Reader saved = readerRepository.save(reader);
+        readerRepository.registerReader(username, email, encodedPassword);
+
+        Reader saved = readerRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Rejestracja się nie powiodła"));
 
         String token = jwtUtils.generateToken(saved.getEmail(), saved.getId(), saved.getUsername(), saved.getRole());
 
