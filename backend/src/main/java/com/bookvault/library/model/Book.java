@@ -1,5 +1,6 @@
 package com.bookvault.library.model;
 
+import org.hibernate.annotations.Formula;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -52,4 +53,15 @@ public class Book extends BaseEntity {
             inverseJoinColumns = @JoinColumn(name = "id_gatunku")
     )
     private Set<Genre> genres = new HashSet<>();
+
+    @Formula("pobierz_srednia_ocena(id_ksiazki)")
+    private Double averageRating;
+
+    public Double getAverageRating() {
+        return averageRating;
+    }
+
+    public void setAverageRating(Double averageRating) {
+        this.averageRating = averageRating;
+    }
 }
