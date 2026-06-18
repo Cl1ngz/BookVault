@@ -21,7 +21,7 @@ public class AdminService {
     private final ReaderRepository readerRepository;
 
     public List<Reader> getAllReaders() {
-        return readerRepository.findAll();
+        return readerRepository.findAllByOrderByIdAsc();
     }
 
     public ResponseEntity<?> setRole(Integer id, Map<String, String> body, Authentication authentication) {
@@ -85,4 +85,3 @@ public class AdminService {
         return ResponseEntity.ok(Map.of("message", "User " + reader.getUsername() + " deleted"));
     }
 }
-
