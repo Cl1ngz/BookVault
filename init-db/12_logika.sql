@@ -4,7 +4,7 @@ DROP FUNCTION IF EXISTS biblioteka.pobierz_srednia_ocena(integer);
 CREATE FUNCTION biblioteka.pobierz_srednia_ocena(p_id_ksiazki INT)
 RETURNS DOUBLE PRECISION AS $$
 BEGIN
-    RETURN (SELECT ROUND(AVG(ocena)::numeric, 2) FROM recenzje WHERE id_ksiazki = p_id_ksiazki);
+    RETURN (SELECT ROUND(AVG(ocena)::numeric, 2) FROM biblioteka.recenzje WHERE id_ksiazki = p_id_ksiazki);
 END;
 $$ LANGUAGE plpgsql;
 
