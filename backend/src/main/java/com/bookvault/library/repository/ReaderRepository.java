@@ -22,6 +22,8 @@ public interface ReaderRepository extends JpaRepository<Reader, Integer> {
 
     Optional<Reader> findByShareToken(String shareToken);
 
+    List<Reader> findAllByOrderByIdAsc();
+
     @Procedure(procedureName = "zarejestruj_czytelnika")
     void registerReader(
         @Param("p_username") String username,

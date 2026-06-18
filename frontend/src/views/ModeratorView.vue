@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {ref, onMounted} from 'vue'
+import {ref, onMounted, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import api from '@/api'
 const router = useRouter()
@@ -25,12 +25,63 @@ onMounted(async () => {
   await loadReports()
 })
 
+// --- Add/Edit Books ---
 const newBook = ref({
   title: '', authorId: null as number | null, publisherId: null as number | null,
   seriesId: null as number | null, publicationYear: null as number | null,
   pageCount: null as number | null, mood: '', genreIds: [] as number[]
 })
 const bookMsg = ref({text: '', ok: true})
+
+// Search refs for "Add Book" form
+const authorSearch = ref('')
+const publisherSearch = ref('')
+const seriesSearch = ref('')
+
+// Search refs for "Edit Book" form
+const editAuthorSearch = ref('')
+const editPublisherSearch = ref('')
+const editSeriesSearch = ref('')
+
+const filteredAuthors = computed(() => {
+  const search = activeTab.value === 'books' ? authorSearch.value : editAuthorSearch.value
+  if (!search) return authors.value
+  return authors.value.filter(a => `${a.firstName} ${a.lastName}`.toLowerCase().includes(search.toLowerCase()))
+})
+const filteredPublishers = computed(() => {
+  const search = activeTab.value === 'books' ? publisherSearch.value : editPublisherSearch.value
+  if (!search) return publishers.value
+  return publishers.value.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+})
+const filteredSeries = computed(() => {
+  const search = activeTab.value === 'books' ? seriesSearch.value : editSeriesSearch.value
+  if (!search) return seriesList.value
+  return seriesList.value.filter(s => s.name.toLowerCase().includes(search.toLowerCase()))
+})
+
+function handleAssociationInput(
+  type: 'author' | 'publisher' | 'series',
+  form: 'new' | 'edit',
+  event: Event
+) {
+  const value = (event.target as HTMLInputElement).value;
+  const isNew = form === 'new';
+
+  const [searchRef, dataList, nameKey, idKey] =
+    type === 'author'
+      ? [isNew ? authorSearch : editAuthorSearch, authors.value, (a: any) => `${a.firstName} ${a.lastName}`, 'authorId']
+      : type === 'publisher'
+        ? [isNew ? publisherSearch : editPublisherSearch, publishers.value, (p: any) => p.name, 'publisherId']
+        : [isNew ? seriesSearch : editSeriesSearch, seriesList.value, (s: any) => s.name, 'seriesId'];
+
+  searchRef.value = value;
+  const selectedItem = dataList.find(item => nameKey(item) === value);
+  const targetObj = isNew ? newBook.value : editBook.value;
+
+  if (targetObj) {
+    targetObj[idKey] = selectedItem ? selectedItem.id : null;
+  }
+}
 
 async function addBook() {
   bookMsg.value = {text: '', ok: true}
@@ -49,6 +100,7 @@ async function addBook() {
       title: '', authorId: null, publisherId: null, seriesId: null,
       publicationYear: null, pageCount: null, mood: '', genreIds: []
     }
+    authorSearch.value = ''; publisherSearch.value = ''; seriesSearch.value = '';
   } catch (e: any) {
     bookMsg.value = {text: e.response?.data ?? 'Failed', ok: false}
   }
@@ -63,21 +115,46 @@ const allBooks = ref<any[]>([])
 const selectedBookId = ref<number | null>(null)
 const editBook = ref<any>(null)
 const editBookMsg = ref({text: '', ok: true})
+const bookSearch = ref('')
+
+const filteredBooks = computed(() => {
+  if (!bookSearch.value) return allBooks.value
+  return allBooks.value.filter(b => b.title.toLowerCase().includes(bookSearch.value.toLowerCase()))
+})
 
 async function loadBooksForEdit() {
   const res = await api.get('/books')
   allBooks.value = res.data
 }
 
+function handleBookInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  bookSearch.value = target.value;
+
+  const selectedBook = allBooks.value.find(b => b.title === target.value);
+  if (selectedBook) {
+    selectBookToEdit(selectedBook.id);
+  } else if (editBook.value) {
+    editBook.value = null;
+    selectedBookId.value = null;
+  }
+}
+
 function selectBookToEdit(id: number) {
   const b = allBooks.value.find(x => x.id === id)
   if (!b) return
+  selectedBookId.value = id
+  bookSearch.value = b.title;
   editBook.value = {
     title: b.title, mood: b.mood ?? '', publicationYear: b.publicationYear ?? null,
     pageCount: b.pageCount ?? null, authorId: b.author?.id ?? null,
     publisherId: b.publisher?.id ?? null, seriesId: b.series?.id ?? null,
     genreIds: b.genres?.map((g: any) => g.id) ?? []
   }
+  // Populate search fields for edit form
+  editAuthorSearch.value = b.author ? `${b.author.firstName} ${b.author.lastName}` : ''
+  editPublisherSearch.value = b.publisher ? b.publisher.name : ''
+  editSeriesSearch.value = b.series ? b.series.name : ''
 }
 
 async function saveEditBook() {
@@ -98,10 +175,31 @@ async function saveEditBook() {
 const selectedAuthorId = ref<number | null>(null)
 const editAuthor = ref<any>(null)
 const authorMsg = ref({text: '', ok: true})
+const authorSelectSearch = ref('')
+
+const filteredAuthorsForSelect = computed(() => {
+  if (!authorSelectSearch.value) return authors.value
+  return authors.value.filter(a => `${a.firstName} ${a.lastName}`.toLowerCase().includes(authorSelectSearch.value.toLowerCase()))
+})
+
+function handleAuthorSelectInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  authorSelectSearch.value = target.value;
+
+  const selected = authors.value.find(a => `${a.firstName} ${a.lastName}` === target.value);
+  if (selected) {
+    selectAuthorToEdit(selected.id);
+  } else if (editAuthor.value) {
+    editAuthor.value = null;
+    selectedAuthorId.value = null;
+  }
+}
 
 function selectAuthorToEdit(id: number) {
   const a = authors.value.find(x => x.id === id)
   if (!a) return
+  selectedAuthorId.value = id;
+  authorSelectSearch.value = `${a.firstName} ${a.lastName}`;
   editAuthor.value = {
     firstName: a.firstName, lastName: a.lastName,
     nationality: a.nationality ?? '', biography: a.biography ?? ''
@@ -124,6 +222,25 @@ const newSeries = ref({name: '', volumeCount: null as number | null, authorId: n
 const selectedSeriesId = ref<number | null>(null)
 const editSeries = ref<any>(null)
 const seriesMsg = ref({text: '', ok: true})
+const seriesSelectSearch = ref('')
+
+const filteredSeriesForSelect = computed(() => {
+  if (!seriesSelectSearch.value) return seriesList.value
+  return seriesList.value.filter(s => s.name.toLowerCase().includes(seriesSelectSearch.value.toLowerCase()))
+})
+
+function handleSeriesSelectInput(event: Event) {
+  const target = event.target as HTMLInputElement;
+  seriesSelectSearch.value = target.value;
+
+  const selected = seriesList.value.find(s => s.name === target.value);
+  if (selected) {
+    selectSeriestoEdit(selected.id);
+  } else if (editSeries.value) {
+    editSeries.value = null;
+    selectedSeriesId.value = null;
+  }
+}
 
 async function addSeries() {
   seriesMsg.value = {text: '', ok: true}
@@ -149,6 +266,8 @@ async function addSeries() {
 function selectSeriestoEdit(id: number) {
   const s = seriesList.value.find(x => x.id === id)
   if (!s) return
+  selectedSeriesId.value = id;
+  seriesSelectSearch.value = s.name;
   editSeries.value = {name: s.name, volumeCount: s.volumeCount ?? null, authorId: s.author?.id ?? null}
 }
 
@@ -308,24 +427,27 @@ async function deleteReview(reviewId: number) {
         </div>
         <div>
           <label for="new-book-author">Author</label>
-          <select id="new-book-author" v-model="newBook.authorId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
-          </select>
+          <input id="new-book-author" :value="authorSearch" @input="handleAssociationInput('author', 'new', $event)"
+                 list="author-list-new" class="form-input" placeholder="Search authors...">
+          <datalist id="author-list-new">
+            <option v-for="a in filteredAuthors" :key="a.id" :value="`${a.firstName} ${a.lastName}`"></option>
+          </datalist>
         </div>
         <div>
           <label for="new-book-publisher">Publisher</label>
-          <select id="new-book-publisher" v-model="newBook.publisherId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="p in publishers" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <input id="new-book-publisher" :value="publisherSearch" @input="handleAssociationInput('publisher', 'new', $event)"
+                 list="publisher-list-new" class="form-input" placeholder="Search publishers...">
+          <datalist id="publisher-list-new">
+            <option v-for="p in filteredPublishers" :key="p.id" :value="p.name"></option>
+          </datalist>
         </div>
         <div>
           <label for="new-book-series">Series</label>
-          <select id="new-book-series" v-model="newBook.seriesId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
+          <input id="new-book-series" :value="seriesSearch" @input="handleAssociationInput('series', 'new', $event)"
+                 list="series-list-new" class="form-input" placeholder="Search series...">
+          <datalist id="series-list-new">
+            <option v-for="s in filteredSeries" :key="s.id" :value="s.name"></option>
+          </datalist>
         </div>
         <div>
           <label for="new-book-year">Publication Year</label>
@@ -357,11 +479,16 @@ async function deleteReview(reviewId: number) {
     <section v-if="activeTab === 'editBook'" id="mod-panel-editBook" role="tabpanel" aria-labelledby="mod-tab-editBook">
       <h2><span aria-hidden="true">✏️</span> Edit Book</h2>
       <div style="margin-bottom:1rem;">
-        <label for="edit-book-select">Select book to edit:</label>
-        <select id="edit-book-select" v-model="selectedBookId" @change="selectBookToEdit(selectedBookId!)" class="form-select--full">
-          <option :value="null">-- choose a book --</option>
-          <option v-for="b in allBooks" :key="b.id" :value="b.id">{{ b.title }}</option>
-        </select>
+        <label for="edit-book-search">Search for a book to edit:</label>
+        <input id="edit-book-search"
+               :value="bookSearch"
+               @input="handleBookInput"
+               list="book-list"
+               class="form-select--full"
+               placeholder="Type a book title...">
+        <datalist id="book-list">
+          <option v-for="b in filteredBooks" :key="b.id" :value="b.title"></option>
+        </datalist>
       </div>
       <div v-if="editBook" class="form-grid">
         <div>
@@ -374,24 +501,27 @@ async function deleteReview(reviewId: number) {
         </div>
         <div>
           <label for="edit-book-author">Author</label>
-          <select id="edit-book-author" v-model="editBook.authorId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
-          </select>
+          <input id="edit-book-author" :value="editAuthorSearch" @input="handleAssociationInput('author', 'edit', $event)"
+                 list="author-list-edit" class="form-input" placeholder="Search authors...">
+          <datalist id="author-list-edit">
+            <option v-for="a in filteredAuthors" :key="a.id" :value="`${a.firstName} ${a.lastName}`"></option>
+          </datalist>
         </div>
         <div>
           <label for="edit-book-publisher">Publisher</label>
-          <select id="edit-book-publisher" v-model="editBook.publisherId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="p in publishers" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
+          <input id="edit-book-publisher" :value="editPublisherSearch" @input="handleAssociationInput('publisher', 'edit', $event)"
+                 list="publisher-list-edit" class="form-input" placeholder="Search publishers...">
+          <datalist id="publisher-list-edit">
+            <option v-for="p in filteredPublishers" :key="p.id" :value="p.name"></option>
+          </datalist>
         </div>
         <div>
           <label for="edit-book-series">Series</label>
-          <select id="edit-book-series" v-model="editBook.seriesId" class="form-select">
-            <option :value="null">-- none --</option>
-            <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
+          <input id="edit-book-series" :value="editSeriesSearch" @input="handleAssociationInput('series', 'edit', $event)"
+                 list="series-list-edit" class="form-input" placeholder="Search series...">
+          <datalist id="series-list-edit">
+            <option v-for="s in filteredSeries" :key="s.id" :value="s.name"></option>
+          </datalist>
         </div>
         <div>
           <label for="edit-book-year">Publication Year</label>
@@ -423,11 +553,16 @@ async function deleteReview(reviewId: number) {
     <section v-if="activeTab === 'authors'" id="mod-panel-authors" role="tabpanel" aria-labelledby="mod-tab-authors">
       <h2><span aria-hidden="true">✍️</span> Edit Author</h2>
       <div style="margin-bottom:1rem;">
-        <label for="edit-author-select">Select author:</label>
-        <select id="edit-author-select" v-model="selectedAuthorId" @change="selectAuthorToEdit(selectedAuthorId!)" class="form-select--full">
-          <option :value="null">-- choose an author --</option>
-          <option v-for="a in authors" :key="a.id" :value="a.id">{{ a.firstName }} {{ a.lastName }}</option>
-        </select>
+        <label for="edit-author-search">Search for an author to edit:</label>
+        <input id="edit-author-search"
+               :value="authorSelectSearch"
+               @input="handleAuthorSelectInput"
+               list="author-select-list"
+               class="form-select--full"
+               placeholder="Type an author's name...">
+        <datalist id="author-select-list">
+          <option v-for="a in filteredAuthorsForSelect" :key="a.id" :value="`${a.firstName} ${a.lastName}`"></option>
+        </datalist>
       </div>
       <div v-if="editAuthor" class="form-grid">
         <div>
@@ -480,12 +615,16 @@ async function deleteReview(reviewId: number) {
 
       <h3 style="margin-top:1.5rem;">Edit Existing Series</h3>
       <div style="margin-bottom:1rem;">
-        <label for="edit-series-select" class="visually-hidden">Select series to edit</label>
-        <select id="edit-series-select" v-model="selectedSeriesId" @change="selectSeriestoEdit(selectedSeriesId!)"
-                class="form-select--full" aria-label="Select series to edit">
-          <option :value="null">-- choose a series --</option>
-          <option v-for="s in seriesList" :key="s.id" :value="s.id">{{ s.name }}</option>
-        </select>
+        <label for="edit-series-search">Search for a series to edit:</label>
+        <input id="edit-series-search"
+               :value="seriesSelectSearch"
+               @input="handleSeriesSelectInput"
+               list="series-select-list"
+               class="form-select--full"
+               placeholder="Type a series name...">
+        <datalist id="series-select-list">
+          <option v-for="s in filteredSeriesForSelect" :key="s.id" :value="s.name"></option>
+        </datalist>
       </div>
       <div v-if="editSeries" class="form-grid form-grid--narrow">
         <div>
@@ -936,4 +1075,3 @@ fieldset.genres-row legend {
   border-radius: 4px;
 }
 </style>
-
