@@ -19,20 +19,11 @@ public class AdminController {
 
     private final AdminService adminService;
 
-    /**
-     * GET /api/v1/admin/readers
-     * Returns all users with their ban status.
-     */
     @GetMapping("/readers")
     public ResponseEntity<List<Reader>> getAllReaders() {
         return ResponseEntity.ok(adminService.getAllReaders());
     }
 
-    /**
-     * PUT /api/v1/admin/readers/{id}/role
-     * Body: { "role": "MODERATOR" }
-     * Changes the role of a user. Cannot demote/promote another ADMIN.
-     */
     @PutMapping("/readers/{id}/role")
     public ResponseEntity<?> setRole(
             @PathVariable Integer id,
@@ -42,11 +33,6 @@ public class AdminController {
         return adminService.setRole(id, body, authentication);
     }
 
-    /**
-     * PUT /api/v1/admin/readers/{id}/ban
-     * Body: { "days": 7 }
-     * Bans a user for the given number of days. days=0 lifts the ban.
-     */
     @PutMapping("/readers/{id}/ban")
     public ResponseEntity<?> banReader(
             @PathVariable Integer id,
@@ -55,10 +41,6 @@ public class AdminController {
         return adminService.banReader(id, body);
     }
 
-    /**
-     * DELETE /api/v1/admin/readers/{id}
-     * Permanently deletes a user account. Cannot delete an ADMIN account.
-     */
     @DeleteMapping("/readers/{id}")
     public ResponseEntity<?> deleteReader(
             @PathVariable Integer id,

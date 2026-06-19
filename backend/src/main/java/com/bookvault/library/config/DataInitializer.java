@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 @Component
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
-
     private final AuthorRepository authorRepository;
     private final BookRepository bookRepository;
     private final GenreRepository genreRepository;
@@ -36,8 +35,8 @@ public class DataInitializer implements CommandLineRunner {
         List<Author> authors = seedAuthors(24);
         List<Publisher> publishers = seedPublishers(11);
         List<Series> seriesList = seedSeries(15, authors);
-        seedBooks(1234, authors, publishers, seriesList, genres);
 
+        seedBooks(1234, authors, publishers, seriesList, genres);
         seedReaders(60);
         seedReviews(5000);
 

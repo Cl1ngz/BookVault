@@ -19,8 +19,6 @@ public class ReviewReportController {
 
     private final ReviewReportService reviewReportService;
 
-    // POST /api/v1/reports
-    // Body: { "reviewId": 1, "reason": "spam" }
     @PostMapping
     public ResponseEntity<?> reportReview(
             @Valid @RequestBody ReviewReportDto reportDto,
@@ -29,7 +27,6 @@ public class ReviewReportController {
         return reviewReportService.reportReview(reportDto, authentication);
     }
 
-    // GET /api/v1/reports?status=pending
     @GetMapping
     @PreAuthorize("hasRole('MODERATOR')")
     public ResponseEntity<List<ReviewReport>> getReports(@RequestParam(required = false) String status) {

@@ -1,4 +1,5 @@
-# BookVault
+# BookVault project for Computer Science
+## Its not maintain and not complete
 
 A book review application built with Spring Boot, Vue.js, and PostgreSQL.
 
